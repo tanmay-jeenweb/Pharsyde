@@ -1,6 +1,6 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 import CartDrawer from './components/cart/CartDrawer';
@@ -9,7 +9,7 @@ import AgeGateModal from './components/common/AgeGateModal';
 import ToastContainer from './components/common/ToastContainer';
 import ScrollToTop from './components/common/ScrollToTop';
 
-// Pages
+// Storefront Pages
 import HomePage from './pages/HomePage';
 import CatalogPage from './pages/CatalogPage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
@@ -79,8 +79,131 @@ function MainApp() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <MainApp />
-    </AppProvider>
+    <BrowserRouter>
+      <Routes>
+        {/* ========================================================
+            Office Management Routes (All prefixed with /office/..)
+            ======================================================== */}
+        <Route path="/office/login" element={<OfficeLogin />} />
+        
+        <Route
+          path="/office/dashboard"
+          element={
+            <OfficeProtectedRoute>
+              <OfficeDashboard />
+            </OfficeProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/office/user-master"
+          element={
+            <OfficeProtectedRoute>
+              <UserMaster />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route
+          path="/office/user-master/create"
+          element={
+            <OfficeProtectedRoute>
+              <CreateUserPage />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route
+          path="/office/user-master/edit/:id"
+          element={
+            <OfficeProtectedRoute>
+              <CreateUserPage />
+            </OfficeProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/office/user-type-master"
+          element={
+            <OfficeProtectedRoute>
+              <UserTypeMaster />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route
+          path="/office/user-type-master/create"
+          element={
+            <OfficeProtectedRoute>
+              <CreateUserTypePage />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route
+          path="/office/user-type-master/edit/:id"
+          element={
+            <OfficeProtectedRoute>
+              <CreateUserTypePage />
+            </OfficeProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/office/product-master"
+          element={
+            <OfficeProtectedRoute>
+              <ProductMaster />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route
+          path="/office/product-master/create"
+          element={
+            <OfficeProtectedRoute>
+              <CreateProductPage />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route
+          path="/office/product-master/edit/:id"
+          element={
+            <OfficeProtectedRoute>
+              <CreateProductPage />
+            </OfficeProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/office/product-image-master"
+          element={
+            <OfficeProtectedRoute>
+              <ProductImageMaster />
+            </OfficeProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/office/activity-report"
+          element={
+            <OfficeProtectedRoute>
+              <ActivityReport />
+            </OfficeProtectedRoute>
+          }
+        />
+
+        {/* /office redirects to /office/dashboard */}
+        <Route path="/office" element={<Navigate to="/office/dashboard" replace />} />
+        <Route path="/office/*" element={<Navigate to="/office/dashboard" replace />} />
+
+        {/* ========================================================
+            Public Storefront Routes
+            ======================================================== */}
+        <Route
+          path="/*"
+          element={
+            <AppProvider>
+              <MainStoreApp />
+            </AppProvider>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }

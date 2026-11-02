@@ -194,6 +194,83 @@ const ProductImageModel = {
     );
     return rows[0]?.total || 0;
   },
+
+  /**
+   * List product images for Product Image Master table with pagination and filtering
+   */
+  async findAllImages({ search = '', filter = 'all', limit = 50, offset = 0 } = {}) {
+    let whereClause = 'WHERE 1=1';
+    const params = [];
+
+    if (filter === 'with_image') {
+      whereClause += ' AND imageUrl IS NOT NULL AND imageUrl != ""';
+    } else if (filter === 'missing_image') {
+      whereClause += ' AND (imageUrl IS NULL OR imageUrl = "")';
+    }
+
+    if (search) {
+      whereClause += ' AND (sku LIKE ? OR name LIKE ? OR id LIKE ?)';
+      const s = `%${search}%`;
+      params.push(s, s, s);
+    }
+
+    // Get count
+    const [countRows] = await pool.query(
+      `SELECT COUNT(*) as total FROM techpos_product_images ${whereClause}`,
+      params
+    );
+    const total = countRows[0]?.total || 0;
+
+    // Get paginated rows
+    const query = `
+      SELECT id, sku, name, imageUrl, secondImageUrl, source_page, created_at, updated_at
+      FROM techpos_product_images
+      ${whereClause}
+      ORDER BY updated_at DESC
+      LIMIT ? OFFSET ?
+    `;
+    const [rows] = await pool.query(query, [...params, Number(limit) || 50, Number(offset) || 0]);
+
+    return { total, rows };
+  },
+
+  /**
+   * Find single image record by ID
+   */
+  async findById(id) {
+    const [rows] = await pool.query('SELECT * FROM techpos_product_images WHERE id = ?', [id]);
+    return rows[0] || null;
+  },
+
+  /**
+   * Update imageUrl and secondImageUrl for a product image record and sync to products table
+   */
+  async updateImages(id, { imageUrl, secondImageUrl }) {
+    await pool.query(
+      'UPDATE techpos_product_images SET imageUrl = ?, secondImageUrl = ? WHERE id = ?',
+      [imageUrl || null, secondImageUrl || null, id]
+    );
+
+    // Also update products table if matching product exists by pk or sku
+    const [rec] = await pool.query('SELECT id, sku FROM techpos_product_images WHERE id = ?', [id]);
+    if (rec[0]) {
+      await pool.query(`
+        UPDATE products 
+        SET imageUrl = ?, secondImageUrl = ? 
+        WHERE pk = ? OR (sku IS NOT NULL AND sku = ?)
+      `, [imageUrl || null, secondImageUrl || null, rec[0].id, rec[0].sku || '']);
+    }
+
+    return this.findById(id);
+  },
+
+  /**
+   * Delete image record
+   */
+  async deleteImage(id) {
+    const [res] = await pool.query('DELETE FROM techpos_product_images WHERE id = ?', [id]);
+    return res.affectedRows > 0;
+  },
 };
 
 module.exports = ProductImageModel;
@@ -201,4 +278,3 @@ module.exports.ProductImageModel = ProductImageModel;
 module.exports.PRODUCT_IMAGE_TABLE_SCHEMA = PRODUCT_IMAGE_TABLE_SCHEMA;
 module.exports.extractImageUrls = extractImageUrls;
 module.exports.filterProductForImageSync = filterProductForImageSync;
-
