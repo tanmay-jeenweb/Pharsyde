@@ -15,6 +15,7 @@ const { initModelTables } = require('./models/index');
 // Route Handlers
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
+const officeRoutes = require('./routes/officeRoutes');
 
 // Middlewares
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
@@ -56,6 +57,7 @@ app.get('/api/health', (req, res) => {
 // Mount API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/office', officeRoutes);
 
 // 404 & Error Handling Middlewares
 app.use(notFound);
@@ -78,6 +80,7 @@ const startServer = async () => {
     console.log(`===============================================`);
     console.log(`🚀 Pharsyde Server running on port ${PORT}`);
     console.log(`🔗 API Base URL: http://localhost:${PORT}`);
+    console.log(`🏢 Office API: http://localhost:${PORT}/api/office`);
     console.log(`🩺 Health check: http://localhost:${PORT}/api/health`);
     console.log(`===============================================`);
   });
