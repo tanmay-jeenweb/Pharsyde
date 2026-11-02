@@ -111,11 +111,11 @@ export default function CartDrawer() {
                 <button
                   onClick={() => {
                     setIsCartOpen(false);
-                    navigateTo('cannabis');
+                    navigateTo('catalog');
                   }}
                   className="px-6 py-2.5 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-extrabold uppercase tracking-wider transition-opacity shadow-sm"
                 >
-                  Explore Cannabis
+                  Explore Catalogue
                 </button>
               </div>
             ) : (

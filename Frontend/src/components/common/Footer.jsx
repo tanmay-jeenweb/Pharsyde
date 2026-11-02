@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { STORE_INFO } from '../../data/products';
 import { MapPin, Phone, Mail, Clock, ShieldAlert, Award, ArrowUpRight } from 'lucide-react';
@@ -17,12 +18,13 @@ export default function Footer() {
           {/* Col 1: Brand & Philosophy */}
           <div className="space-y-4">
             <div className="flex items-center">
-              <img
-                src={logoImg}
-                alt="PHARSYDE"
-                className="h-9 w-auto object-contain cursor-pointer hover:opacity-90 transition-all drop-shadow-[0_2px_8px_rgba(142,247,5,0.4)]"
-                onClick={() => navigateTo('home')}
-              />
+              <Link to="/">
+                <img
+                  src={logoImg}
+                  alt="PHARSYDE"
+                  className="h-9 w-auto object-contain cursor-pointer hover:opacity-90 transition-all drop-shadow-[0_2px_8px_rgba(142,247,5,0.4)]"
+                />
+              </Link>
             </div>
             <p className="text-sm leading-relaxed text-slate-600">
               Winnipeg's premier dispensary and lifestyle destination. Curating exceptional craft cannabis, 
@@ -37,46 +39,37 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <button
-                  onClick={() => navigateTo('home')}
+                <Link
+                  to="/"
                   className="hover:text-slate-900 transition-colors flex items-center gap-1 group text-slate-600"
                 >
                   <span>Home Showcase</span>
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => navigateTo('cannabis')}
+                <Link
+                  to="/catalog"
                   className="hover:text-[#599e03] transition-colors flex items-center gap-1 group text-slate-600"
                 >
-                  <span>Craft Cannabis Catalogue</span>
+                  <span>Product Catalogue</span>
                   <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => navigateTo('nicotine')}
-                  className="hover:text-orange-700 transition-colors flex items-center gap-1 group text-slate-600"
-                >
-                  <span>Nicotine Vape Systems</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => navigateTo('about')}
+                <Link
+                  to="/about"
                   className="hover:text-slate-900 transition-colors flex items-center gap-1 group text-slate-600"
                 >
                   <span>About Pharsyde</span>
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => navigateTo('contact')}
+                <Link
+                  to="/contact"
                   className="hover:text-slate-900 transition-colors flex items-center gap-1 group text-slate-600"
                 >
                   <span>Contact & Store Visit</span>
-                </button>
+                </Link>
               </li>
             </ul>
           </div>
@@ -88,44 +81,44 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <button
-                  onClick={() => navigateTo('policy')}
-                  className="hover:text-slate-900 transition-colors text-left text-slate-600"
+                <Link
+                  to="/policy"
+                  className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
                 >
                   Return, Exchange & Warranty Policy
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => navigateTo('policy')}
-                  className="hover:text-slate-900 transition-colors text-left text-slate-600"
+                <Link
+                  to="/policy"
+                  className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
                 >
                   Cannabis Final Sale & Recalls
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => navigateTo('policy')}
-                  className="hover:text-slate-900 transition-colors text-left text-slate-600"
+                <Link
+                  to="/policy"
+                  className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
                 >
                   24-Hour Vape Concern Protocol
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => navigateTo('policy')}
-                  className="hover:text-slate-900 transition-colors text-left text-slate-600"
+                <Link
+                  to="/policy"
+                  className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
                 >
                   Age & Identity Verification Rules
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => navigateTo('policy')}
-                  className="hover:text-slate-900 transition-colors text-left text-slate-600"
+                <Link
+                  to="/policy"
+                  className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
                 >
                   Terms & Conditions of Service
-                </button>
+                </Link>
               </li>
             </ul>
           </div>
