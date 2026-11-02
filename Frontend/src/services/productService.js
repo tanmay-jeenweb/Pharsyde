@@ -100,6 +100,28 @@ export async function getProductByIdApi(id) {
 }
 
 /**
+ * Trigger base product catalog sync from TechPOS OpenAPI
+ */
+export async function syncProductsApi() {
+  const url = `${API_BASE}/products/sync-techpos`;
+
+  try {
+    const res = await fetch(url, { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
+    return await res.json();
+  } catch (error) {
+    try {
+      const fallbackUrl = 'http://localhost:5000/api/products/sync-techpos';
+      const resFallback = await fetch(fallbackUrl, { method: 'POST' });
+      if (resFallback.ok) {
+        return await resFallback.json();
+      }
+    } catch {}
+    throw error;
+  }
+}
+
+/**
  * Trigger backend image sync from TechPOS WebMenu
  */
 export async function syncImagesApi() {
