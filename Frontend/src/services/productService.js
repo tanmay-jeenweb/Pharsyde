@@ -16,7 +16,12 @@ export async function getProductsApi({
   const offset = (page - 1) * limit;
   const params = new URLSearchParams();
 
-  if (category && category !== 'All') {
+  if (Array.isArray(category) && category.length > 0) {
+    const validCats = category.filter((c) => c && c !== 'All');
+    if (validCats.length > 0) {
+      params.append('category', validCats.join(','));
+    }
+  } else if (category && category !== 'All') {
     params.append('category', category);
   }
   if (search.trim()) {

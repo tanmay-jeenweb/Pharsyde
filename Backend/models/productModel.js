@@ -169,8 +169,19 @@ const ProductModel = {
     }
 
     if (category) {
-      query += ' AND category = ?';
-      params.push(category);
+      const categories = Array.isArray(category)
+        ? category
+        : (typeof category === 'string' && category.includes(',')
+            ? category.split(',').map((c) => c.trim()).filter(Boolean)
+            : [category]);
+
+      if (categories.length === 1) {
+        query += ' AND category = ?';
+        params.push(categories[0]);
+      } else if (categories.length > 1) {
+        query += ` AND category IN (${categories.map(() => '?').join(', ')})`;
+        params.push(...categories);
+      }
     }
 
     if (subCategory) {
@@ -228,8 +239,19 @@ const ProductModel = {
     }
 
     if (category) {
-      query += ' AND category = ?';
-      params.push(category);
+      const categories = Array.isArray(category)
+        ? category
+        : (typeof category === 'string' && category.includes(',')
+            ? category.split(',').map((c) => c.trim()).filter(Boolean)
+            : [category]);
+
+      if (categories.length === 1) {
+        query += ' AND category = ?';
+        params.push(categories[0]);
+      } else if (categories.length > 1) {
+        query += ` AND category IN (${categories.map(() => '?').join(', ')})`;
+        params.push(...categories);
+      }
     }
 
     if (brand) {
