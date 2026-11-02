@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useTransition } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { getProductsApi, getCategoriesApi, syncImagesApi, syncProductsApi } from '../services/productService';
 import ProductCard from '../components/common/ProductCard';
@@ -18,15 +19,19 @@ import {
 } from 'lucide-react';
 
 export default function CatalogPage() {
-  const { navigateTo, showToast } = useApp();
+  const { showToast } = useApp();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const urlCategory = searchParams.get('category');
+  const urlSearch = searchParams.get('search');
 
   // State
   const [products, setProducts] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(urlCategory || 'All');
+  const [searchQuery, setSearchQuery] = useState(urlSearch || '');
+  const [debouncedSearch, setDebouncedSearch] = useState(urlSearch || '');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(24);
   const [sortBy, setSortBy] = useState('modified');
@@ -132,10 +137,27 @@ export default function CatalogPage() {
     return () => { isMounted = false; };
   }, [selectedCategory, debouncedSearch, page, limit, sortBy, sortOrder, refreshTrigger]);
 
+  // Sync category from URL param if changed externally or on back/forward
+  useEffect(() => {
+    if (urlCategory && urlCategory !== selectedCategory) {
+      setSelectedCategory(urlCategory);
+      setPage(1);
+    } else if (!urlCategory && selectedCategory !== 'All') {
+      setSelectedCategory('All');
+      setPage(1);
+    }
+  }, [urlCategory]);
+
   // Category switch handler
   const handleSelectCategory = (cat) => {
     setSelectedCategory(cat);
     setPage(1);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (cat === 'All') next.delete('category');
+      else next.set('category', cat);
+      return next;
+    }, { replace: true });
   };
 
   // Sort change handler

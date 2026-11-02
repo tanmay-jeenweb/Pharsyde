@@ -313,7 +313,7 @@ export default function HomePage() {
                 </div>
 
                 <button
-                  onClick={() => navigateTo('cannabis')}
+                  onClick={() => navigateTo('catalog')}
                   className="w-full py-3.5 px-4 rounded-xl bg-slate-100 hover:bg-[#8EF705] hover:text-black text-slate-900 text-xs font-heading font-extrabold uppercase tracking-wider border border-slate-200 hover:border-[#8EF705] transition-all flex items-center justify-center gap-2 group/btn shadow-xs"
                 >
                   <span>EXPLORE CANNABIS</span>
@@ -344,7 +344,7 @@ export default function HomePage() {
                 </div>
 
                 <button
-                  onClick={() => navigateTo('cannabis')}
+                  onClick={() => navigateTo('catalog')}
                   className="w-full py-3.5 px-4 rounded-xl bg-slate-100 hover:bg-orange-600 hover:text-white text-slate-900 text-xs font-heading font-bold uppercase tracking-wider border border-slate-200 hover:border-orange-600 transition-all flex items-center justify-center gap-2 group/btn shadow-xs"
                 >
                   <span>EXPLORE COLLECTION</span>
@@ -375,7 +375,7 @@ export default function HomePage() {
                 </div>
 
                 <button
-                  onClick={() => navigateTo('nicotine')}
+                  onClick={() => navigateTo('catalog')}
                   className="w-full py-3.5 px-4 rounded-xl bg-slate-100 hover:bg-[#8EF705] hover:text-black text-slate-900 text-xs font-heading font-extrabold uppercase tracking-wider border border-slate-200 hover:border-[#8EF705] transition-all flex items-center justify-center gap-2 group/btn shadow-xs"
                 >
                   <span>DISCOVER MORE</span>
@@ -521,7 +521,7 @@ export default function HomePage() {
 
               {/* Action Button in #8EF705 */}
               <button
-                onClick={() => navigateTo('cannabis')}
+                onClick={() => navigateTo('catalog')}
                 className="w-full py-3.5 px-6 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-heading font-extrabold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-md shadow-[#8EF705]/25"
               >
                 <span>Explore This Experience</span>

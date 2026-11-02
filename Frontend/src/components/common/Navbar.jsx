@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { Search, ShoppingBag, User, Menu, X, ShieldCheck, Sparkles } from 'lucide-react';
 import logoImg from '../../assets/image.webp';
 
 export default function Navbar() {
-  const { currentPage, navigateTo, cartCount, setIsCartOpen, setIsSearchOpen, isAgeVerified } = useApp();
+  const { cartCount, setIsCartOpen, setIsSearchOpen, isAgeVerified } = useApp();
+  const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -22,18 +24,11 @@ export default function Navbar() {
   }, []);
 
   const navLinks = [
-    { id: 'home', label: 'Home' },
-    { id: 'catalog', label: 'All Products' },
-    { id: 'cannabis', label: 'Cannabis' },
-    { id: 'nicotine', label: 'Nicotine Vape' },
-    { id: 'about', label: 'About Us' },
-    { id: 'contact', label: 'Contact' }
+    { path: '/', label: 'Home' },
+    { path: '/catalog', label: 'All Products' },
+    { path: '/about', label: 'About Us' },
+    { path: '/contact', label: 'Contact' }
   ];
-
-  const handleNavClick = (id) => {
-    navigateTo(id);
-    setMobileMenuOpen(false);
-  };
 
   return (
     <>
@@ -47,8 +42,8 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             {/* Left: Brand Logo */}
-            <button
-              onClick={() => handleNavClick('home')}
+            <Link
+              to="/"
               className="group flex items-center text-left focus:outline-none py-1"
               aria-label="Pharsyde Home"
             >
@@ -57,16 +52,18 @@ export default function Navbar() {
                 alt="PHARSYDE"
                 className="h-8 sm:h-10 md:h-11 w-auto object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_2px_12px_rgba(142,247,5,0.45)]"
               />
-            </button>
+            </Link>
 
             {/* Centre: Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-1 lg:space-x-1.5 bg-slate-100/90 backdrop-blur-xl px-3 py-1.5 rounded-full border border-slate-200/80 shadow-inner">
               {navLinks.map((link) => {
-                const isActive = currentPage === link.id;
+                const isActive = link.path === '/'
+                  ? location.pathname === '/'
+                  : location.pathname.startsWith(link.path);
                 return (
-                  <button
-                    key={link.id}
-                    onClick={() => handleNavClick(link.id)}
+                  <Link
+                    key={link.path}
+                    to={link.path}
                     className={`group relative px-4 py-2 text-xs lg:text-[13px] font-semibold tracking-[0.14em] uppercase transition-all duration-200 rounded-full ${
                       isActive
                         ? 'text-slate-900 font-bold bg-white shadow-xs'
@@ -83,7 +80,7 @@ export default function Navbar() {
                           : 'bg-[#8EF705]/0 opacity-0 group-hover:opacity-40 group-hover:bg-[#8EF705]'
                       }`}
                     />
-                  </button>
+                  </Link>
                 );
               })}
             </nav>
@@ -94,27 +91,27 @@ export default function Navbar() {
               <button
                 onClick={() => setIsSearchOpen(true)}
                 aria-label="Search catalogue"
-                className="w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#8EF705] text-slate-700 hover:text-slate-900 flex items-center justify-center transition-all duration-200 shadow-xs hover:shadow-md hover:scale-105 group"
+                className="w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#8EF705] text-slate-700 hover:text-slate-900 flex items-center justify-center transition-all duration-200 shadow-xs hover:shadow-md hover:scale-105 group cursor-pointer"
                 title="Search Products"
               >
                 <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
               </button>
 
               {/* Account info / Policy modal trigger */}
-              <button
-                onClick={() => navigateTo('policy')}
+              <Link
+                to="/policy"
                 aria-label="Account and Policies"
                 className="hidden sm:flex w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#8EF705] text-slate-700 hover:text-slate-900 items-center justify-center transition-all duration-200 shadow-xs hover:shadow-md hover:scale-105 group"
                 title="Store Policies & Warranty"
               >
                 <User className="w-4 h-4 group-hover:scale-110 transition-transform" />
-              </button>
+              </Link>
 
               {/* Shopping Cart Button */}
               <button
                 onClick={() => setIsCartOpen(true)}
                 aria-label="View shopping bag"
-                className="relative w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#8EF705] text-slate-900 flex items-center justify-center transition-all duration-200 shadow-xs hover:shadow-md hover:scale-105 group"
+                className="relative w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#8EF705] text-slate-900 flex items-center justify-center transition-all duration-200 shadow-xs hover:shadow-md hover:scale-105 group cursor-pointer"
                 title="Shopping Bag"
               >
                 <ShoppingBag className="w-4 h-4 group-hover:scale-110 text-slate-800 transition-transform" />
@@ -148,11 +145,13 @@ export default function Navbar() {
           <div className="fixed top-0 right-0 bottom-0 w-4/5 max-w-sm bg-white border-l border-slate-200 p-6 flex flex-col justify-between shadow-2xl animate-in slide-in-from-right duration-300">
             <div>
               <div className="pb-4 mb-6 border-b border-slate-200 flex items-center justify-between">
-                <img
-                  src={logoImg}
-                  alt="PHARSYDE"
-                  className="h-8 w-auto object-contain drop-shadow-[0_2px_8px_rgba(142,247,5,0.4)]"
-                />
+                <Link to="/" onClick={() => setMobileMenuOpen(false)}>
+                  <img
+                    src={logoImg}
+                    alt="PHARSYDE"
+                    className="h-8 w-auto object-contain drop-shadow-[0_2px_8px_rgba(142,247,5,0.4)]"
+                  />
+                </Link>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
                   className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800"
@@ -164,11 +163,14 @@ export default function Navbar() {
 
               <nav className="space-y-2">
                 {navLinks.map((link) => {
-                  const isActive = currentPage === link.id;
+                  const isActive = link.path === '/'
+                    ? location.pathname === '/'
+                    : location.pathname.startsWith(link.path);
                   return (
-                    <button
-                      key={link.id}
-                      onClick={() => handleNavClick(link.id)}
+                    <Link
+                      key={link.path}
+                      to={link.path}
+                      onClick={() => setMobileMenuOpen(false)}
                       className={`w-full text-left px-4 py-3.5 rounded-xl text-base font-semibold tracking-wide flex items-center justify-between transition-all ${
                         isActive
                           ? 'bg-[#8EF705]/20 text-slate-900 font-bold border-l-4 border-[#8EF705]'
@@ -177,16 +179,17 @@ export default function Navbar() {
                     >
                       <span>{link.label}</span>
                       {isActive && <span className="w-5 h-[3px] rounded-full bg-[#8EF705] shadow-[0_0_8px_#8EF705]" />}
-                    </button>
+                    </Link>
                   );
                 })}
 
-                <button
-                  onClick={() => handleNavClick('policy')}
-                  className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                <Link
+                  to="/policy"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 block"
                 >
                   Return & Warranty Policies
-                </button>
+                </Link>
               </nav>
             </div>
 

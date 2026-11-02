@@ -1,11 +1,28 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const AppContext = createContext();
 
 export function AppProvider({ children }) {
-  // Navigation State
-  const [currentPage, setCurrentPage] = useState('home');
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Selected product ID state (for detail views)
   const [selectedProductId, setSelectedProductId] = useState(null);
+
+  // Derive currentPage dynamically from URL pathname for full backward compatibility
+  const getPageFromPath = (path) => {
+    if (path === '/') return 'home';
+    if (path.startsWith('/catalog') || path.startsWith('/products') || path.startsWith('/shop')) return 'catalog';
+    if (path.startsWith('/product/')) return 'product-detail';
+    if (path.startsWith('/checkout')) return 'checkout';
+    if (path.startsWith('/policy')) return 'policy';
+    if (path.startsWith('/about')) return 'about';
+    if (path.startsWith('/contact')) return 'contact';
+    return 'home';
+  };
+
+  const currentPage = getPageFromPath(location.pathname);
 
   // Cart State (Persisted in localStorage)
   const [cart, setCart] = useState(() => {
@@ -111,11 +128,21 @@ export function AppProvider({ children }) {
     }
   };
 
-  // Navigation Helper
+  // Navigation Helper backed by React Router
   const navigateTo = (page, productId = null) => {
-    setCurrentPage(page);
     if (productId) {
       setSelectedProductId(productId);
+    }
+    if (page === 'product-detail' && productId) {
+      navigate(`/product/${productId}`);
+    } else if (page === 'home') {
+      navigate('/');
+    } else if (page === 'catalog' || page === 'products' || page === 'shop' || page === 'cannabis' || page === 'nicotine') {
+      navigate('/catalog');
+    } else if (page.startsWith('/')) {
+      navigate(page);
+    } else {
+      navigate(`/${page}`);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
