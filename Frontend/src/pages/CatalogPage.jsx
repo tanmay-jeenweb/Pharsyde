@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Sparkles,
   RefreshCw,
-  Package,
   AlertCircle,
   Tag,
   Grid,
@@ -37,54 +36,36 @@ export default function CatalogPage() {
   const [error, setError] = useState(null);
   const [isPending, startTransition] = useTransition();
   const [isSyncing, setIsSyncing] = useState(false);
-  const [isSyncingProducts, setIsSyncingProducts] = useState(false);
+  const [syncPhase, setSyncPhase] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Sync products directly from TechPOS OpenAPI
-  const handleSyncProducts = async () => {
-    if (isSyncingProducts || isSyncing) return;
-    setIsSyncingProducts(true);
-    showToast('Fetching latest products from TechPOS API...', 'info');
-
-    try {
-      const result = await syncProductsApi();
-      if (result && result.success) {
-        showToast(
-          `Products synced! Saved ${result.upsertedCount || 0} items (${result.totalFetched || 0} fetched).`,
-          'success'
-        );
-        setRefreshTrigger((prev) => prev + 1);
-      } else {
-        showToast('Sync finished: ' + (result?.message || 'Check console logs'), 'info');
-      }
-    } catch (err) {
-      showToast('Product sync failed: ' + err.message, 'error');
-    } finally {
-      setIsSyncingProducts(false);
-    }
-  };
-
-  // Sync images directly from TechPOS WebMenu
-  const handleSyncImages = async () => {
+  // Complete Sync: First Products from OpenAPI, then Images from WebMenu
+  const handleSync = async () => {
     if (isSyncing) return;
     setIsSyncing(true);
-    showToast('Starting TechPOS product images sync...', 'info');
+    setSyncPhase('Syncing Products...');
+    showToast('Starting Sync: Fetching product catalogue...', 'info');
 
     try {
-      const result = await syncImagesApi();
-      if (result && result.success) {
-        showToast(
-          `Images synced! Updated ${result.productsUpdatedByPk || 0} products (${result.totalWithImagesInProducts || 0} total photos).`,
-          'success'
-        );
-        setRefreshTrigger((prev) => prev + 1);
-      } else {
-        showToast('Sync finished: ' + (result?.message || 'Check console logs'), 'info');
-      }
+      // Step 1: Sync base products from OpenAPI
+      const prodResult = await syncProductsApi();
+      const productCount = prodResult.upsertedCount || prodResult.totalFetched || 0;
+      showToast(`Products synced (${productCount} items). Now syncing images...`, 'info');
+
+      // Step 2: Sync product images from WebMenu eapi
+      setSyncPhase('Syncing Images...');
+      const imgResult = await syncImagesApi();
+
+      showToast(
+        `Sync complete! ${productCount} products & ${imgResult.totalWithImagesInProducts || imgResult.totalWithImages || 0} photos synchronized.`,
+        'success'
+      );
+      setRefreshTrigger((prev) => prev + 1);
     } catch (err) {
-      showToast('Image sync failed: ' + err.message, 'error');
+      showToast('Sync failed: ' + err.message, 'error');
     } finally {
       setIsSyncing(false);
+      setSyncPhase('');
     }
   };
 
@@ -232,34 +213,19 @@ export default function CatalogPage() {
               </span>
             </div>
 
-            {/* Sync Products from OpenAPI */}
+            {/* Unified Sync Button */}
             <button
-              onClick={handleSyncProducts}
-              disabled={isSyncingProducts || isSyncing}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-md cursor-pointer border ${
-                isSyncingProducts
-                  ? 'bg-slate-800 text-slate-400 cursor-not-allowed border-slate-700'
-                  : 'bg-white/10 hover:bg-white/20 text-white border-white/20 hover:scale-[1.02] active:scale-[0.98]'
-              }`}
-              title="Fetch and populate products from TechPOS OpenAPI"
-            >
-              <Package className={`w-3.5 h-3.5 ${isSyncingProducts ? 'animate-spin' : ''}`} />
-              <span>{isSyncingProducts ? 'Syncing Products...' : 'Sync Products'}</span>
-            </button>
-
-            {/* Sync Images from WebMenu */}
-            <button
-              onClick={handleSyncImages}
-              disabled={isSyncing || isSyncingProducts}
+              onClick={handleSync}
+              disabled={isSyncing}
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-md cursor-pointer ${
                 isSyncing
-                  ? 'bg-slate-700/80 text-slate-400 cursor-not-allowed border border-slate-600'
+                  ? 'bg-slate-700/80 text-slate-300 cursor-not-allowed border border-slate-600'
                   : 'bg-[#8EF705] hover:bg-[#7ce004] text-slate-950 hover:shadow-[#8EF705]/20 hover:scale-[1.02] active:scale-[0.98]'
               }`}
-              title="Sync product images directly from TechPOS into database"
+              title="Sync all products from TechPOS OpenAPI, then sync product images from WebMenu"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Syncing Images...' : 'Sync Images'}</span>
+              <span>{isSyncing ? syncPhase || 'Syncing...' : 'Sync'}</span>
             </button>
           </div>
         </div>
