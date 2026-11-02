@@ -326,3 +326,26 @@ export async function getActivityLogsApi({ masterName = 'all', changeType = 'all
   return handleResponse(res);
 }
 
+
+// ─────────────────────────────────────────────────────────────
+// Order Master & TechPOS Purchase Orders
+// ─────────────────────────────────────────────────────────────
+
+export async function getOfficeOrdersApi({ limit = 50, offset = 0, status = '' } = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.append('limit', String(limit));
+  if (offset) params.append('offset', String(offset));
+  if (status) params.append('status', status);
+
+  const res = await fetch(`${API_BASE}/orders?${params.toString()}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function getTechPosPurchaseOrdersApi() {
+  const res = await fetch(`${API_BASE}/purchase-orders`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}

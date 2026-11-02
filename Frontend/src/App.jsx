@@ -14,10 +14,12 @@ import HomePage from './pages/HomePage';
 import CatalogPage from './pages/CatalogPage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
 import CheckoutPage from './pages/CheckoutPage';
+import AccountOrdersPage from './pages/AccountOrdersPage';
 import PolicyPage from './pages/PolicyPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import NotFoundPage from './pages/NotFoundPage';
+import AuthModal from './components/auth/AuthModal';
 
 // Office Portal Components & Pages (ERP Office Management)
 import OfficeProtectedRoute from './components/office/OfficeProtectedRoute';
@@ -31,6 +33,7 @@ import ProductMaster from './pages/office/ProductMaster';
 import CreateProductPage from './pages/office/CreateProductPage';
 import ProductImageMaster from './pages/office/ProductImageMaster';
 import ActivityReport from './pages/office/ActivityReport';
+import OrderMaster from './pages/office/OrderMaster';
 
 function MainStoreApp() {
   return (
@@ -63,6 +66,11 @@ function MainStoreApp() {
           {/* Checkout & transactional */}
           <Route path="/checkout" element={<CheckoutPage />} />
 
+          {/* Customer Account & Order History */}
+          <Route path="/account" element={<AccountOrdersPage />} />
+          <Route path="/account/orders" element={<AccountOrdersPage />} />
+          <Route path="/orders" element={<AccountOrdersPage />} />
+
           {/* Informational pages */}
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
@@ -83,6 +91,9 @@ function MainStoreApp() {
 
       {/* Global Search Modal (Ctrl/Cmd+K) */}
       <GlobalSearchModal />
+
+      {/* Customer Sign In / Register Modal */}
+      <AuthModal />
 
       {/* Toast Feedback Notifications */}
       <ToastContainer />
@@ -201,6 +212,14 @@ export default function App() {
         />
 
         {/* /office redirects to /office/dashboard */}
+                <Route
+          path="/office/orders"
+          element={
+            <OfficeProtectedRoute>
+              <OrderMaster />
+            </OfficeProtectedRoute>
+          }
+        />
         <Route path="/office" element={<Navigate to="/office/dashboard" replace />} />
         <Route path="/office/*" element={<Navigate to="/office/dashboard" replace />} />
 

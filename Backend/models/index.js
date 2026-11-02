@@ -3,6 +3,7 @@ const ProductModel = require('./productModel');
 const ProductImageModel = require('./productImageModel');
 const UserTypeModel = require('./userTypeModel');
 const AuditLogModel = require('./auditLogModel');
+const OrderModel = require('./orderModel');
 
 /**
  * Initialize database tables defined inside all models in correct order
@@ -18,6 +19,8 @@ const initModelTables = async () => {
   await ProductModel.createTable();
   // 5. TechPOS product images table
   await ProductImageModel.createTable();
+  // 6. Orders and Order Items tables
+  await OrderModel.createTable();
 };
 
 module.exports = {
@@ -27,4 +30,5 @@ module.exports = {
   ProductImageModel,
   UserTypeModel,
   AuditLogModel,
+  OrderModel,
 };

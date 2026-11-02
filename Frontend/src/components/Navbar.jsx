@@ -67,6 +67,15 @@ export default function Navbar({ title = "ERP Admin" }) {
     // Masters available in the office portal
     const allMasters = [
         {
+            name: "Order Master",
+            path: "/office/orders",
+            masterKey: "order_master",
+            icon: "fa-solid fa-receipt",
+            color: "bg-purple-50 text-purple-700 border border-purple-100/50",
+            activeColor: "bg-purple-100 text-purple-800",
+            desc: "Storefront customer sales orders & TechPOS purchase orders"
+        },
+        {
             name: "User Master",
             path: "/office/user-master",
             masterKey: "user_master",

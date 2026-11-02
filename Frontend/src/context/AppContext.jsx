@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  customerLoginApi,
+  customerRegisterApi,
+  getCustomerProfileApi,
+} from '../services/orderService';
 
 const AppContext = createContext();
 
@@ -16,6 +21,7 @@ export function AppProvider({ children }) {
     if (path.startsWith('/catalog') || path.startsWith('/products') || path.startsWith('/shop')) return 'catalog';
     if (path.startsWith('/product/')) return 'product-detail';
     if (path.startsWith('/checkout')) return 'checkout';
+    if (path.startsWith('/account') || path.startsWith('/orders')) return 'account';
     if (path.startsWith('/policy')) return 'policy';
     if (path.startsWith('/about')) return 'about';
     if (path.startsWith('/contact')) return 'contact';
@@ -38,6 +44,35 @@ export function AppProvider({ children }) {
   // Search Modal State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  // Customer Auth State
+  const [customerUser, setCustomerUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pharsyde_customer_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [customerToken, setCustomerToken] = useState(() => {
+    try {
+      return localStorage.getItem('pharsyde_customer_token') || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const isCustomerLoggedIn = Boolean(customerToken && customerUser);
+
+  // Customer Auth Modal State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState('login'); // 'login' | 'register'
+
+  const openAuthModal = (tab = 'login') => {
+    setAuthModalTab(tab);
+    setIsAuthModalOpen(true);
+  };
+
   // Age Verification State (19+ Manitoba requirement)
   const [isAgeVerified, setIsAgeVerified] = useState(() => {
     try {
@@ -59,22 +94,76 @@ export function AppProvider({ children }) {
     }
   }, [cart]);
 
+  // Sync Customer Profile on Token changes
+  useEffect(() => {
+    if (customerToken && !customerUser) {
+      getCustomerProfileApi(customerToken)
+        .then((user) => {
+          if (user) {
+            setCustomerUser(user);
+            localStorage.setItem('pharsyde_customer_user', JSON.stringify(user));
+          }
+        })
+        .catch(() => {
+          customerLogout();
+        });
+    }
+  }, [customerToken]);
+
   // Show Toast Helper
   const showToast = (message, type = 'success') => {
     const id = Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
+      setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 3500);
+  };
+
+  // Customer Auth Operations
+  const customerLogin = async (email, password) => {
+    const res = await customerLoginApi({ email, password });
+    if (res.success && res.token) {
+      setCustomerToken(res.token);
+      setCustomerUser(res.user);
+      localStorage.setItem('pharsyde_customer_token', res.token);
+      localStorage.setItem('pharsyde_customer_user', JSON.stringify(res.user));
+      setIsAuthModalOpen(false);
+      showToast(`Welcome back, ${res.user.name || 'Member'}!`, 'success');
+      return res.user;
+    }
+    throw new Error(res.message || 'Login failed');
+  };
+
+  const customerRegister = async ({ name, email, password, phone, dateOfBirth }) => {
+    const res = await customerRegisterApi({ name, email, password, phone, dateOfBirth });
+    if (res.success && res.token) {
+      setCustomerToken(res.token);
+      setCustomerUser(res.user);
+      localStorage.setItem('pharsyde_customer_token', res.token);
+      localStorage.setItem('pharsyde_customer_user', JSON.stringify(res.user));
+      setIsAuthModalOpen(false);
+      showToast(`Welcome to Pharsyde, ${res.user.name}! Account created.`, 'success');
+      return res.user;
+    }
+    throw new Error(res.message || 'Registration failed');
+  };
+
+  const customerLogout = () => {
+    setCustomerToken(null);
+    setCustomerUser(null);
+    localStorage.removeItem('pharsyde_customer_token');
+    localStorage.removeItem('pharsyde_customer_user');
+    showToast('Signed out successfully.', 'info');
   };
 
   // Cart operations
   const addToCart = (product, variant = null, quantity = 1) => {
-    const targetVariant = variant || (product.variants && product.variants[0]) || { id: 'default', label: 'Standard', price: product.price };
-    
-    setCart(prevCart => {
+    const targetVariant =
+      variant || (product.variants && product.variants[0]) || { id: 'default', label: 'Standard', price: product.price };
+
+    setCart((prevCart) => {
       const existingIndex = prevCart.findIndex(
-        item => item.product.id === product.id && item.variant.id === targetVariant.id
+        (item) => item.product.id === product.id && item.variant.id === targetVariant.id
       );
 
       if (existingIndex > -1) {
@@ -94,8 +183,8 @@ export function AppProvider({ children }) {
       removeFromCart(productId, variantId);
       return;
     }
-    setCart(prev =>
-      prev.map(item =>
+    setCart((prev) =>
+      prev.map((item) =>
         item.product.id === productId && item.variant.id === variantId
           ? { ...item, quantity: qty }
           : item
@@ -104,8 +193,8 @@ export function AppProvider({ children }) {
   };
 
   const removeFromCart = (productId, variantId) => {
-    setCart(prev =>
-      prev.filter(item => !(item.product.id === productId && item.variant.id === variantId))
+    setCart((prev) =>
+      prev.filter((item) => !(item.product.id === productId && item.variant.id === variantId))
     );
     showToast('Item removed from cart', 'info');
   };
@@ -115,7 +204,7 @@ export function AppProvider({ children }) {
   };
 
   // Calculate Totals
-  const cartSubtotal = cart.reduce((sum, item) => sum + (item.variant.price * item.quantity), 0);
+  const cartSubtotal = cart.reduce((sum, item) => sum + item.variant.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   // Age verification action
@@ -137,7 +226,13 @@ export function AppProvider({ children }) {
       navigate(`/product/${productId}`);
     } else if (page === 'home') {
       navigate('/');
-    } else if (page === 'catalog' || page === 'products' || page === 'shop' || page === 'cannabis' || page === 'nicotine') {
+    } else if (
+      page === 'catalog' ||
+      page === 'products' ||
+      page === 'shop' ||
+      page === 'cannabis' ||
+      page === 'nicotine'
+    ) {
       navigate('/catalog');
     } else if (page.startsWith('/')) {
       navigate(page);
@@ -167,7 +262,18 @@ export function AppProvider({ children }) {
         isAgeVerified,
         confirmAge,
         toasts,
-        showToast
+        showToast,
+        customerUser,
+        customerToken,
+        isCustomerLoggedIn,
+        customerLogin,
+        customerRegister,
+        customerLogout,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+        authModalTab,
+        setAuthModalTab,
+        openAuthModal,
       }}
     >
       {children}
@@ -182,4 +288,3 @@ export function useApp() {
   }
   return context;
 }
-

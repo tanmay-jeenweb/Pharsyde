@@ -5,6 +5,9 @@ import { syncImagesApi, syncProductsApi } from '../../services/productService';
 import { 
   Users, 
   ShieldCheck, 
+  ShoppingBag, 
+  Building, 
+  Receipt, 
   Package, 
   Image as ImageIcon, 
   FileText, 
@@ -27,6 +30,7 @@ export default function OfficeDashboard() {
   const [syncPhase, setSyncPhase] = useState('');
   const [syncStatus, setSyncStatus] = useState('success');
   const [syncMessage, setSyncMessage] = useState('');
+  const [dashboardOrderTab, setDashboardOrderTab] = useState('sales');
 
   const fetchStats = async () => {
     try {
@@ -256,7 +260,7 @@ export default function OfficeDashboard() {
       )}
 
       {/* Key Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         
         {/* Card 1: Users */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-emerald-300 transition-all flex flex-col justify-between">
@@ -364,6 +368,33 @@ export default function OfficeDashboard() {
           </Link>
         </div>
 
+        {/* Card 5: Orders & Purchase Orders */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-emerald-300 transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Order Master</span>
+              <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
+                <ShoppingBag className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="text-3xl font-extrabold text-slate-900">
+              {loading ? '—' : ((stats?.orders?.total ?? 0) + (stats?.orders?.purchaseOrdersCount ?? 0))}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-500 mt-2">
+              <span className="text-emerald-700 font-bold">{stats?.orders?.total ?? 0} sales</span>
+              <span>•</span>
+              <span className="text-blue-600 font-semibold">{stats?.orders?.purchaseOrdersCount ?? 0} TechPOS POs</span>
+            </div>
+          </div>
+          <Link
+            to="/office/orders"
+            className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-700 hover:text-emerald-800"
+          >
+            <span>Manage Orders</span>
+            <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </div>
+
       </div>
 
       {/* Quick Launchpad & Masters Shortcut Grid */}
@@ -437,6 +468,161 @@ export default function OfficeDashboard() {
 
         </div>
       </div>
+
+      
+      {/* Live Storefront Sales & TechPOS Purchase Orders Preview */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#8EF705]/20 border border-[#8EF705]/40 flex items-center justify-center text-[#488203]">
+              <ShoppingBag className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                Live Store Orders & TechPOS Purchase Orders
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">Real-time storefront checkouts and synced supplier orders</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="flex bg-slate-200/80 p-0.5 rounded-lg text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setDashboardOrderTab('sales')}
+                className={`px-3 py-1 rounded-md transition-all ${dashboardOrderTab === 'sales' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                Storefront Sales ({stats?.orders?.total || 0})
+              </button>
+              <button
+                type="button"
+                onClick={() => setDashboardOrderTab('po')}
+                className={`px-3 py-1 rounded-md transition-all ${dashboardOrderTab === 'po' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                TechPOS POs ({stats?.orders?.purchaseOrdersCount || 0})
+              </button>
+            </div>
+
+            <Link
+              to="/office/orders"
+              className="text-xs font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1 ml-2"
+            >
+              Open Order Master &rarr;
+            </Link>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          {dashboardOrderTab === 'sales' ? (
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="bg-[#064e3b] text-white font-bold uppercase tracking-wider">
+                <tr>
+                  <th className="px-4 py-3">Order #</th>
+                  <th className="px-4 py-3">Customer</th>
+                  <th className="px-4 py-3">Mode</th>
+                  <th className="px-4 py-3">Total (CAD)</th>
+                  <th className="px-4 py-3">POS Sync</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3 text-right">Details</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-slate-400">Loading orders...</td>
+                  </tr>
+                ) : !stats?.orders?.recentOrders || stats.orders.recentOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-slate-400">
+                      No customer orders recorded yet. Place an order on the storefront to test.
+                    </td>
+                  </tr>
+                ) : (
+                  stats.orders.recentOrders.slice(0, 5).map((o) => (
+                    <tr key={o.id || o.order_number} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-3 font-mono font-bold text-slate-900">{o.order_number}</td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">{o.customer_name}</td>
+                      <td className="px-4 py-3">
+                        <span className="capitalize px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[10px]">
+                          {o.fulfillment_type || 'pickup'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-mono font-bold text-slate-900">
+                        ${Number(o.total || 0).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${o.sync_status === 'synced' || o.techpos_order_id ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                          {o.sync_status === 'synced' || o.techpos_order_id ? 'Synced' : 'Pending'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 font-mono text-[11px]">
+                        {new Date(o.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Link to="/office/orders" className="text-emerald-700 font-bold hover:underline">
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          ) : (
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="bg-[#064e3b] text-white font-bold uppercase tracking-wider">
+                <tr>
+                  <th className="px-4 py-3">PO #</th>
+                  <th className="px-4 py-3">Description</th>
+                  <th className="px-4 py-3">Vendor</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Total (CAD)</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-slate-400">Loading TechPOS purchase orders...</td>
+                  </tr>
+                ) : !stats?.orders?.recentPurchaseOrders || stats.orders.recentPurchaseOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-slate-400">
+                      No purchase orders returned from TechPOS.
+                    </td>
+                  </tr>
+                ) : (
+                  stats.orders.recentPurchaseOrders.slice(0, 5).map((po) => (
+                    <tr key={po.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-3 font-mono font-bold text-slate-900">PO-{po.id}</td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">{po.description || '—'}</td>
+                      <td className="px-4 py-3 font-medium text-blue-700">{po.vendor || 'MBLL'}</td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                          {po.status || 'Closed'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-mono font-bold text-slate-900">
+                        ${Number(po.total || 0).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-slate-500 font-mono text-[11px]">
+                        {po.creationDateString || (po.dateExpected ? new Date(po.dateExpected).toLocaleDateString() : '—')}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Link to="/office/orders" className="text-emerald-700 font-bold hover:underline">
+                          Inspect
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
 
       {/* Recent Activity Log Section */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
