@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useTransition } from 'react';
 import { useApp } from '../context/AppContext';
-import { getProductsApi, getCategoriesApi } from '../services/productService';
+import { getProductsApi, getCategoriesApi, syncImagesApi } from '../services/productService';
 import ProductCard from '../components/common/ProductCard';
 import {
   Search,
@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export default function CatalogPage() {
-  const { navigateTo } = useApp();
+  const { navigateTo, showToast } = useApp();
 
   // State
   const [products, setProducts] = useState([]);
@@ -35,6 +35,32 @@ export default function CatalogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isPending, startTransition] = useTransition();
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Sync images directly from TechPOS
+  const handleSyncImages = async () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    showToast('Starting TechPOS product images sync...', 'info');
+
+    try {
+      const result = await syncImagesApi();
+      if (result && result.success) {
+        showToast(
+          `Images synced! Updated ${result.productsUpdatedByPk || 0} products (${result.totalWithImagesInProducts || 0} total photos).`,
+          'success'
+        );
+        setRefreshTrigger((prev) => prev + 1);
+      } else {
+        showToast('Sync finished: ' + (result?.message || 'Check console logs'), 'info');
+      }
+    } catch (err) {
+      showToast('Image sync failed: ' + err.message, 'error');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Debounce search input
   useEffect(() => {
@@ -45,7 +71,7 @@ export default function CatalogPage() {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Fetch available categories once on mount
+  // Fetch available categories once on mount or when refreshed
   useEffect(() => {
     let isMounted = true;
     async function loadCategories() {
@@ -60,9 +86,9 @@ export default function CatalogPage() {
     }
     loadCategories();
     return () => { isMounted = false; };
-  }, []);
+  }, [refreshTrigger]);
 
-  // Fetch products whenever filters or pagination changes
+  // Fetch products whenever filters, pagination, or sync changes
   useEffect(() => {
     let isMounted = true;
 
@@ -97,7 +123,7 @@ export default function CatalogPage() {
 
     loadProducts();
     return () => { isMounted = false; };
-  }, [selectedCategory, debouncedSearch, page, limit, sortBy, sortOrder]);
+  }, [selectedCategory, debouncedSearch, page, limit, sortBy, sortOrder, refreshTrigger]);
 
   // Category switch handler
   const handleSelectCategory = (cat) => {
@@ -171,12 +197,28 @@ export default function CatalogPage() {
             </p>
           </div>
 
-          {/* Quick Stat Pill */}
-          <div className="mt-6 sm:mt-0 sm:absolute sm:right-10 sm:bottom-10 inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 text-xs">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#8EF705] animate-pulse" />
-            <span className="text-slate-200">
-              <strong className="text-white font-bold">{totalCount.toLocaleString()}</strong> Products with Verified Photos
-            </span>
+          {/* Quick Stat Pill & Sync Action Button */}
+          <div className="mt-6 sm:mt-0 sm:absolute sm:right-10 sm:bottom-10 flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10 text-xs">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#8EF705] animate-pulse" />
+              <span className="text-slate-200">
+                <strong className="text-white font-bold">{totalCount.toLocaleString()}</strong> Products with Verified Photos
+              </span>
+            </div>
+
+            <button
+              onClick={handleSyncImages}
+              disabled={isSyncing}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-md cursor-pointer ${
+                isSyncing
+                  ? 'bg-slate-700/80 text-slate-400 cursor-not-allowed border border-slate-600'
+                  : 'bg-[#8EF705] hover:bg-[#7ce004] text-slate-950 hover:shadow-[#8EF705]/20 hover:scale-[1.02] active:scale-[0.98]'
+              }`}
+              title="Sync product images directly from TechPOS into database"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Syncing Images...' : 'Sync Images'}</span>
+            </button>
           </div>
         </div>
 

@@ -20,14 +20,18 @@ Backend/
 ├── models/
 │   ├── index.js          # Aggregator & initModelTables() executor
 │   ├── userModel.js      # Users table schema & queries
-│   └── productModel.js   # Products table schema & high-performance bulk upsert
+│   ├── productModel.js   # Products table schema & high-performance bulk upsert
+│   └── productImageModel.js # TechPOS image repository & sync joins
 ├── routes/
 │   ├── authRoutes.js     # /api/auth routes
 │   └── productRoutes.js  # /api/products routes
 ├── scripts/
-│   └── syncProducts.js   # CLI script to populate products from TechPOS API
+│   ├── syncProducts.js      # CLI script to populate products from TechPOS API
+│   ├── syncProductImages.js # CLI script to sync images directly to MySQL
+│   └── sync_techpos_images.py # Python alternative for direct image sync
 ├── services/
-│   └── techposService.js # TechPOS API fetcher & database population service
+│   ├── techposService.js      # TechPOS OpenAPI fetcher & base product sync
+│   └── techposImageService.js # TechPOS WebMenu eapi image sync service
 ├── utils/
 │   └── jwt.js            # JWT token generation & verification
 ├── .env                  # Environment variables & TechPOS API keys
@@ -55,15 +59,26 @@ TECHPOS_API_URL=https://integrations-api.techpos.ca/467-41/api/openAPI/allProduc
 TECHPOS_API_KEY=Ym9KsXaM3M7W2B301iI3ynU1
 ```
 
-### 2. Populate Products From TechPOS
-Run the automated population script:
-```bash
-npm run seed
-```
-*(Or `npm run sync` / `node scripts/syncProducts.js`)*
+### 2. Populate Products & Sync Images Directly
+No Excel or CSV downloads required. The services stream directly to MySQL:
 
-Alternatively, trigger it via API while the server is running:
-- **`POST`** or **`GET`** `http://localhost:5000/api/products/sync-techpos`
+- **Sync Base Products (OpenAPI):**
+  ```bash
+  npm run sync
+  ```
+- **Sync Product Images (WebMenu eapi):**
+  ```bash
+  npm run sync:images
+  ```
+- **Sync Both in Sequence:**
+  ```bash
+  npm run sync:all
+  ```
+
+Alternatively, trigger synchronization via API:
+- `POST` or `GET` `/api/products/sync-techpos` (Base catalog)
+- `POST` or `GET` `/api/products/sync-images` (Product images)
+- `POST` or `GET` `/api/products/sync-all` (Full catalog + images)
 
 ### 3. Start the Server
 ```bash
@@ -77,7 +92,9 @@ npm run dev
 ### 🛍️ Products (`/api/products`)
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` / `POST` | `/api/products/sync-techpos` | **Populate/Sync all products directly from TechPOS API** |
+| `GET` / `POST` | `/api/products/sync-techpos` | Populate base products from TechPOS OpenAPI |
+| `GET` / `POST` | `/api/products/sync-images` | Direct image sync from TechPOS WebMenu into DB |
+| `GET` / `POST` | `/api/products/sync-all` | Combined base products + image sync |
 | `GET` | `/api/products` | Query products (`category`, `subCategory`, `brand`, `strain`, `search`, etc.) |
 | `GET` | `/api/products/meta/categories` | Distinct categories list |
 | `GET` | `/api/products/meta/brands` | Distinct brands list |
