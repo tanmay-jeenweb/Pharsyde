@@ -175,6 +175,9 @@ export default function Footer() {
           <p>© {new Date().getFullYear()} PHARSYDE Inc. All rights reserved.</p>
           <div className="flex items-center space-x-6">
             <span>Winnipeg, Manitoba, Canada</span>
+            <a href="/office/login" className="text-emerald-700 hover:text-emerald-900 font-bold underline">
+              Staff Office Portal
+            </a>
             <span>Secure SSL 256-Bit Encrypted</span>
           </div>
         </div>
