@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getDashboardStatsApi, syncOfficeProductImagesApi } from '../../services/officeApi';
+import { syncImagesApi, syncProductsApi } from '../../services/productService';
 import { 
   Users, 
   ShieldCheck, 
@@ -13,7 +14,8 @@ import {
   AlertCircle, 
   Clock, 
   Activity,
-  Plus
+  Plus,
+  Zap
 } from 'lucide-react';
 
 export default function OfficeDashboard() {
@@ -21,6 +23,9 @@ export default function OfficeDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [syncType, setSyncType] = useState('');
+  const [syncPhase, setSyncPhase] = useState('');
+  const [syncStatus, setSyncStatus] = useState('success');
   const [syncMessage, setSyncMessage] = useState('');
 
   const fetchStats = async () => {
@@ -41,19 +46,69 @@ export default function OfficeDashboard() {
     fetchStats();
   }, []);
 
+  // TechPOS API & WebMenu Synchronization
+  // isQuick = true: OpenAPI catalog + Page 1 WebMenu images (recent/new items, ~2-3s)
+  // isQuick = false: OpenAPI catalog + all pages of WebMenu images (optimized ~15s)
+  const handleSync = async (isQuick = true) => {
+    if (syncing) return;
+    setSyncing(true);
+    setSyncType(isQuick ? 'quick' : 'full');
+    const syncLabel = isQuick ? 'Quick Sync' : 'Full Sync';
+    setSyncPhase('Syncing Products...');
+    setSyncStatus('info');
+    setSyncMessage(`Starting ${syncLabel}: Fetching product catalogue from TechPOS...`);
+
+    try {
+      // Step 1: Sync base products from OpenAPI
+      const prodResult = await syncProductsApi();
+      const productCount = prodResult.upsertedCount || prodResult.totalFetched || 0;
+      setSyncMessage(
+        `Products synced (${productCount} items). Now syncing images (${isQuick ? 'recent items' : 'full catalog'})...`
+      );
+
+      // Step 2: Sync product images from WebMenu eapi
+      setSyncPhase(isQuick ? 'Syncing Recent Images...' : 'Syncing All Images...');
+      const imgResult = await syncImagesApi({ quick: isQuick });
+
+      const imgCount = imgResult.totalWithImagesInProducts || imgResult.totalWithImages || 0;
+      setSyncStatus('success');
+      setSyncMessage(
+        `${syncLabel} complete! ${productCount} products & ${imgCount} photos synchronized.`
+      );
+      // Immediately refresh dashboard stats with new numbers
+      await fetchStats();
+    } catch (err) {
+      console.error(`${syncLabel} failed:`, err);
+      setSyncStatus('error');
+      setSyncMessage(`${syncLabel} failed: ` + (err.message || 'Unknown error'));
+    } finally {
+      setSyncing(false);
+      setSyncType('');
+      setSyncPhase('');
+      setTimeout(() => {
+        setSyncMessage((prev) => (prev.includes('complete!') ? '' : prev));
+      }, 8000);
+    }
+  };
+
   const handleSyncImages = async () => {
     try {
       setSyncing(true);
-      setSyncMessage('');
+      setSyncType('images');
+      setSyncStatus('info');
+      setSyncMessage('Syncing local product images...');
       const res = await syncOfficeProductImagesApi();
       if (res.success) {
+        setSyncStatus('success');
         setSyncMessage(`Successfully updated ${res.result?.updatedByPk || 0} products by ID & ${res.result?.updatedBySku || 0} by SKU.`);
         await fetchStats();
       }
     } catch (err) {
+      setSyncStatus('error');
       setSyncMessage(`Sync failed: ${err.message}`);
     } finally {
       setSyncing(false);
+      setSyncType('');
       setTimeout(() => setSyncMessage(''), 6000);
     }
   };
@@ -101,37 +156,99 @@ export default function OfficeDashboard() {
           <button
             type="button"
             onClick={fetchStats}
-            disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+            disabled={loading || syncing}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer disabled:opacity-50"
             title="Refresh dashboard metrics"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
 
+          {/* Quick Sync Button */}
+          <button
+            type="button"
+            onClick={() => handleSync(true)}
+            disabled={syncing}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+              syncing && syncType === 'quick'
+                ? 'bg-amber-100 text-amber-800 border border-amber-300 cursor-wait'
+                : syncing
+                ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60'
+                : 'bg-[#8EF705] hover:bg-[#80de04] text-slate-950 hover:shadow-md hover:shadow-[#8EF705]/20 active:scale-[0.98]'
+            }`}
+            title="Quick Sync: Syncs base catalogue and recent product images (~2-3s)"
+          >
+            {syncing && syncType === 'quick' ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Zap className="w-3.5 h-3.5 fill-current" />
+            )}
+            <span>{syncing && syncType === 'quick' ? syncPhase || 'Quick Syncing...' : 'Quick Sync'}</span>
+          </button>
+
+          {/* Full Sync Button */}
+          <button
+            type="button"
+            onClick={() => handleSync(false)}
+            disabled={syncing}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+              syncing && syncType === 'full'
+                ? 'bg-amber-100 text-amber-800 border border-amber-300 cursor-wait'
+                : syncing
+                ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60'
+                : 'bg-emerald-700 hover:bg-emerald-800 text-white hover:shadow-md hover:shadow-emerald-700/20 active:scale-[0.98]'
+            }`}
+            title="Optimized Full Sync: Syncs all base catalogue items and all images (~15s)"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${syncing && syncType === 'full' ? 'animate-spin' : ''}`} />
+            <span>{syncing && syncType === 'full' ? syncPhase || 'Full Syncing...' : 'Full Sync'}</span>
+          </button>
+
+          {/* Sync Local DB Images */}
           <button
             type="button"
             onClick={handleSyncImages}
             disabled={syncing}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+            title="Sync images from product_images table to products table"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'Syncing Images...' : 'Sync Product Images'}
+            <RefreshCw className={`w-3.5 h-3.5 ${syncing && syncType === 'images' ? 'animate-spin' : ''}`} />
+            {syncing && syncType === 'images' ? 'Syncing...' : 'Sync Local DB Images'}
           </button>
         </div>
       </div>
 
       {/* Sync Notification Banner */}
       {syncMessage && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-sm font-semibold text-emerald-900 flex items-center justify-between shadow-xs">
+        <div
+          className={`p-4 rounded-xl border text-sm font-semibold flex items-center justify-between shadow-xs transition-all ${
+            syncStatus === 'error'
+              ? 'bg-rose-50 border-rose-200 text-rose-900'
+              : syncStatus === 'info'
+              ? 'bg-blue-50 border-blue-200 text-blue-900'
+              : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+          }`}
+        >
           <div className="flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            {syncStatus === 'error' ? (
+              <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
+            ) : syncStatus === 'info' ? (
+              <RefreshCw className="w-5 h-5 text-blue-600 flex-shrink-0 animate-spin" />
+            ) : (
+              <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            )}
             <span>{syncMessage}</span>
           </div>
           <button
             type="button"
             onClick={() => setSyncMessage('')}
-            className="text-xs text-emerald-700 hover:text-emerald-900 font-bold"
+            className={`text-xs font-bold hover:underline ${
+              syncStatus === 'error'
+                ? 'text-rose-700'
+                : syncStatus === 'info'
+                ? 'text-blue-700'
+                : 'text-emerald-700'
+            }`}
           >
             Dismiss
           </button>
