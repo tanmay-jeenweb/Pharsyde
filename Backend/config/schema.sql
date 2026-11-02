@@ -58,3 +58,17 @@ CREATE TABLE IF NOT EXISTS products (
     INDEX idx_sku (sku),
     INDEX idx_barcode (barcode)
 );
+
+-- 3. TechPOS Product Images Sync Table (Lean image repository)
+CREATE TABLE IF NOT EXISTS techpos_product_images (
+    id VARCHAR(50) PRIMARY KEY,
+    sku VARCHAR(100) NULL,
+    name VARCHAR(255) NULL,
+    imageUrl VARCHAR(500) NULL,
+    secondImageUrl VARCHAR(500) NULL,
+    raw_images_urls TEXT NULL,
+    source_page INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_image_sku (sku)
+);

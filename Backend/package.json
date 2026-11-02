@@ -8,6 +8,8 @@
     "dev": "nodemon index.js",
     "seed": "node scripts/syncProducts.js",
     "sync": "node scripts/syncProducts.js",
+    "sync:images": "node scripts/syncProductImages.js",
+    "sync:all": "node scripts/syncProducts.js && node scripts/syncProductImages.js",
     "update-images": "node scripts/updateProductImages.js"
   },
   "keywords": [

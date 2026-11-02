@@ -92,11 +92,53 @@ export async function getProductByIdApi(id) {
       const fallbackUrl = `http://localhost:5000/api/products/${encodeURIComponent(id)}`;
       const resFallback = await fetch(fallbackUrl);
       if (resFallback.ok) {
-        const data = await resFallback.json();
-        return data.product || null;
+        return await resFallback.json();
       }
     } catch {}
     throw error;
   }
 }
 
+/**
+ * Trigger backend image sync from TechPOS WebMenu
+ */
+export async function syncImagesApi() {
+  const url = `${API_BASE}/products/sync-images`;
+
+  try {
+    const res = await fetch(url, { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
+    return await res.json();
+  } catch (error) {
+    try {
+      const fallbackUrl = 'http://localhost:5000/api/products/sync-images';
+      const resFallback = await fetch(fallbackUrl, { method: 'POST' });
+      if (resFallback.ok) {
+        return await resFallback.json();
+      }
+    } catch {}
+    throw error;
+  }
+}
+
+/**
+ * Trigger full sync (TechPOS base products + WebMenu images)
+ */
+export async function syncAllApi() {
+  const url = `${API_BASE}/products/sync-all`;
+
+  try {
+    const res = await fetch(url, { method: 'POST' });
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
+    return await res.json();
+  } catch (error) {
+    try {
+      const fallbackUrl = 'http://localhost:5000/api/products/sync-all';
+      const resFallback = await fetch(fallbackUrl, { method: 'POST' });
+      if (resFallback.ok) {
+        return await resFallback.json();
+      }
+    } catch {}
+    throw error;
+  }
+}

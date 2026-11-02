@@ -9,6 +9,8 @@ const {
   getCategories,
   getBrands,
   syncTechPOS,
+  syncImages,
+  syncAllTechPOS,
 } = require('../controllers/productController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
@@ -19,6 +21,10 @@ router.get('/meta/categories', getCategories);
 router.get('/meta/brands', getBrands);
 router.post('/sync-techpos', syncTechPOS);
 router.get('/sync-techpos', syncTechPOS);
+router.post('/sync-images', syncImages);
+router.get('/sync-images', syncImages);
+router.post('/sync-all', syncAllTechPOS);
+router.get('/sync-all', syncAllTechPOS);
 
 // Public product queries
 router.get('/', getProducts);

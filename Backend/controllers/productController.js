@@ -1,5 +1,6 @@
 const ProductModel = require('../models/productModel');
 const { syncTechPOSProducts } = require('../services/techposService');
+const { syncProductImages } = require('../services/techposImageService');
 
 /**
  * @route   GET /api/products
@@ -253,6 +254,52 @@ const syncTechPOS = async (req, res, next) => {
   }
 };
 
+/**
+ * @route   POST /api/products/sync-images
+ * @desc    Fetch and sync product images directly from TechPOS webmenu eapi into database
+ * @access  Public
+ */
+const syncImages = async (req, res, next) => {
+  try {
+    const { companyCode, branchId, pageSize, maxPages } = req.body || {};
+    const result = await syncProductImages({
+      companyCode,
+      branchId,
+      pageSize: pageSize ? Number(pageSize) : undefined,
+      maxPages: maxPages ? Number(maxPages) : undefined,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Product images synchronized successfully',
+      ...result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   POST /api/products/sync-all
+ * @desc    Fetch inventory from TechPOS OpenAPI then sync images from TechPOS WebMenu
+ * @access  Public
+ */
+const syncAllTechPOS = async (req, res, next) => {
+  try {
+    const productResult = await syncTechPOSProducts();
+    const imageResult = await syncProductImages();
+
+    res.status(200).json({
+      success: true,
+      message: 'Complete TechPOS product and image synchronization completed',
+      products: productResult,
+      images: imageResult,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getProducts,
   getProductById,
@@ -263,4 +310,6 @@ module.exports = {
   getCategories,
   getBrands,
   syncTechPOS,
+  syncImages,
+  syncAllTechPOS,
 };
