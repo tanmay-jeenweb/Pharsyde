@@ -295,17 +295,19 @@ export default function CheckoutPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <button
-                onClick={() => navigateTo('orders')}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#8EF705]/25 flex items-center justify-center gap-2"
-              >
-                <Receipt className="w-4 h-4" />
-                <span>View in Order History</span>
-              </button>
+              {isCustomerLoggedIn && (
+                <button
+                  onClick={() => navigateTo('orders')}
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#8EF705]/25 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Receipt className="w-4 h-4" />
+                  <span>View in Order History</span>
+                </button>
+              )}
 
               <button
                 onClick={() => navigateTo('home')}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-heading font-bold uppercase tracking-wider transition-all"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-heading font-bold uppercase tracking-wider transition-all cursor-pointer"
               >
                 Return to Storefront
               </button>
