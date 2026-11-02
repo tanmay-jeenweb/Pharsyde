@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
@@ -19,7 +19,20 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import NotFoundPage from './pages/NotFoundPage';
 
-function MainApp() {
+// Office Portal Components & Pages (ERP Office Management)
+import OfficeProtectedRoute from './components/office/OfficeProtectedRoute';
+import OfficeLogin from './pages/office/OfficeLogin';
+import OfficeDashboard from './pages/office/OfficeDashboard';
+import UserMaster from './pages/office/UserMaster';
+import CreateUserPage from './pages/office/CreateUserPage';
+import UserTypeMaster from './pages/office/UserTypeMaster';
+import CreateUserTypePage from './pages/office/CreateUserTypePage';
+import ProductMaster from './pages/office/ProductMaster';
+import CreateProductPage from './pages/office/CreateProductPage';
+import ProductImageMaster from './pages/office/ProductImageMaster';
+import ActivityReport from './pages/office/ActivityReport';
+
+function MainStoreApp() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans selection:bg-[#8EF705] selection:text-black">
       {/* Scroll to top automatically on route changes */}
@@ -79,7 +92,6 @@ function MainApp() {
 
 export default function App() {
   return (
-    <BrowserRouter>
       <Routes>
         {/* ========================================================
             Office Management Routes (All prefixed with /office/..)
@@ -204,6 +216,5 @@ export default function App() {
           }
         />
       </Routes>
-    </BrowserRouter>
   );
 }

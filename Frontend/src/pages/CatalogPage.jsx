@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useTransition } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { getProductsApi, getCategoriesApi, syncImagesApi, syncProductsApi } from '../services/productService';
+import { getProductsApi, getCategoriesApi } from '../services/productService';
 import ProductCard from '../components/common/ProductCard';
 import {
   Search,
@@ -10,8 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Zap,
-  ChevronDown,
   RefreshCw,
   AlertCircle,
   Tag,
@@ -50,62 +48,7 @@ export default function CatalogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isPending, startTransition] = useTransition();
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncPhase, setSyncPhase] = useState('');
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-  const [isSyncMenuOpen, setIsSyncMenuOpen] = useState(false);
-  const syncMenuRef = useRef(null);
-
-  // Close sync menu when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (syncMenuRef.current && !syncMenuRef.current.contains(event.target)) {
-        setIsSyncMenuOpen(false);
-      }
-    }
-    if (isSyncMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isSyncMenuOpen]);
-
-  // Sync products from OpenAPI, then images from WebMenu
-  // isQuick = true: fetches OpenAPI catalog and Page 1 of WebMenu images (recent/new items, ~4s)
-  // isQuick = false: fetches OpenAPI catalog and all pages of WebMenu images (optimized ~14s)
-  const handleSync = async (isQuick = true) => {
-    if (isSyncing) return;
-    setIsSyncing(true);
-    setIsSyncMenuOpen(false);
-    const syncLabel = isQuick ? 'Quick Sync' : 'Full Sync';
-    setSyncPhase('Syncing Products...');
-    showToast(`Starting ${syncLabel}: Fetching product catalogue...`, 'info');
-
-    try {
-      // Step 1: Sync base products from OpenAPI
-      const prodResult = await syncProductsApi();
-      const productCount = prodResult.upsertedCount || prodResult.totalFetched || 0;
-      showToast(
-        `Products synced (${productCount} items). Now syncing images (${isQuick ? 'recent items' : 'full catalog'})...`,
-        'info'
-      );
-
-      // Step 2: Sync product images from WebMenu eapi
-      setSyncPhase(isQuick ? 'Syncing Recent Images...' : 'Syncing All Images...');
-      const imgResult = await syncImagesApi({ quick: isQuick });
-
-      showToast(
-        `${syncLabel} complete! ${productCount} products & ${imgResult.totalWithImagesInProducts || imgResult.totalWithImages || 0} photos synchronized.`,
-        'success'
-      );
-      setRefreshTrigger((prev) => prev + 1);
-    } catch (err) {
-      showToast(`${syncLabel} failed: ` + err.message, 'error');
-    } finally {
-      setIsSyncing(false);
-      setSyncPhase('');
-    }
-  };
 
   // Debounce search input
   useEffect(() => {
@@ -131,9 +74,9 @@ export default function CatalogPage() {
     }
     loadCategories();
     return () => { isMounted = false; };
-  }, [refreshTrigger]);
+  }, []);
 
-  // Fetch products whenever filters, pagination, or sync changes
+  // Fetch products whenever filters or pagination change
   useEffect(() => {
     let isMounted = true;
 
@@ -168,7 +111,7 @@ export default function CatalogPage() {
 
     loadProducts();
     return () => { isMounted = false; };
-  }, [selectedCategories, debouncedSearch, page, limit, sortBy, sortOrder, refreshTrigger]);
+  }, [selectedCategories, debouncedSearch, page, limit, sortBy, sortOrder]);
 
   // Sync category from URL param if changed externally or on back/forward
   useEffect(() => {
@@ -321,73 +264,13 @@ export default function CatalogPage() {
             </p>
           </div>
 
-          {/* Right Status Pill & Sync Action Button */}
+          {/* Right Status Pill */}
           <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
-            <div className="inline-flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 shadow-xs">
+            <div className="inline-flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span>
                 <strong className="text-slate-900 font-bold">{totalCount.toLocaleString()}</strong> Products with Photos
               </span>
-            </div>
-
-            {/* Sync Action Split Button */}
-            <div ref={syncMenuRef} className="relative inline-flex items-stretch rounded-xl shadow-xs">
-              <button
-                onClick={() => handleSync(true)}
-                disabled={isSyncing}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-l-xl text-xs font-bold transition-all cursor-pointer ${
-                  isSyncing
-                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-                    : 'bg-[#8EF705] hover:bg-[#80de04] text-slate-950 hover:shadow-md hover:shadow-[#8EF705]/20 active:scale-[0.98]'
-                }`}
-                title="Quick Sync: Syncs base catalogue and recent product images (~4s)"
-              >
-                {isSyncing ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Zap className="w-3.5 h-3.5 fill-current" />
-                )}
-                <span>{isSyncing ? syncPhase || 'Syncing...' : 'Quick Sync'}</span>
-              </button>
-
-              <button
-                onClick={() => setIsSyncMenuOpen(!isSyncMenuOpen)}
-                disabled={isSyncing}
-                className={`px-2 py-2 rounded-r-xl border-l border-black/10 text-xs font-bold transition-all cursor-pointer ${
-                  isSyncing
-                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed border-t border-r border-b border-slate-200'
-                    : 'bg-[#8EF705] hover:bg-[#80de04] text-slate-950 active:scale-[0.98]'
-                }`}
-                title="More sync options"
-              >
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isSyncMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isSyncMenuOpen && (
-                <div className="absolute right-0 top-full mt-1.5 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-                  <button
-                    onClick={() => handleSync(true)}
-                    className="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 flex items-start gap-2.5 text-slate-800 transition-colors"
-                  >
-                    <Zap className="w-4 h-4 text-[#599e03] mt-0.5 shrink-0 fill-current" />
-                    <div>
-                      <div className="font-bold text-slate-900">Quick Sync (~2-3s)</div>
-                      <div className="text-[11px] text-slate-500">Latest 500 products (1 API call)</div>
-                    </div>
-                  </button>
-                  <div className="border-t border-slate-100 my-1" />
-                  <button
-                    onClick={() => handleSync(false)}
-                    className="w-full text-left px-3.5 py-2 text-xs hover:bg-slate-50 flex items-start gap-2.5 text-slate-800 transition-colors"
-                  >
-                    <RefreshCw className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
-                    <div>
-                      <div className="font-bold text-slate-900">Optimized Full Sync (~15s)</div>
-                      <div className="text-[11px] text-slate-500">All 1,500+ items (4 API calls)</div>
-                    </div>
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>

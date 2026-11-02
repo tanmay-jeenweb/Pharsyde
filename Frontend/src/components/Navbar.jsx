@@ -247,7 +247,7 @@ export default function Navbar({ title = "ERP Admin" }) {
                                 closeAllDropdowns();
                                 navigate("/office/dashboard");
                             }}
-                            className={`flex items-center gap-2 px-5 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
+                            className={`w-44 sm:w-52 md:w-56 flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
                                 location.pathname === "/office/dashboard" ? "bg-white/15" : "bg-transparent"
                             }`}
                         >
@@ -260,7 +260,7 @@ export default function Navbar({ title = "ERP Admin" }) {
                     <div className="relative">
                         <button
                             onClick={toggleMasters}
-                            className={`flex items-center gap-2 px-5 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
+                            className={`w-44 sm:w-52 md:w-56 flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
                                 isOpen || ["/office/user-master", "/office/user-type-master", "/office/product-master", "/office/product-image-master"].includes(location.pathname)
                                     ? "bg-white/15"
                                     : "bg-transparent"
@@ -369,7 +369,7 @@ export default function Navbar({ title = "ERP Admin" }) {
                     <div className="relative" id="reports-dropdown">
                         <button
                             onClick={toggleReports}
-                            className={`flex items-center gap-2 px-5 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
+                            className={`w-44 sm:w-52 md:w-56 flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
                                 isReportsOpen || location.pathname === "/office/activity-report"
                                     ? "bg-white/15"
                                     : "bg-transparent"

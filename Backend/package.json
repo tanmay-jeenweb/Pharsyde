@@ -10,7 +10,8 @@
     "sync": "node scripts/syncProducts.js",
     "sync:images": "node scripts/syncProductImages.js",
     "sync:all": "node scripts/syncProducts.js && node scripts/syncProductImages.js",
-    "update-images": "node scripts/updateProductImages.js"
+    "update-images": "node scripts/updateProductImages.js",
+    "create-admin": "node scripts/createAdminUser.js"
   },
   "keywords": [
     "express",
