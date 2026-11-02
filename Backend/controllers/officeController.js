@@ -4,6 +4,7 @@ const UserTypeModel = require('../models/userTypeModel');
 const ProductModel = require('../models/productModel');
 const ProductImageModel = require('../models/productImageModel');
 const AuditLogModel = require('../models/auditLogModel');
+const OrderModel = require('../models/orderModel');
 const { generateToken } = require('../utils/jwt');
 
 /**
@@ -131,6 +132,39 @@ const getOfficeMe = async (req, res, next) => {
 // ─────────────────────────────────────────────────────────────
 // 2. Office Dashboard Overview Stats
 // ─────────────────────────────────────────────────────────────
+
+
+/**
+ * Fetch Purchase Orders from TechPOS OpenAPI
+ * GET https://integrations-api.techpos.ca/{companyCode}/api/openAPI/purchaseOrders/{storeId}
+ */
+const fetchTechPosPurchaseOrders = async () => {
+  const companyCode = process.env.TECHPOS_COMPANY_CODE || '467-41';
+  const storeId = process.env.TECHPOS_STORE_ID || '467';
+  const apiKey = process.env.TECHPOS_API_KEY || 'Ym9KsXaM3M7W2B301iI3ynU1';
+  const url = `https://integrations-api.techpos.ca/${companyCode}/api/openAPI/purchaseOrders/${storeId}`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'TechPOSAPIKey': apiKey,
+        'Accept': 'application/json'
+      }
+    });
+
+    if (!res.ok) {
+      console.warn(`[TechPOS PurchaseOrders Warning] HTTP ${res.status}`);
+      return [];
+    }
+
+    const json = await res.json();
+    return json.data?.list || [];
+  } catch (err) {
+    console.error('[TechPOS PurchaseOrders Error]', err.message);
+    return [];
+  }
+};
 
 const getDashboardStats = async (req, res, next) => {
   try {
@@ -764,6 +798,39 @@ const getActivityLogs = async (req, res, next) => {
   }
 };
 
+
+// ─────────────────────────────────────────────────────────────
+// 8. Order Master & TechPOS Purchase Orders Controllers
+// ─────────────────────────────────────────────────────────────
+
+const getOfficeOrders = async (req, res, next) => {
+  try {
+    const { limit = 50, offset = 0, status = '' } = req.query;
+    const ordersData = await OrderModel.getAllOrders({ limit, offset, status });
+
+    res.status(200).json({
+      success: true,
+      total: ordersData.total,
+      orders: ordersData.orders,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getTechPosPurchaseOrders = async (req, res, next) => {
+  try {
+    const list = await fetchTechPosPurchaseOrders();
+    res.status(200).json({
+      success: true,
+      count: list.length,
+      purchaseOrders: list,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   officeLogin,
   getOfficeMe,
@@ -789,5 +856,8 @@ module.exports = {
   updateOfficeProductImage,
   syncOfficeProductImages,
   getActivityLogs,
+  getOfficeOrders,
+  getTechPosPurchaseOrders,
+  fetchTechPosPurchaseOrders,
 };
 

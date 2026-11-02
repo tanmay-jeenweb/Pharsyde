@@ -1,0 +1,40 @@
+[
+  {
+    "id": 1793619235070,
+    "order_number": "PHAR-TEST101",
+    "user_id": null,
+    "customer_name": "Jane Doe",
+    "customer_email": "jane.test@example.com",
+    "customer_phone": "",
+    "fulfillment_type": "pickup",
+    "address": "",
+    "city": "Winnipeg",
+    "postal_code": "",
+    "subtotal": 0,
+    "tax": 0,
+    "shipping": 0,
+    "total": 105.26,
+    "payment_method": "interac",
+    "payment_status": "Pending",
+    "order_status": "Confirmed",
+    "notes": "",
+    "techpos_order_id": null,
+    "sync_status": "pending",
+    "sync_error": null,
+    "created_at": "2026-11-02T11:33:55.070Z",
+    "items": [
+      {
+        "id": 1,
+        "product_id": null,
+        "techpos_product_id": null,
+        "sku": null,
+        "product_name": "Test Product",
+        "variant_label": "Standard",
+        "quantity": 2,
+        "unit_price": 46.99,
+        "line_total": 93.98,
+        "image_url": null
+      }
+    ]
+  }
+]

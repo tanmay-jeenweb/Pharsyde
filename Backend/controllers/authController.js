@@ -4,12 +4,12 @@ const { generateToken } = require('../utils/jwt');
 
 /**
  * @route   POST /api/auth/register
- * @desc    Register a new user
+ * @desc    Register a new customer/user
  * @access  Public
  */
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, phone, mob_no, dateOfBirth, date_of_birth } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -37,6 +37,9 @@ const register = async (req, res, next) => {
       email,
       password: hashedPassword,
       role: role === 'admin' ? 'admin' : 'user',
+      user_type: role === 'admin' ? 'Admin' : 'Customer',
+      mob_no: mob_no || phone || null,
+      date_of_birth: date_of_birth || dateOfBirth || null,
     });
 
     // Generate JWT token
@@ -48,13 +51,16 @@ const register = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'Account registered successfully',
       token,
       user: {
         id: newUser.id,
         name: newUser.name,
         email: newUser.email,
+        phone: newUser.mob_no,
         role: newUser.role,
+        user_type: newUser.user_type,
+        date_of_birth: newUser.date_of_birth,
       },
     });
   } catch (error) {
@@ -64,7 +70,7 @@ const register = async (req, res, next) => {
 
 /**
  * @route   POST /api/auth/login
- * @desc    Authenticate user & get JWT token
+ * @desc    Authenticate customer/user & get JWT token
  * @access  Public
  */
 const login = async (req, res, next) => {
@@ -111,7 +117,10 @@ const login = async (req, res, next) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.mob_no,
         role: user.role,
+        user_type: user.user_type,
+        date_of_birth: user.date_of_birth,
       },
     });
   } catch (error) {
@@ -126,9 +135,10 @@ const login = async (req, res, next) => {
  */
 const getMe = async (req, res, next) => {
   try {
+    const user = await UserModel.findById(req.user.id);
     res.status(200).json({
       success: true,
-      user: req.user,
+      user: user || req.user,
     });
   } catch (error) {
     next(error);

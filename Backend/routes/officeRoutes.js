@@ -24,6 +24,8 @@ const {
   updateOfficeProductImage,
   syncOfficeProductImages,
   getActivityLogs,
+  getOfficeOrders,
+  getTechPosPurchaseOrders,
 } = require('../controllers/officeController');
 const { verifyToken } = require('../utils/jwt');
 const pool = require('../config/db');
@@ -91,5 +93,8 @@ router.post('/product-images/sync', syncOfficeProductImages);
 // 7. Activity Report
 router.get('/activity-logs', getActivityLogs);
 
-module.exports = router;
+// 8. Order Master & TechPOS Purchase Orders
+router.get('/orders', getOfficeOrders);
+router.get('/purchase-orders', getTechPosPurchaseOrders);
 
+module.exports = router;
