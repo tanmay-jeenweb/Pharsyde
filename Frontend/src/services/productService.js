@@ -44,9 +44,9 @@ export async function getProductsApi({
     }
     return await res.json();
   } catch (error) {
-    // If running standalone or dev server without proxy, try absolute localhost:5000
+    // If running standalone or dev server without proxy, try absolute localhost:5001
     try {
-      const fallbackUrl = `http://localhost:5000/api/products?${params.toString()}`;
+      const fallbackUrl = `http://localhost:5001/api/products?${params.toString()}`;
       const resFallback = await fetch(fallbackUrl);
       if (resFallback.ok) {
         return await resFallback.json();
@@ -69,7 +69,7 @@ export async function getCategoriesApi({ hasImage = true } = {}) {
     return data.categories || [];
   } catch (error) {
     try {
-      const fallbackUrl = `http://localhost:5000/api/products/meta/categories?hasImage=${hasImage ? 'true' : 'false'}`;
+      const fallbackUrl = `http://localhost:5001/api/products/meta/categories?hasImage=${hasImage ? 'true' : 'false'}`;
       const resFallback = await fetch(fallbackUrl);
       if (resFallback.ok) {
         const data = await resFallback.json();
@@ -94,7 +94,7 @@ export async function getProductByIdApi(id) {
     return data.product || null;
   } catch (error) {
     try {
-      const fallbackUrl = `http://localhost:5000/api/products/${encodeURIComponent(id)}`;
+      const fallbackUrl = `http://localhost:5001/api/products/${encodeURIComponent(id)}`;
       const resFallback = await fetch(fallbackUrl);
       if (resFallback.ok) {
         return await resFallback.json();
