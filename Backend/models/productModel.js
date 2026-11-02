@@ -331,7 +331,12 @@ const ProductModel = {
 
     const updateClauses = columns
       .filter((c) => c !== 'pk')
-      .map((c) => `\`${c}\` = VALUES(\`${c}\`)`)
+      .map((c) => {
+        if (c === 'imageUrl' || c === 'secondImageUrl') {
+          return `\`${c}\` = COALESCE(VALUES(\`${c}\`), \`products\`.\`${c}\`)`;
+        }
+        return `\`${c}\` = VALUES(\`${c}\`)`;
+      })
       .join(', ');
 
     const sql = `
@@ -363,7 +368,12 @@ const ProductModel = {
     const columns = PRODUCT_COLUMNS;
     const updateClauses = columns
       .filter((c) => c !== 'pk')
-      .map((c) => `\`${c}\` = VALUES(\`${c}\`)`)
+      .map((c) => {
+        if (c === 'imageUrl' || c === 'secondImageUrl') {
+          return `\`${c}\` = COALESCE(VALUES(\`${c}\`), \`products\`.\`${c}\`)`;
+        }
+        return `\`${c}\` = VALUES(\`${c}\`)`;
+      })
       .join(', ');
 
     let processedCount = 0;

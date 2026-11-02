@@ -129,17 +129,26 @@ export async function syncProductsApi() {
 /**
  * Trigger backend image sync from TechPOS WebMenu
  */
-export async function syncImagesApi() {
+export async function syncImagesApi({ quick = false, maxPages, pageSize, sortId } = {}) {
   const url = `${API_BASE}/products/sync-images`;
+  const bodyPayload = JSON.stringify({ quick, maxPages, pageSize, sortId });
 
   try {
-    const res = await fetch(url, { method: 'POST' });
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: bodyPayload,
+    });
     if (!res.ok) throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
     return await res.json();
   } catch (error) {
     try {
       const fallbackUrl = 'http://localhost:5000/api/products/sync-images';
-      const resFallback = await fetch(fallbackUrl, { method: 'POST' });
+      const resFallback = await fetch(fallbackUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: bodyPayload,
+      });
       if (resFallback.ok) {
         return await resFallback.json();
       }
@@ -151,17 +160,26 @@ export async function syncImagesApi() {
 /**
  * Trigger full sync (TechPOS base products + WebMenu images)
  */
-export async function syncAllApi() {
+export async function syncAllApi({ quick = false, maxPages, pageSize, sortId } = {}) {
   const url = `${API_BASE}/products/sync-all`;
+  const bodyPayload = JSON.stringify({ quick, maxPages, pageSize, sortId });
 
   try {
-    const res = await fetch(url, { method: 'POST' });
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: bodyPayload,
+    });
     if (!res.ok) throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
     return await res.json();
   } catch (error) {
     try {
       const fallbackUrl = 'http://localhost:5000/api/products/sync-all';
-      const resFallback = await fetch(fallbackUrl, { method: 'POST' });
+      const resFallback = await fetch(fallbackUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: bodyPayload,
+      });
       if (resFallback.ok) {
         return await resFallback.json();
       }

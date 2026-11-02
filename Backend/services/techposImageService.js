@@ -8,8 +8,8 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const DEFAULT_COMPANY_CODE = process.env.TECHPOS_COMPANY_CODE || '467-41';
 const DEFAULT_BRANCH_ID = process.env.TECHPOS_BRANCH_ID || '1';
-const DEFAULT_PAGE_SIZE = parseInt(process.env.TECHPOS_PAGE_SIZE || '20', 10);
-const DEFAULT_MAX_PAGES = parseInt(process.env.TECHPOS_MAX_PAGES || '150', 10);
+const DEFAULT_PAGE_SIZE = parseInt(process.env.TECHPOS_PAGE_SIZE || '500', 10);
+const DEFAULT_MAX_PAGES = parseInt(process.env.TECHPOS_MAX_PAGES || '10', 10);
 const DEFAULT_BASE_URL =
   process.env.TECHPOS_EAPI_URL ||
   `https://techpos-eapi-prod.azurewebsites.net/${DEFAULT_COMPANY_CODE}/api/products/filterProducts`;
@@ -33,11 +33,11 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 /**
  * Build TechPOS eapi filterProducts payload
  */
-function makePayload(page, pageSize, branchId) {
+function makePayload(page, pageSize, branchId, sortId = 1) {
   return {
     ProductGroupId: '',
     Category: '',
-    SortId: 1,
+    SortId: sortId,
     Page: page,
     PageSize: pageSize,
     SearchText: '',
@@ -128,14 +128,15 @@ async function syncProductImages({
   branchId = DEFAULT_BRANCH_ID,
   pageSize = DEFAULT_PAGE_SIZE,
   maxPages = DEFAULT_MAX_PAGES,
-  requestDelayMs = 300,
+  sortId = 1,
+  requestDelayMs = 150,
 } = {}) {
   const url = DEFAULT_BASE_URL.replace('{company}', companyCode);
 
   console.log('========================================================');
   console.log('🖼️  TechPOS Image Sync Service');
   console.log(`Endpoint:    ${url}`);
-  console.log(`Company:     ${companyCode} | Branch: ${branchId} | PageSize: ${pageSize}`);
+  console.log(`Company:     ${companyCode} | Branch: ${branchId} | PageSize: ${pageSize} | MaxPages: ${maxPages} | SortId: ${sortId}`);
   console.log('========================================================');
 
   // 1. Ensure the dedicated table exists
@@ -146,12 +147,12 @@ async function syncProductImages({
   let totalUniqueFetched = 0;
   let totalWithImages = 0;
   let reportedTotal = null;
-  let stopReason = 'maximum page limit reached';
+  let stopReason = maxPages === 1 ? 'single page quick sync completed' : 'maximum page limit reached';
 
   const startTime = Date.now();
 
   for (let page = 1; page <= maxPages; page++) {
-    const payload = makePayload(page, pageSize, branchId);
+    const payload = makePayload(page, pageSize, branchId, sortId);
     let pageData;
 
     try {
