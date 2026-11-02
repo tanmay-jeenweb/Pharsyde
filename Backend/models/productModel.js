@@ -169,8 +169,19 @@ const ProductModel = {
     }
 
     if (category) {
-      query += ' AND category = ?';
-      params.push(category);
+      const categories = Array.isArray(category)
+        ? category
+        : (typeof category === 'string' && category.includes(',')
+            ? category.split(',').map((c) => c.trim()).filter(Boolean)
+            : [category]);
+
+      if (categories.length === 1) {
+        query += ' AND category = ?';
+        params.push(categories[0]);
+      } else if (categories.length > 1) {
+        query += ` AND category IN (${categories.map(() => '?').join(', ')})`;
+        params.push(...categories);
+      }
     }
 
     if (subCategory) {
@@ -228,8 +239,19 @@ const ProductModel = {
     }
 
     if (category) {
-      query += ' AND category = ?';
-      params.push(category);
+      const categories = Array.isArray(category)
+        ? category
+        : (typeof category === 'string' && category.includes(',')
+            ? category.split(',').map((c) => c.trim()).filter(Boolean)
+            : [category]);
+
+      if (categories.length === 1) {
+        query += ' AND category = ?';
+        params.push(categories[0]);
+      } else if (categories.length > 1) {
+        query += ` AND category IN (${categories.map(() => '?').join(', ')})`;
+        params.push(...categories);
+      }
     }
 
     if (brand) {
@@ -309,7 +331,12 @@ const ProductModel = {
 
     const updateClauses = columns
       .filter((c) => c !== 'pk')
-      .map((c) => `\`${c}\` = VALUES(\`${c}\`)`)
+      .map((c) => {
+        if (c === 'imageUrl' || c === 'secondImageUrl') {
+          return `\`${c}\` = COALESCE(VALUES(\`${c}\`), \`products\`.\`${c}\`)`;
+        }
+        return `\`${c}\` = VALUES(\`${c}\`)`;
+      })
       .join(', ');
 
     const sql = `
@@ -341,7 +368,12 @@ const ProductModel = {
     const columns = PRODUCT_COLUMNS;
     const updateClauses = columns
       .filter((c) => c !== 'pk')
-      .map((c) => `\`${c}\` = VALUES(\`${c}\`)`)
+      .map((c) => {
+        if (c === 'imageUrl' || c === 'secondImageUrl') {
+          return `\`${c}\` = COALESCE(VALUES(\`${c}\`), \`products\`.\`${c}\`)`;
+        }
+        return `\`${c}\` = VALUES(\`${c}\`)`;
+      })
       .join(', ');
 
     let processedCount = 0;

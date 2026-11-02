@@ -7,72 +7,59 @@ import CartDrawer from './components/cart/CartDrawer';
 import GlobalSearchModal from './components/common/GlobalSearchModal';
 import AgeGateModal from './components/common/AgeGateModal';
 import ToastContainer from './components/common/ToastContainer';
+import ScrollToTop from './components/common/ScrollToTop';
 
 // Storefront Pages
 import HomePage from './pages/HomePage';
 import CatalogPage from './pages/CatalogPage';
-import CannabisPage from './pages/CannabisPage';
-import NicotineVapePage from './pages/NicotineVapePage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
 import CheckoutPage from './pages/CheckoutPage';
 import PolicyPage from './pages/PolicyPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
+import NotFoundPage from './pages/NotFoundPage';
 
-// Office Portal Components & Pages (Green Theme / Reference from ERP)
-import OfficeProtectedRoute from './components/office/OfficeProtectedRoute';
-import OfficeLogin from './pages/office/OfficeLogin';
-import OfficeDashboard from './pages/office/OfficeDashboard';
-import UserMaster from './pages/office/UserMaster';
-import CreateUserPage from './pages/office/CreateUserPage';
-import UserTypeMaster from './pages/office/UserTypeMaster';
-import CreateUserTypePage from './pages/office/CreateUserTypePage';
-import ProductMaster from './pages/office/ProductMaster';
-import CreateProductPage from './pages/office/CreateProductPage';
-import ProductImageMaster from './pages/office/ProductImageMaster';
-import ActivityReport from './pages/office/ActivityReport';
-
-function MainStoreApp() {
-  const { currentPage } = useApp();
-
-  const renderCurrentPage = () => {
-    switch (currentPage) {
-      case 'home':
-        return <HomePage />;
-      case 'catalog':
-      case 'products':
-      case 'shop':
-        return <CatalogPage />;
-      case 'cannabis':
-        return <CannabisPage />;
-      case 'nicotine':
-        return <NicotineVapePage />;
-      case 'product-detail':
-        return <ProductDetailsPage />;
-      case 'checkout':
-        return <CheckoutPage />;
-      case 'policy':
-        return <PolicyPage />;
-      case 'about':
-        return <AboutPage />;
-      case 'contact':
-        return <ContactPage />;
-      default:
-        return <HomePage />;
-    }
-  };
-
+function MainApp() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans selection:bg-[#8EF705] selection:text-black">
+      {/* Scroll to top automatically on route changes */}
+      <ScrollToTop />
+
       {/* 19+ Age Gate Compliance Modal */}
       <AgeGateModal />
 
       {/* Floating / Sticky Navigation Bar */}
       <Navbar />
 
-      {/* Dynamic Main View */}
+      {/* Dynamic Main View via React Router */}
       <main className="flex-grow">
-        {renderCurrentPage()}
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/catalog" element={<CatalogPage />} />
+
+          {/* Catalog route aliases */}
+          <Route path="/products" element={<Navigate to="/catalog" replace />} />
+          <Route path="/shop" element={<Navigate to="/catalog" replace />} />
+          <Route path="/cannabis" element={<Navigate to="/catalog" replace />} />
+          <Route path="/nicotine" element={<Navigate to="/catalog" replace />} />
+
+          {/* Product detail views */}
+          <Route path="/product/:id" element={<ProductDetailsPage />} />
+          <Route path="/catalog/:id" element={<ProductDetailsPage />} />
+
+          {/* Checkout & transactional */}
+          <Route path="/checkout" element={<CheckoutPage />} />
+
+          {/* Informational pages */}
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/policy" element={<PolicyPage />} />
+          <Route path="/policies" element={<Navigate to="/policy" replace />} />
+          <Route path="/terms" element={<Navigate to="/policy" replace />} />
+
+          {/* 404 Catch-All */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
       </main>
 
       {/* Footer */}

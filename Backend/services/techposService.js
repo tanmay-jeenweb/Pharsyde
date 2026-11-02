@@ -67,9 +67,9 @@ const syncTechPOSProducts = async () => {
     };
   }
 
-  // Populate / bulk-upsert into MySQL
+  // Populate / bulk-upsert into MySQL with 500 items per batch
   console.log(`[TechPOS Service] Populating ${products.length} products into MySQL...`);
-  const result = await ProductModel.bulkUpsert(products, 100);
+  const result = await ProductModel.bulkUpsert(products, 500);
 
   console.log(`[TechPOS Service] ✓ Populated ${result.insertedOrUpdated} products successfully.`);
   return {

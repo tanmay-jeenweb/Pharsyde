@@ -236,7 +236,7 @@ export default function CheckoutPage() {
             Add items to your bag before heading to checkout.
           </p>
           <button
-            onClick={() => navigateTo('cannabis')}
+            onClick={() => navigateTo('catalog')}
             className="px-6 py-3 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#8EF705]/25"
           >
             Explore Catalogue
@@ -259,7 +259,7 @@ export default function CheckoutPage() {
             </h1>
           </div>
           <button
-            onClick={() => navigateTo('cannabis')}
+            onClick={() => navigateTo('catalog')}
             className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1 font-semibold"
           >
             <ArrowLeft className="w-4 h-4" />

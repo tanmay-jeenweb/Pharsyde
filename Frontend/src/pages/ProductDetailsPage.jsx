@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { getProductByIdApi, getProductsApi } from '../services/productService';
 import { PRODUCTS } from '../data/products';
@@ -27,7 +28,11 @@ import {
 } from 'lucide-react';
 
 export default function ProductDetailsPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const { selectedProductId, navigateTo, addToCart } = useApp();
+
+  const activeId = id || selectedProductId;
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +56,7 @@ export default function ProductDetailsPage() {
       setError(null);
       setImgError(false);
 
-      if (!selectedProductId) {
+      if (!activeId) {
         // Fallback to static mock if no ID selected
         const fallback = PRODUCTS[0];
         setProduct(fallback);
@@ -61,7 +66,7 @@ export default function ProductDetailsPage() {
       }
 
       try {
-        const fetched = await getProductByIdApi(selectedProductId);
+        const fetched = await getProductByIdApi(activeId);
         if (!isMounted) return;
 
         if (fetched) {
@@ -87,18 +92,18 @@ export default function ProductDetailsPage() {
           }
         } else {
           // Check static mock
-          const mockMatch = PRODUCTS.find((p) => p.id === selectedProductId);
+          const mockMatch = PRODUCTS.find((p) => String(p.id) === String(activeId));
           if (mockMatch) {
             setProduct(mockMatch);
             setSelectedImage(mockMatch.image);
           } else {
-            setError(`Product with ID "${selectedProductId}" could not be found.`);
+            setError(`Product with ID "${activeId}" could not be found.`);
           }
         }
       } catch (err) {
         if (!isMounted) return;
         // Fallback to static mock if API fails
-        const mockMatch = PRODUCTS.find((p) => p.id === selectedProductId);
+        const mockMatch = PRODUCTS.find((p) => String(p.id) === String(activeId));
         if (mockMatch) {
           setProduct(mockMatch);
           setSelectedImage(mockMatch.image);
@@ -117,7 +122,7 @@ export default function ProductDetailsPage() {
     return () => {
       isMounted = false;
     };
-  }, [selectedProductId]);
+  }, [activeId]);
 
   if (loading) {
     return (
@@ -149,7 +154,7 @@ export default function ProductDetailsPage() {
           <h2 className="text-xl font-bold font-heading text-slate-900 mb-2">Product Not Found</h2>
           <p className="text-sm text-slate-500 mb-6">{error || 'This product is no longer in active stock.'}</p>
           <button
-            onClick={() => navigateTo('catalog')}
+            onClick={() => navigate('/catalog')}
             className="w-full py-3 rounded-xl bg-[#8EF705] text-black font-bold uppercase tracking-wider text-xs hover:bg-[#80de04] transition-all shadow-md shadow-[#8EF705]/20"
           >
             Return to Product Catalogue
@@ -246,7 +251,7 @@ export default function ProductDetailsPage() {
         {/* Breadcrumb Navigation */}
         <div className="mb-8 flex items-center justify-between text-xs text-slate-500">
           <button
-            onClick={() => navigateTo('catalog')}
+            onClick={() => navigate('/catalog')}
             className="inline-flex items-center gap-2 text-slate-800 hover:text-[#529402] font-semibold transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -254,7 +259,7 @@ export default function ProductDetailsPage() {
           </button>
 
           <div className="hidden sm:flex items-center gap-1.5 font-medium">
-            <button onClick={() => navigateTo('catalog')} className="hover:text-slate-900">Catalogue</button>
+            <Link to="/catalog" className="hover:text-slate-900">Catalogue</Link>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-slate-700">{productCategory}</span>
             {productSubCategory && (
@@ -610,13 +615,13 @@ export default function ProductDetailsPage() {
                   More from {productCategory}
                 </h3>
               </div>
-              <button
-                onClick={() => navigateTo('catalog')}
+              <Link
+                to="/catalog"
                 className="text-xs font-bold text-slate-700 hover:text-[#529402] flex items-center gap-1 transition-colors"
               >
                 <span>View Full Catalogue</span>
                 <ChevronRight className="w-4 h-4" />
-              </button>
+              </Link>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

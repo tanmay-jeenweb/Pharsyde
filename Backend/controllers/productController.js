@@ -261,17 +261,23 @@ const syncTechPOS = async (req, res, next) => {
  */
 const syncImages = async (req, res, next) => {
   try {
-    const { companyCode, branchId, pageSize, maxPages } = req.body || {};
+    const params = { ...(req.query || {}), ...(req.body || {}) };
+    const isQuick = params.quick === true || params.quick === 'true';
+
     const result = await syncProductImages({
-      companyCode,
-      branchId,
-      pageSize: pageSize ? Number(pageSize) : undefined,
-      maxPages: maxPages ? Number(maxPages) : undefined,
+      companyCode: params.companyCode,
+      branchId: params.branchId,
+      pageSize: params.pageSize ? Number(params.pageSize) : 500,
+      maxPages: params.maxPages ? Number(params.maxPages) : (isQuick ? 1 : undefined),
+      sortId: params.sortId ? Number(params.sortId) : (isQuick ? 9 : 1),
     });
 
     res.status(200).json({
       success: true,
-      message: 'Product images synchronized successfully',
+      message: isQuick
+        ? 'Quick product image synchronization completed (first page)'
+        : 'Product images synchronized successfully',
+      isQuick,
       ...result,
     });
   } catch (error) {
@@ -286,12 +292,24 @@ const syncImages = async (req, res, next) => {
  */
 const syncAllTechPOS = async (req, res, next) => {
   try {
+    const params = { ...(req.query || {}), ...(req.body || {}) };
+    const isQuick = params.quick === true || params.quick === 'true';
+
     const productResult = await syncTechPOSProducts();
-    const imageResult = await syncProductImages();
+    const imageResult = await syncProductImages({
+      companyCode: params.companyCode,
+      branchId: params.branchId,
+      pageSize: params.pageSize ? Number(params.pageSize) : 500,
+      maxPages: params.maxPages ? Number(params.maxPages) : (isQuick ? 1 : undefined),
+      sortId: params.sortId ? Number(params.sortId) : (isQuick ? 9 : 1),
+    });
 
     res.status(200).json({
       success: true,
-      message: 'Complete TechPOS product and image synchronization completed',
+      message: isQuick
+        ? 'Quick TechPOS synchronization completed'
+        : 'Complete TechPOS product and image synchronization completed',
+      isQuick,
       products: productResult,
       images: imageResult,
     });
