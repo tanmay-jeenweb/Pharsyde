@@ -1,0 +1,36 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Backend API for Pharsyde with Express, MySQL2, JWT, and bcrypt",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "seed": "node scripts/syncProducts.js",
+    "sync": "node scripts/syncProducts.js",
+    "update-images": "node scripts/updateProductImages.js"
+  },
+  "keywords": [
+    "express",
+    "mysql2",
+    "jwt",
+    "bcrypt",
+    "nodejs",
+    "techpos"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "mysql2": "^3.12.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
