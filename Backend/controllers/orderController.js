@@ -152,23 +152,21 @@ const createOrder = async (req, res, next) => {
 /**
  * @route   GET /api/orders
  * @desc    Get order history for the authenticated customer
- * @access  Private (or via query email if guest)
+ * @access  Private (Strictly requires Customer Login - matches zip implementation)
  */
 const getMyOrders = async (req, res, next) => {
   try {
     const authUser = req.user || null;
-    const emailParam = req.query.email ? String(req.query.email).trim() : null;
 
-    if (!authUser && !emailParam) {
+    if (!authUser) {
       return res.status(401).json({
         success: false,
-        message: 'Please log in to view your orders, or provide your email address.',
+        message: 'Please login to view your orders.',
       });
     }
 
     const orders = await OrderModel.findByUser({
-      userId: authUser ? authUser.id : null,
-      email: authUser ? authUser.email : emailParam,
+      userId: authUser.id,
     });
 
     res.status(200).json({

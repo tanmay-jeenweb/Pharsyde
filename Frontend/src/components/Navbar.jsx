@@ -140,6 +140,20 @@ export default function Navbar({ title = "ERP Admin" }) {
                 </div>
 
                 <div className="flex items-center gap-4 sm:gap-6">
+                    {/* Orders Quick Nav */}
+                    <button
+                        onClick={() => navigate("/office/orders")}
+                        className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
+                            location.pathname === "/office/orders"
+                                ? "bg-emerald-100 text-[#064e3b] border-emerald-300 shadow-xs"
+                                : "bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200"
+                        }`}
+                        title="View Orders & Shipments"
+                    >
+                        <i className="fa-solid fa-receipt text-xs text-[#047857]"></i>
+                        <span>Orders</span>
+                    </button>
+
                     {/* Live Storefront Link */}
                     <a
                         href="/"
@@ -213,6 +227,16 @@ export default function Navbar({ title = "ERP Admin" }) {
                                     </button>
                                     <button
                                         onClick={() => {
+                                            navigate("/office/orders");
+                                            setIsProfileOpen(false);
+                                        }}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-semibold transition-all duration-150 cursor-pointer text-left"
+                                    >
+                                        <i className="fa-solid fa-receipt text-slate-400 text-xs"></i>
+                                        Orders
+                                    </button>
+                                    <button
+                                        onClick={() => {
                                             navigate("/office/activity-report");
                                             setIsProfileOpen(false);
                                         }}
@@ -256,8 +280,8 @@ export default function Navbar({ title = "ERP Admin" }) {
                                 closeAllDropdowns();
                                 navigate("/office/dashboard");
                             }}
-                            className={`w-44 sm:w-52 md:w-56 flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
-                                location.pathname === "/office/dashboard" ? "bg-white/15" : "bg-transparent"
+                            className={`w-36 sm:w-44 md:w-48 flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
+                                location.pathname === "/office/dashboard" ? "bg-white/20 shadow-inner" : "bg-transparent"
                             }`}
                         >
                             <i className="fa-solid fa-gauge-high text-xs"></i>
@@ -265,13 +289,29 @@ export default function Navbar({ title = "ERP Admin" }) {
                         </button>
                     </div>
 
+                    {/* Orders Button */}
+                    <div className="relative">
+                        <button
+                            onClick={() => {
+                                closeAllDropdowns();
+                                navigate("/office/orders");
+                            }}
+                            className={`w-36 sm:w-44 md:w-48 flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
+                                location.pathname === "/office/orders" ? "bg-white/20 shadow-inner" : "bg-transparent"
+                            }`}
+                        >
+                            <i className="fa-solid fa-receipt text-xs"></i>
+                            <span>Orders</span>
+                        </button>
+                    </div>
+
                     {/* Masters Dropdown Button */}
                     <div className="relative">
                         <button
                             onClick={toggleMasters}
-                            className={`w-44 sm:w-52 md:w-56 flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
+                            className={`w-36 sm:w-44 md:w-48 flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
                                 isOpen || ["/office/user-master", "/office/user-type-master", "/office/product-master", "/office/product-image-master"].includes(location.pathname)
-                                    ? "bg-white/15"
+                                    ? "bg-white/20 shadow-inner"
                                     : "bg-transparent"
                             }`}
                         >
@@ -378,9 +418,9 @@ export default function Navbar({ title = "ERP Admin" }) {
                     <div className="relative" id="reports-dropdown">
                         <button
                             onClick={toggleReports}
-                            className={`w-44 sm:w-52 md:w-56 flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
+                            className={`w-36 sm:w-44 md:w-48 flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
                                 isReportsOpen || location.pathname === "/office/activity-report"
-                                    ? "bg-white/15"
+                                    ? "bg-white/20 shadow-inner"
                                     : "bg-transparent"
                             }`}
                         >

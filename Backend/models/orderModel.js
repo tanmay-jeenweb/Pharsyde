@@ -126,7 +126,7 @@ const OrderModel = {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
         [
           order_number,
-          user_id,
+          user_id || null,
           customer_name,
           customer_email,
           customer_phone,
@@ -180,7 +180,7 @@ const OrderModel = {
       const newOrder = {
         id: Date.now(),
         order_number,
-        user_id,
+        user_id: user_id || null,
         customer_name,
         customer_email,
         customer_phone,
@@ -245,27 +245,16 @@ const OrderModel = {
   },
 
   /**
-   * Find all orders belonging to a customer (by user_id or email)
+   * Find all orders belonging to an authenticated customer strictly by user_id (Option 1: Exact Zip Behavior)
    */
-  async findByUser({ userId = null, email = null }) {
+  async findByUser({ userId = null }) {
+    if (!userId) {
+      return [];
+    }
+
     try {
-      let query = '';
-      let params = [];
-
-      if (userId && email) {
-        query = 'SELECT * FROM orders WHERE user_id = ? OR customer_email = ? ORDER BY created_at DESC';
-        params = [userId, email];
-      } else if (userId) {
-        query = 'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC';
-        params = [userId];
-      } else if (email) {
-        query = 'SELECT * FROM orders WHERE customer_email = ? ORDER BY created_at DESC';
-        params = [email];
-      } else {
-        return [];
-      }
-
-      const [orders] = await pool.query(query, params);
+      const query = 'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC';
+      const [orders] = await pool.query(query, [userId]);
 
       // Attach items for each order
       for (const order of orders) {
@@ -277,7 +266,7 @@ const OrderModel = {
     } catch {
       const fallback = getFallbackOrders();
       return fallback.filter(
-        (o) => (userId && String(o.user_id) === String(userId)) || (email && o.customer_email === email)
+        (o) => userId && String(o.user_id) === String(userId)
       );
     }
   },
@@ -287,15 +276,14 @@ const OrderModel = {
    */
   async updateSyncStatus(orderId, { techpos_order_id = null, sync_status = 'synced', sync_error = null }) {
     try {
-      await pool.query(
-        `UPDATE orders SET
-          techpos_order_id = COALESCE(?, techpos_order_id),
-          sync_status = ?,
-          sync_error = ?
-        WHERE id = ? OR order_number = ?`,
-        [techpos_order_id, sync_status, sync_error, orderId, orderId]
-      );
-    } catch {
+      const isNum = !isNaN(orderId) && String(orderId).indexOf('PHAR-') === -1;
+      const query = isNum
+        ? `UPDATE orders SET techpos_order_id = COALESCE(?, techpos_order_id), sync_status = ?, sync_error = ? WHERE id = ?`
+        : `UPDATE orders SET techpos_order_id = COALESCE(?, techpos_order_id), sync_status = ?, sync_error = ? WHERE order_number = ?`;
+
+      await pool.query(query, [techpos_order_id, sync_status, sync_error, orderId]);
+    } catch (err) {
+      console.warn('[OrderModel Error] updateSyncStatus MySQL error:', err.message);
       const orders = getFallbackOrders();
       const order = orders.find((o) => String(o.id) === String(orderId) || o.order_number === orderId);
       if (order) {
@@ -312,12 +300,14 @@ const OrderModel = {
    */
   async updatePaymentStatus(orderId, paymentStatus) {
     try {
-      await pool.query('UPDATE orders SET payment_status = ? WHERE id = ? OR order_number = ?', [
-        paymentStatus,
-        orderId,
-        orderId,
-      ]);
-    } catch {
+      const isNum = !isNaN(orderId) && String(orderId).indexOf('PHAR-') === -1;
+      const query = isNum
+        ? 'UPDATE orders SET payment_status = ? WHERE id = ?'
+        : 'UPDATE orders SET payment_status = ? WHERE order_number = ?';
+
+      await pool.query(query, [paymentStatus, orderId]);
+    } catch (err) {
+      console.warn('[OrderModel Error] updatePaymentStatus MySQL error:', err.message);
       const orders = getFallbackOrders();
       const order = orders.find((o) => String(o.id) === String(orderId) || o.order_number === orderId);
       if (order) {

@@ -26,7 +26,7 @@ export default function Navbar() {
   const navLinks = [
     { path: '/', label: 'Home' },
     { path: '/catalog', label: 'All Products' },
-    { path: '/orders', label: 'My Orders' },
+    ...(isCustomerLoggedIn ? [{ path: '/orders', label: 'My Orders' }] : []),
     { path: '/about', label: 'About Us' },
     { path: '/contact', label: 'Contact' }
   ];
@@ -197,14 +197,27 @@ export default function Navbar() {
                   );
                 })}
 
-                <Link
-                  to="/account"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 hover:bg-slate-100 flex items-center gap-2"
-                >
-                  <Package className="w-4 h-4 text-[#488203]" />
-                  <span>{isCustomerLoggedIn ? 'My Account & Orders' : 'Sign In / My Orders'}</span>
-                </Link>
+                {isCustomerLoggedIn ? (
+                  <Link
+                    to="/orders"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 hover:bg-slate-100 flex items-center gap-2"
+                  >
+                    <Package className="w-4 h-4 text-[#488203]" />
+                    <span>My Orders</span>
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openAuthModal('login');
+                    }}
+                    className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
+                  >
+                    <User className="w-4 h-4 text-[#488203]" />
+                    <span>Sign In / Register</span>
+                  </button>
+                )}
 
                 <Link
                   to="/policy"

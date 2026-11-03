@@ -65,13 +65,10 @@ export async function createOrderApi(orderPayload, token = null) {
 }
 
 /**
- * Get logged-in customer's order history
+ * Get logged-in customer's order history (Strictly authenticated)
  */
-export async function getMyOrdersApi(token = null, email = null) {
-  let url = `${API_BASE}/orders`;
-  if (email) {
-    url += `?email=${encodeURIComponent(email)}`;
-  }
+export async function getMyOrdersApi(token = null) {
+  const url = `${API_BASE}/orders`;
 
   try {
     const res = await fetch(url, {
@@ -83,7 +80,7 @@ export async function getMyOrdersApi(token = null, email = null) {
   } catch (error) {
     if (!url.startsWith('http')) {
       try {
-        const fallbackUrl = `http://localhost:5000/api/orders${email ? `?email=${encodeURIComponent(email)}` : ''}`;
+        const fallbackUrl = `http://localhost:5000/api/orders`;
         const fallbackRes = await fetch(fallbackUrl, {
           method: 'GET',
           headers: getHeaders(token),
