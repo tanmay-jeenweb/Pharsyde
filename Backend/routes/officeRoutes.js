@@ -24,6 +24,10 @@ const {
   updateOfficeProductImage,
   syncOfficeProductImages,
   getActivityLogs,
+  getOfficeOrders,
+  getTechPosPurchaseOrders,
+  getTechPosLiveOrders,
+  getTechPosOrderItems,
 } = require('../controllers/officeController');
 const { verifyToken } = require('../utils/jwt');
 const pool = require('../config/db');
@@ -91,5 +95,10 @@ router.post('/product-images/sync', syncOfficeProductImages);
 // 7. Activity Report
 router.get('/activity-logs', getActivityLogs);
 
-module.exports = router;
+// 8. Order Master, TechPOS Purchase Orders & Live POS Orders
+router.get('/orders', getOfficeOrders);
+router.get('/purchase-orders', getTechPosPurchaseOrders);
+router.get('/pos-live-orders', getTechPosLiveOrders);
+router.get('/pos-order-items/:orderId', getTechPosOrderItems);
 
+module.exports = router;

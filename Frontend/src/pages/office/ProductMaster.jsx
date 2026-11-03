@@ -24,11 +24,11 @@ export default function ProductMaster() {
     setTimeout(() => setNotification(null), 4000);
   };
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (currentSearch = search) => {
     try {
       setLoading(true);
       const res = await getOfficeProductsApi({
-        search,
+        search: currentSearch.trim(),
         category: selectedCategory,
         brand: selectedBrand,
         active: showInactive ? '' : 'true',
@@ -44,9 +44,13 @@ export default function ProductMaster() {
     }
   };
 
+  // Debounce search query so typing triggers server-side product search across all 10,000+ items
   useEffect(() => {
-    fetchProducts();
-  }, [selectedCategory, selectedBrand, showInactive]);
+    const timer = setTimeout(() => {
+      fetchProducts(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, selectedCategory, selectedBrand, showInactive]);
 
   // Extract unique categories & brands for filter dropdowns
   const categoriesList = useMemo(() => {
@@ -273,6 +277,9 @@ export default function ProductMaster() {
         data={products}
         columns={columns}
         loading={loading}
+        searchValue={search}
+        onSearchChange={setSearch}
+        serverSide={true}
         searchPlaceholder="Search products by name, SKU, or brand..."
         toggleActions={
           <div className="flex items-center gap-3">

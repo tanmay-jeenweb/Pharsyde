@@ -326,3 +326,53 @@ export async function getActivityLogsApi({ masterName = 'all', changeType = 'all
   return handleResponse(res);
 }
 
+
+// ─────────────────────────────────────────────────────────────
+// Order Master & TechPOS Purchase Orders
+// ─────────────────────────────────────────────────────────────
+
+export async function getOfficeOrdersApi({ limit = 50, offset = 0, status = '' } = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.append('limit', String(limit));
+  if (offset) params.append('offset', String(offset));
+  if (status) params.append('status', status);
+
+  const res = await fetch(`${API_BASE}/orders?${params.toString()}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function getTechPosPurchaseOrdersApi({ page = 1 } = {}) {
+  const params = new URLSearchParams();
+  if (page) params.append('page', String(page));
+
+  const res = await fetch(`${API_BASE}/purchase-orders?${params.toString()}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function getTechPosLiveOrdersApi({ beginDate = '', endDate = '', orderType = 'All', page = 1, pageSize = 50 } = {}) {
+  const params = new URLSearchParams();
+  if (beginDate) params.append('beginDate', beginDate);
+  if (endDate) params.append('endDate', endDate);
+  if (orderType && orderType !== 'All') params.append('orderType', orderType);
+  if (page) params.append('page', String(page));
+  if (pageSize) params.append('pageSize', String(pageSize));
+
+  const res = await fetch(`${API_BASE}/pos-live-orders?${params.toString()}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function getTechPosOrderItemsApi(orderId, date = '') {
+  const params = new URLSearchParams();
+  if (date) params.append('date', date);
+
+  const res = await fetch(`${API_BASE}/pos-order-items/${orderId}?${params.toString()}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}

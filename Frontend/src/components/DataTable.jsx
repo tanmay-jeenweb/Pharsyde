@@ -60,6 +60,9 @@ export default function DataTable({
   hideColumnChooser = false,
   onRowReorder = null,
   hidePagination = false,
+  searchValue = undefined,
+  onSearchChange = null,
+  serverSide = false,
 }) {
   // Full ordered list (visible + hidden). Visible ones come first.
   const [columns, setColumns] = useState(initialColumns);
@@ -200,7 +203,8 @@ export default function DataTable({
   };
 
   // ── Search / pagination / sort ─────────────────────────────────────────────
-  const [search, setSearch] = useState('');
+  const [internalSearch, setInternalSearch] = useState('');
+  const search = searchValue !== undefined ? searchValue : internalSearch;
   const [pageSize, setPageSize] = useState(hidePagination ? 'all' : 8);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
@@ -215,7 +219,7 @@ export default function DataTable({
   const filteredRows = useMemo(() => {
     let filtered = [...data];
 
-    if (search) {
+    if (!serverSide && search) {
       filtered = filtered.filter(row => {
         const customValues = initialColumns
           .filter(col => typeof col.getSearchValue === 'function')
@@ -259,7 +263,15 @@ export default function DataTable({
     setCurrentPage(1);
   };
 
-  const handleSearch = (val) => { setSearch(val); setCurrentPage(1); };
+  const handleSearch = (val) => {
+    if (searchValue === undefined) {
+      setInternalSearch(val);
+    }
+    if (onSearchChange) {
+      onSearchChange(val);
+    }
+    setCurrentPage(1);
+  };
   const handlePageSize = (val) => {
     setPageSize(val === 'all' ? 'all' : Number(val));
     setCurrentPage(1);

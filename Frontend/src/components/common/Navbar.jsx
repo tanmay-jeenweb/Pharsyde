@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { Search, ShoppingBag, User, Menu, X, ShieldCheck, Sparkles } from 'lucide-react';
+import { Search, ShoppingBag, User, Menu, X, ShieldCheck, Sparkles, Package } from 'lucide-react';
 import logoImg from '../../assets/image.webp';
 
 export default function Navbar() {
-  const { cartCount, setIsCartOpen, setIsSearchOpen, isAgeVerified } = useApp();
+  const { cartCount, setIsCartOpen, setIsSearchOpen, isAgeVerified, isCustomerLoggedIn, customerUser, openAuthModal } = useApp();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -26,6 +26,7 @@ export default function Navbar() {
   const navLinks = [
     { path: '/', label: 'Home' },
     { path: '/catalog', label: 'All Products' },
+    ...(isCustomerLoggedIn ? [{ path: '/orders', label: 'My Orders' }] : []),
     { path: '/about', label: 'About Us' },
     { path: '/contact', label: 'Contact' }
   ];
@@ -97,15 +98,28 @@ export default function Navbar() {
                 <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
               </button>
 
-              {/* Account info / Policy modal trigger */}
-              <Link
-                to="/policy"
-                aria-label="Account and Policies"
-                className="hidden sm:flex w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#8EF705] text-slate-700 hover:text-slate-900 items-center justify-center transition-all duration-200 shadow-xs hover:shadow-md hover:scale-105 group"
-                title="Store Policies & Warranty"
-              >
-                <User className="w-4 h-4 group-hover:scale-110 transition-transform" />
-              </Link>
+              {/* Customer Account / Orders trigger */}
+              {isCustomerLoggedIn ? (
+                <Link
+                  to="/account"
+                  aria-label="My Account and Orders"
+                  className="relative hidden sm:flex h-10 px-3.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#8EF705] text-slate-800 items-center gap-2 transition-all duration-200 shadow-xs hover:shadow-md group"
+                  title={`Signed in as ${customerUser?.name || 'Customer'}`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-[#8EF705] ring-2 ring-[#8EF705]/40" />
+                  <span className="text-xs font-bold max-w-[80px] truncate">{customerUser?.name?.split(' ')[0]}</span>
+                  <User className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-900" />
+                </Link>
+              ) : (
+                <button
+                  onClick={() => openAuthModal('login')}
+                  aria-label="Sign In or Register"
+                  className="hidden sm:flex w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#8EF705] text-slate-700 hover:text-slate-900 items-center justify-center transition-all duration-200 shadow-xs hover:shadow-md hover:scale-105 group"
+                  title="Sign In / Register"
+                >
+                  <User className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                </button>
+              )}
 
               {/* Shopping Cart Button */}
               <button
@@ -182,6 +196,28 @@ export default function Navbar() {
                     </Link>
                   );
                 })}
+
+                {isCustomerLoggedIn ? (
+                  <Link
+                    to="/orders"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 hover:bg-slate-100 flex items-center gap-2"
+                  >
+                    <Package className="w-4 h-4 text-[#488203]" />
+                    <span>My Orders</span>
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      openAuthModal('login');
+                    }}
+                    className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
+                  >
+                    <User className="w-4 h-4 text-[#488203]" />
+                    <span>Sign In / Register</span>
+                  </button>
+                )}
 
                 <Link
                   to="/policy"
