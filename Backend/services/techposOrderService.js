@@ -45,7 +45,7 @@ function buildTechPosPayload(order, storeId) {
     storeId: Number(storeId),
     paymentAmount: Number(order.total) || 0,
     memberId: null,
-    isPaid: order.payment_status === 'Paid',
+    isPaid: true,
     lastFourDigits: null,
     forDelivery: isDelivery,
     deliveryCost: isDelivery ? Number(order.shipping) || 0 : null,
@@ -55,11 +55,56 @@ function buildTechPosPayload(order, storeId) {
     lastName: lastName,
     phone: order.customer_phone || '',
     email: order.customer_email || '',
-    paymentCardType: order.payment_method === 'card' ? 'Visa' : 'None',
+    paymentCardType: 'Visa',
     deliverySlot: null,
     expireDate: null,
     products: products.length > 0 ? products : [{ productId: 1, quantity: 1, unitPrice: Number(order.total) || 0 }],
   };
+}
+
+/**
+ * Update online order status in TechPOS
+ * e.g. status: 'ArrivedAtCustomer' to finalize and trigger TechPOS cloud stock decrement
+ */
+async function updateTechPosOrderStatus(orderId, status = 'ArrivedAtCustomer', branchId = 1) {
+  const companyCode = process.env.TECHPOS_COMPANY_CODE || DEFAULT_COMPANY_CODE;
+  const apiKey = process.env.TECHPOS_API_KEY || DEFAULT_TECHPOS_KEY;
+  const targetUrl = `https://integrations-api.techpos.ca/${companyCode}/api/openAPI/updateOnlineOrderStatus`;
+
+  try {
+    const response = await fetch(targetUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'TechPOSAPIKey': apiKey,
+      },
+      body: JSON.stringify({
+        branchId: Number(branchId),
+        orderId: Number(orderId),
+        status: status,
+      }),
+    });
+
+    const responseText = await response.text();
+    let data = {};
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      data = { rawText: responseText };
+    }
+
+    if (!response.ok) {
+      console.warn(`[TechPOS Order Status Warning] HTTP ${response.status}:`, data);
+      return { success: false, status: response.status, data };
+    }
+
+    console.log(`[TechPOS Order Status] ✓ Order #${orderId} status set to '${status}' in TechPOS`);
+    return { success: true, status: response.status, data };
+  } catch (err) {
+    console.error(`[TechPOS Order Status Error]:`, err.message);
+    return { success: false, message: err.message };
+  }
 }
 
 /**
@@ -111,6 +156,17 @@ async function syncOrderToTechPOS(order) {
 
     console.log(`[TechPOS Order Sync] ✓ Order #${order.order_number} successfully posted to TechPOS. ID: ${techposOrderId}`);
 
+    // If order was created in TechPOS, auto-finalize to 'ArrivedAtCustomer'
+    // so TechPOS immediately deducts the quantity from its cloud stock
+    if (techposOrderId) {
+      try {
+        const branchId = process.env.TECHPOS_BRANCH_ID || 1;
+        await updateTechPosOrderStatus(techposOrderId, 'ArrivedAtCustomer', branchId);
+      } catch (statusErr) {
+        console.warn(`[TechPOS Order Sync] Status transition warning:`, statusErr.message);
+      }
+    }
+
     return {
       success: true,
       status: response.status,
@@ -131,5 +187,6 @@ async function syncOrderToTechPOS(order) {
 module.exports = {
   buildTechPosPayload,
   syncOrderToTechPOS,
+  updateTechPosOrderStatus,
 };
 

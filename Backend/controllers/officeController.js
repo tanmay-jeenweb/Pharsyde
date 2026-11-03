@@ -941,30 +941,50 @@ const getTechPosOrderItems = async (req, res, next) => {
     const { date } = req.query;
 
     const orderDate = date ? new Date(date) : new Date();
-    const beginDate = new Date(orderDate.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const endDate = new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const beginDate = new Date(orderDate.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const endDate = new Date(orderDate.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     const companyCode = process.env.TECHPOS_COMPANY_CODE || '467-41';
     const apiKey = process.env.TECHPOS_API_KEY || 'Ym9KsXaM3M7W2B301iI3ynU1';
 
-    const url = `https://integrations-api.techpos.ca/${companyCode}/api/openAPI/getsales?beginDate=${beginDate}&endDate=${endDate}&branch=1&pageNumber=1&pageSize=100`;
-
-    const techRes = await fetch(url, {
-      headers: { TechPOSAPIKey: apiKey, Accept: 'application/json' },
-    });
-
-    if (!techRes.ok) {
-      return res.status(200).json({ success: true, count: 0, items: [] });
+    let matched = [];
+    for (let page = 1; page <= 3; page++) {
+      const url = `https://integrations-api.techpos.ca/${companyCode}/api/openAPI/getsales?beginDate=${beginDate}&endDate=${endDate}&branch=1&pageNumber=${page}&pageSize=300`;
+      const techRes = await fetch(url, { headers: { TechPOSAPIKey: apiKey, Accept: 'application/json' } });
+      if (!techRes.ok) break;
+      const json = await techRes.json();
+      const allSales = json.data || [];
+      if (!Array.isArray(allSales) || allSales.length === 0) break;
+      const pageMatched = allSales.filter((s) => String(s.orderId) === String(orderId));
+      matched.push(...pageMatched);
+      if (pageMatched.length > 0 || allSales.length < 300) break;
     }
 
-    const json = await techRes.json();
-    const allSales = json.data || [];
-    const matched = allSales.filter((s) => String(s.orderId) === String(orderId));
+    // Aggregate line items if same product was bought in multiple units
+    const itemMap = new Map();
+    for (const item of matched) {
+      const key = item.sku || item.productName || item.orderProductId;
+      if (itemMap.has(key)) {
+        const existing = itemMap.get(key);
+        existing.quantity = Number(existing.quantity || 0) + Number(item.quantity || 1);
+        existing.grossSales = Number(existing.grossSales || 0) + Number(item.grossSales || (item.unitSalePrice * item.quantity) || 0);
+      } else {
+        itemMap.set(key, {
+          ...item,
+          productName: (item.productName || 'Product').trim(),
+          quantity: Number(item.quantity || 1),
+          grossSales: Number(item.grossSales || (item.unitSalePrice * item.quantity) || 0),
+        });
+      }
+    }
+
+    const aggregated = Array.from(itemMap.values());
 
     res.status(200).json({
       success: true,
-      count: matched.length,
-      items: matched,
+      count: aggregated.length,
+      rawCount: matched.length,
+      items: aggregated,
     });
   } catch (err) {
     next(err);
