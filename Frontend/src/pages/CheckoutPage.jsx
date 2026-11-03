@@ -42,7 +42,7 @@ export default function CheckoutPage() {
     address: '',
     city: 'Winnipeg',
     postalCode: '',
-    paymentMethod: 'interac', // interac | pickup_pay | card
+    paymentMethod: 'card', // card | interac
     cardName: '',
     cardNumber: '',
     cardExpiry: '',
@@ -600,6 +600,24 @@ export default function CheckoutPage() {
               <div className="space-y-3">
                 <label className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
                   <div className="flex items-center gap-3">
+                    <CreditCard className="w-5 h-5 text-orange-600" />
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 block">Credit Card (Instant Online Payment)</span>
+                      <span className="text-[11px] text-slate-500">Secure encrypted 256-bit checkout</span>
+                    </div>
+                  </div>
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="card"
+                    checked={formData.paymentMethod === 'card'}
+                    onChange={handleInputChange}
+                    className="accent-[#8EF705]"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+                  <div className="flex items-center gap-3">
                     <Building className="w-5 h-5 text-[#488203]" />
                     <div>
                       <span className="text-xs font-bold text-slate-900 block">Interac e-Transfer</span>
@@ -611,44 +629,6 @@ export default function CheckoutPage() {
                     name="paymentMethod"
                     value="interac"
                     checked={formData.paymentMethod === 'interac'}
-                    onChange={handleInputChange}
-                    className="accent-[#8EF705]"
-                  />
-                </label>
-
-                {isPickup && (
-                  <label className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Store className="w-5 h-5 text-[#488203]" />
-                      <div>
-                        <span className="text-xs font-bold text-slate-900 block">Pay Upon Store Pickup</span>
-                        <span className="text-[11px] text-slate-500">Debit / Credit / Cash at 117 Regent Ave W</span>
-                      </div>
-                    </div>
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="pickup_pay"
-                      checked={formData.paymentMethod === 'pickup_pay'}
-                      onChange={handleInputChange}
-                      className="accent-[#8EF705]"
-                    />
-                  </label>
-                )}
-
-                <label className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <CreditCard className="w-5 h-5 text-orange-600" />
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 block">Credit Card (Sandbox Gateway)</span>
-                      <span className="text-[11px] text-slate-500">Secure test checkout mode</span>
-                    </div>
-                  </div>
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="card"
-                    checked={formData.paymentMethod === 'card'}
                     onChange={handleInputChange}
                     className="accent-[#8EF705]"
                   />

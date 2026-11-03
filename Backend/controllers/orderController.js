@@ -23,9 +23,17 @@ const createOrder = async (req, res, next) => {
       address = '',
       city = 'Winnipeg',
       postalCode = '',
-      paymentMethod = 'interac',
+      paymentMethod = 'card',
       notes = '',
     } = req.body;
+
+    // Disallow in-store pay / COD
+    if (paymentMethod === 'pickup_pay' || paymentMethod === 'cod' || paymentMethod === 'cash') {
+      return res.status(400).json({
+        success: false,
+        message: 'In-store payment and COD have been discontinued. All orders must be prepaid online.',
+      });
+    }
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
@@ -107,8 +115,8 @@ const createOrder = async (req, res, next) => {
         tax,
         shipping,
         total,
-        payment_method: paymentMethod,
-        payment_status: paymentMethod === 'card' ? 'Paid' : 'Pending',
+        payment_method: paymentMethod || 'card',
+        payment_status: 'Paid',
         order_status: 'Confirmed',
         notes,
       },

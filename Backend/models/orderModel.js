@@ -169,6 +169,41 @@ const OrderModel = {
           ) VALUES ?`,
           [itemValues]
         );
+
+        // 3. Instant local stock decrement in MySQL products table
+        for (const item of items) {
+          const qty = Number(item.quantity) || 1;
+          const productId = item.product_id || item.productId || item.pk || null;
+          const techPosId = item.techpos_product_id || item.techPosProductId || null;
+          const sku = item.sku || null;
+
+          try {
+            if (productId) {
+              await pool.query(
+                `UPDATE products 
+                 SET qty_available = GREATEST(0, COALESCE(qty_available, 0) - ?) 
+                 WHERE pk = ?`,
+                [qty, String(productId)]
+              );
+            } else if (sku) {
+              await pool.query(
+                `UPDATE products 
+                 SET qty_available = GREATEST(0, COALESCE(qty_available, 0) - ?) 
+                 WHERE sku = ?`,
+                [qty, String(sku)]
+              );
+            } else if (techPosId) {
+              await pool.query(
+                `UPDATE products 
+                 SET qty_available = GREATEST(0, COALESCE(qty_available, 0) - ?) 
+                 WHERE pk = ?`,
+                [qty, String(techPosId)]
+              );
+            }
+          } catch (stockErr) {
+            console.warn(`[Stock Decrement Warning] Could not decrement product ${productId || sku}:`, stockErr.message);
+          }
+        }
       }
 
       return await this.findById(orderId);
