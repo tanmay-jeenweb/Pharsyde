@@ -136,13 +136,13 @@ const getOfficeMe = async (req, res, next) => {
 
 /**
  * Fetch Purchase Orders from TechPOS OpenAPI
- * GET https://integrations-api.techpos.ca/{companyCode}/api/openAPI/purchaseOrders/{storeId}
+ * GET https://integrations-api.techpos.ca/{companyCode}/api/openAPI/purchaseOrders/{storeId}?page={page}
  */
-const fetchTechPosPurchaseOrders = async () => {
+const fetchTechPosPurchaseOrders = async (page = 1) => {
   const companyCode = process.env.TECHPOS_COMPANY_CODE || '467-41';
   const storeId = process.env.TECHPOS_STORE_ID || '467';
   const apiKey = process.env.TECHPOS_API_KEY || 'Ym9KsXaM3M7W2B301iI3ynU1';
-  const url = `https://integrations-api.techpos.ca/${companyCode}/api/openAPI/purchaseOrders/${storeId}`;
+  const url = `https://integrations-api.techpos.ca/${companyCode}/api/openAPI/purchaseOrders/${storeId}?page=${page}`;
 
   try {
     const res = await fetch(url, {
@@ -155,14 +155,89 @@ const fetchTechPosPurchaseOrders = async () => {
 
     if (!res.ok) {
       console.warn(`[TechPOS PurchaseOrders Warning] HTTP ${res.status}`);
-      return [];
+      return { list: [], total: 0 };
     }
 
     const json = await res.json();
-    return json.data?.list || [];
+    return {
+      list: json.data?.list || [],
+      total: json.data?.total || 0,
+    };
   } catch (err) {
     console.error('[TechPOS PurchaseOrders Error]', err.message);
-    return [];
+    return { list: [], total: 0 };
+  }
+};
+
+/**
+ * Fetch Live POS Terminal Sales & Web Orders from TechPOS OpenAPI
+ * GET https://integrations-api.techpos.ca/{companyCode}/api/openAPI/orderList
+ */
+const fetchTechPosOrderList = async ({
+  beginDate,
+  endDate,
+  branchIds = '1',
+  orderType = 'All',
+  pageNumber = 1,
+  pageSize = 100,
+} = {}) => {
+  const companyCode = process.env.TECHPOS_COMPANY_CODE || '467-41';
+  const apiKey = process.env.TECHPOS_API_KEY || 'Ym9KsXaM3M7W2B301iI3ynU1';
+
+  const now = new Date();
+  const defaultEnd = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const defaultBegin = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  const bDate = beginDate || defaultBegin;
+  const eDate = endDate || defaultEnd;
+
+  const params = new URLSearchParams({
+    beginDate: bDate,
+    endDate: eDate,
+    branchIds: String(branchIds),
+    orderType: orderType || 'All',
+    pageNumber: String(pageNumber),
+    pageSize: String(pageSize),
+  });
+
+  const url = `https://integrations-api.techpos.ca/${companyCode}/api/openAPI/orderList?${params.toString()}`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        TechPOSAPIKey: apiKey,
+        Accept: 'application/json',
+      },
+    });
+
+    if (!res.ok) {
+      console.warn(`[TechPOS OrderList Warning] HTTP ${res.status}`);
+      return { list: [], count: 0 };
+    }
+
+    const json = await res.json();
+    const rawList = Array.isArray(json.data) ? json.data : (json.data?.list || []);
+
+    // Deduplicate by orderNumber (each ticket appears exactly once)
+    const dedupeMap = new Map();
+    for (const item of rawList) {
+      if (item && item.orderNumber) {
+        if (!dedupeMap.has(item.orderNumber)) {
+          dedupeMap.set(item.orderNumber, item);
+        }
+      }
+    }
+    const list = Array.from(dedupeMap.values());
+    list.sort((a, b) => Number(b.orderNumber || 0) - Number(a.orderNumber || 0));
+
+    return {
+      list,
+      count: list.length,
+    };
+  } catch (err) {
+    console.error('[TechPOS OrderList Error]', err.message);
+    return { list: [], count: 0 };
   }
 };
 
@@ -820,11 +895,76 @@ const getOfficeOrders = async (req, res, next) => {
 
 const getTechPosPurchaseOrders = async (req, res, next) => {
   try {
-    const list = await fetchTechPosPurchaseOrders();
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const { list, total } = await fetchTechPosPurchaseOrders(page);
     res.status(200).json({
       success: true,
+      total,
+      page,
+      pageSize: 25,
+      totalPages: Math.ceil(total / 25) || 1,
       count: list.length,
       purchaseOrders: list,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getTechPosLiveOrders = async (req, res, next) => {
+  try {
+    const { beginDate, endDate, orderType, page = 1, pageSize = 100 } = req.query;
+    const result = await fetchTechPosOrderList({
+      beginDate,
+      endDate,
+      orderType,
+      pageNumber: page,
+      pageSize,
+    });
+
+    res.status(200).json({
+      success: true,
+      count: result.count,
+      page: Number(page),
+      pageSize: Number(pageSize),
+      totalPages: Math.ceil((result.count || 0) / Number(pageSize)) || 1,
+      orders: result.list,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getTechPosOrderItems = async (req, res, next) => {
+  try {
+    const { orderId } = req.params;
+    const { date } = req.query;
+
+    const orderDate = date ? new Date(date) : new Date();
+    const beginDate = new Date(orderDate.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const endDate = new Date(orderDate.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const companyCode = process.env.TECHPOS_COMPANY_CODE || '467-41';
+    const apiKey = process.env.TECHPOS_API_KEY || 'Ym9KsXaM3M7W2B301iI3ynU1';
+
+    const url = `https://integrations-api.techpos.ca/${companyCode}/api/openAPI/getsales?beginDate=${beginDate}&endDate=${endDate}&branch=1&pageNumber=1&pageSize=100`;
+
+    const techRes = await fetch(url, {
+      headers: { TechPOSAPIKey: apiKey, Accept: 'application/json' },
+    });
+
+    if (!techRes.ok) {
+      return res.status(200).json({ success: true, count: 0, items: [] });
+    }
+
+    const json = await techRes.json();
+    const allSales = json.data || [];
+    const matched = allSales.filter((s) => String(s.orderId) === String(orderId));
+
+    res.status(200).json({
+      success: true,
+      count: matched.length,
+      items: matched,
     });
   } catch (err) {
     next(err);
@@ -859,5 +999,8 @@ module.exports = {
   getOfficeOrders,
   getTechPosPurchaseOrders,
   fetchTechPosPurchaseOrders,
+  getTechPosLiveOrders,
+  fetchTechPosOrderList,
+  getTechPosOrderItems,
 };
 
