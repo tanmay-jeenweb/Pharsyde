@@ -14,6 +14,8 @@ import HomePage from './pages/HomePage';
 import CatalogPage from './pages/CatalogPage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
 import CheckoutPage from './pages/CheckoutPage';
+import PaymentPage from './pages/PaymentPage';
+import OrderSuccessPage from './pages/OrderSuccessPage';
 import AccountOrdersPage from './pages/AccountOrdersPage';
 import PolicyPage from './pages/PolicyPage';
 import AboutPage from './pages/AboutPage';
@@ -65,6 +67,9 @@ function MainStoreApp() {
 
           {/* Checkout & transactional */}
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order" element={<Navigate to="/checkout" replace />} />
+          <Route path="/checkout/payment" element={<PaymentPage />} />
+          <Route path="/order-success" element={<OrderSuccessPage />} />
 
           {/* Customer Account & Order History */}
           <Route path="/account" element={<AccountOrdersPage />} />

@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 const path = require('path');
 
@@ -17,6 +18,7 @@ const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const officeRoutes = require('./routes/officeRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 // Middlewares
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
@@ -36,6 +38,7 @@ app.use(
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Root & Health Check Endpoints
 app.get('/', (req, res) => {
@@ -60,6 +63,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/office', officeRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/payments/moneris', paymentRoutes);
 
 // 404 & Error Handling Middlewares
 app.use(notFound);
