@@ -85,6 +85,7 @@ const OrderModel = {
     try {
       await pool.query(ORDER_TABLES_SCHEMA);
       await pool.query(ORDER_ITEMS_TABLE_SCHEMA);
+      try { await require('../scripts/migratePaymentTables')(); } catch (mErr) { console.warn('[Migration Warning]', mErr.message); }
       console.log('[OrderModel] Orders & Order Items tables verified/created successfully.');
     } catch (err) {
       console.warn('[OrderModel Warning] Could not create orders table in MySQL:', err.message);
@@ -113,6 +114,12 @@ const OrderModel = {
       payment_status = 'Pending',
       order_status = 'Pending',
       notes = '',
+      payment_attempt_id = null,
+      moneris_ticket = null,
+      moneris_reference_no = null,
+      moneris_auth_code = null,
+      card_brand = null,
+      card_last4 = null,
     } = orderData;
 
     try {
@@ -122,8 +129,8 @@ const OrderModel = {
           order_number, user_id, customer_name, customer_email, customer_phone,
           fulfillment_type, address, city, postal_code,
           subtotal, tax, shipping, total,
-          payment_method, payment_status, order_status, notes, sync_status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+          payment_method, payment_status, order_status, notes, sync_status, payment_attempt_id, moneris_ticket, moneris_reference_no, moneris_auth_code, card_brand, card_last4
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)`,
         [
           order_number,
           user_id || null,
@@ -142,6 +149,12 @@ const OrderModel = {
           payment_status,
           order_status,
           notes,
+          payment_attempt_id || null,
+          moneris_ticket || null,
+          moneris_reference_no || null,
+          moneris_auth_code || null,
+          card_brand || null,
+          card_last4 || null,
         ]
       );
 

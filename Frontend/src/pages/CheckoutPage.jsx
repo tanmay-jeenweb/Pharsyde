@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { createOrderApi } from '../services/orderService';
+import { preloadPaymentApi, setMonerisPaymentSession } from '../services/paymentService';
 import { STORE_INFO } from '../data/products';
 import {
   ShieldCheck,
@@ -20,6 +22,7 @@ import {
 } from 'lucide-react';
 
 export default function CheckoutPage() {
+  const navigate = useNavigate();
   const {
     cart,
     cartSubtotal,
@@ -108,12 +111,6 @@ export default function CheckoutPage() {
       if (!formData.postalCode.trim()) newErrors.postalCode = 'Postal code is required';
     }
 
-    if (formData.paymentMethod === 'card') {
-      if (!formData.cardNumber.trim()) newErrors.cardNumber = 'Card number is required';
-      if (!formData.cardExpiry.trim()) newErrors.cardExpiry = 'Expiry date required';
-      if (!formData.cardCvc.trim()) newErrors.cardCvc = 'CVC required';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -156,55 +153,24 @@ export default function CheckoutPage() {
     };
 
     try {
+      // 1. Credit Card via Moneris Hosted Checkout
+      if (formData.paymentMethod === 'card') {
+        const preloadResult = await preloadPaymentApi(payload, customerToken);
+        setMonerisPaymentSession(preloadResult);
+        navigate(`/checkout/payment?attempt=${encodeURIComponent(preloadResult.paymentAttemptId)}`);
+        return;
+      }
+
+      // 2. Interac / Offline Order Creation
       const res = await createOrderApi(payload, customerToken);
       const savedOrder = res.order;
 
-      const confirmedOrder = {
-        orderId: savedOrder.order_number,
-        items: [...cart],
-        subtotal: Number(savedOrder.subtotal || cartSubtotal),
-        tax: Number(savedOrder.tax || manitobaTax),
-        shipping: Number(savedOrder.shipping || shippingFee),
-        total: Number(savedOrder.total || orderTotal),
-        customer: { ...formData },
-        syncStatus: savedOrder.sync_status || 'synced',
-        techposOrderId: savedOrder.techpos_order_id,
-        createdAt: new Date().toLocaleDateString('en-CA', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-      };
-
-      setOrderConfirmed(confirmedOrder);
       clearCart();
-      showToast(`Order #${savedOrder.order_number} confirmed successfully!`, 'success');
+      showToast(`Order #${savedOrder.order_number} received!`, 'success');
+      navigate(`/order-success?orderId=${encodeURIComponent(savedOrder.order_number)}`);
     } catch (err) {
-      console.error('Order placement API failed:', err);
-      // Fallback client simulation if backend is unreachable
-      const fallbackOrderId = `PHAR-${Math.floor(100000 + Math.random() * 900000)}`;
-      const fallbackConfirmed = {
-        orderId: fallbackOrderId,
-        items: [...cart],
-        subtotal: cartSubtotal,
-        tax: manitobaTax,
-        shipping: shippingFee,
-        total: orderTotal,
-        customer: { ...formData },
-        syncStatus: 'pending',
-        createdAt: new Date().toLocaleDateString('en-CA', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-      };
-      setOrderConfirmed(fallbackConfirmed);
-      clearCart();
-      showToast(`Order #${fallbackOrderId} received!`, 'success');
+      console.error('Order processing failed:', err);
+      showToast(err.message || 'Unable to process checkout. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -636,48 +602,14 @@ export default function CheckoutPage() {
               </div>
 
               {formData.paymentMethod === 'card' && (
-                <div className="pt-4 border-t border-slate-100 space-y-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Cardholder Name</label>
-                    <input
-                      type="text"
-                      name="cardName"
-                      value={formData.cardName}
-                      onChange={handleInputChange}
-                      placeholder="Jane Doe"
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
-                    />
+                <div className="pt-4 border-t border-slate-100 p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-900">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    Moneris Hosted Gateway Checkout
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Card Number</label>
-                    <input
-                      type="text"
-                      name="cardNumber"
-                      value={formData.cardNumber}
-                      onChange={handleInputChange}
-                      placeholder="4500 •••• •••• 1234"
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
-                    />
-                    {errors.cardNumber && <span className="text-[10px] text-red-600">{errors.cardNumber}</span>}
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <input
-                      type="text"
-                      name="cardExpiry"
-                      value={formData.cardExpiry}
-                      onChange={handleInputChange}
-                      placeholder="MM/YY"
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
-                    />
-                    <input
-                      type="password"
-                      name="cardCvc"
-                      value={formData.cardCvc}
-                      onChange={handleInputChange}
-                      placeholder="CVC"
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
-                    />
-                  </div>
+                  <p className="text-[11px] text-emerald-800 leading-relaxed">
+                    You will complete payment in the next step via Moneris&apos;s secure hosted payment portal. Your card details are processed directly by the banking network and are never stored on Pharsyde servers (PCI-DSS SAQ-A Certified).
+                  </p>
                 </div>
               )}
             </div>
@@ -747,7 +679,11 @@ export default function CheckoutPage() {
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
-                    <span>Confirm Order • ${orderTotal.toFixed(2)} CAD</span>
+                    <span>
+                      {formData.paymentMethod === 'card'
+                        ? `Proceed to Payment • $${orderTotal.toFixed(2)} CAD`
+                        : `Confirm Order • $${orderTotal.toFixed(2)} CAD`}
+                    </span>
                   </>
                 )}
               </button>
