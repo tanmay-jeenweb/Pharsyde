@@ -11,7 +11,7 @@ export default function AgeGateModal() {
   if (isAgeVerified) return null;
 
   const currentYear = new Date().getFullYear();
-  const minAge = 19; // Manitoba legal age
+  const minAge = 19;
 
   const handleVerify = () => {
     if (!birthYear) {
@@ -25,7 +25,7 @@ export default function AgeGateModal() {
     }
 
     if (currentYear - year < minAge) {
-      setErrorMessage('You must be 19 years of age or older to enter this website in Manitoba.');
+      setErrorMessage('You must be 19 years of age or older to enter this website.');
       return;
     }
 
@@ -75,9 +75,9 @@ export default function AgeGateModal() {
               <option value="MB">Manitoba (19+)</option>
               <option value="ON">Ontario (19+)</option>
               <option value="BC">British Columbia (19+)</option>
-              <option value="AB">Alberta (18+)</option>
+              <option value="AB">Alberta (19+)</option>
               <option value="SK">Saskatchewan (19+)</option>
-              <option value="QC">Quebec (21+)</option>
+              <option value="QC">Quebec (19+)</option>
             </select>
           </div>
 
@@ -120,7 +120,7 @@ export default function AgeGateModal() {
         </div>
 
         <p className="text-[11px] text-slate-400 mt-6 leading-tight">
-          By entering, you confirm you are of legal age in Manitoba and agree to our Terms of Use and Privacy Policy. Valid government ID required upon delivery or pickup.
+          By entering, you confirm you are 19 years of age or older and agree to our Terms of Use and Privacy Policy. Valid government ID required upon delivery or pickup.
         </p>
       </div>
     </div>

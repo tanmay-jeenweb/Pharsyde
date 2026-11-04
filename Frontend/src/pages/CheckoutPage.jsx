@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { createOrderApi } from '../services/orderService';
+import { createOrderApi, checkEmailApi } from '../services/orderService';
 import { preloadPaymentApi, setMonerisPaymentSession } from '../services/paymentService';
 import { STORE_INFO } from '../data/products';
 import {
@@ -93,6 +93,9 @@ export default function CheckoutPage() {
   const manitobaTax = Math.round(discountedSubtotal * 0.12 * 100) / 100; // 5% GST + 7% PST
   const orderTotal = Math.max(0, Math.round((discountedSubtotal + shippingFee + manitobaTax) * 100) / 100);
 
+  const [existingAccountEmail, setExistingAccountEmail] = useState(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -102,6 +105,31 @@ export default function CheckoutPage() {
     // clear error for that field
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
+    }
+    if (name === 'email' && existingAccountEmail && value.trim().toLowerCase() !== existingAccountEmail) {
+      setExistingAccountEmail(null);
+    }
+  };
+
+  const handleEmailBlur = async () => {
+    if (isCustomerLoggedIn) return;
+    const emailToTest = (formData.email || '').trim().toLowerCase();
+    if (!emailToTest || !emailToTest.includes('@')) {
+      setExistingAccountEmail(null);
+      return;
+    }
+    try {
+      setIsCheckingEmail(true);
+      const res = await checkEmailApi(emailToTest);
+      if (res && res.exists) {
+        setExistingAccountEmail(emailToTest);
+      } else {
+        setExistingAccountEmail(null);
+      }
+    } catch (err) {
+      console.warn('Check email failed:', err);
+    } finally {
+      setIsCheckingEmail(false);
     }
   };
 
@@ -133,6 +161,29 @@ export default function CheckoutPage() {
     if (!validateForm()) {
       showToast('Please correct highlighted fields before submitting', 'error');
       return;
+    }
+
+    // If guest, verify email doesn't belong to an existing account
+    if (!isCustomerLoggedIn && formData.email) {
+      const emailToTest = formData.email.trim().toLowerCase();
+      try {
+        setIsCheckingEmail(true);
+        const checkRes = await checkEmailApi(emailToTest);
+        if (checkRes && checkRes.exists) {
+          setExistingAccountEmail(emailToTest);
+          setErrors((prev) => ({
+            ...prev,
+            email: 'An account with this email already exists. Please log in to complete your order.',
+          }));
+          showToast('An account with this email already exists. Please log in.', 'error');
+          openAuthModal('login');
+          return;
+        }
+      } catch (checkErr) {
+        console.warn('Pre-checkout email check failed:', checkErr);
+      } finally {
+        setIsCheckingEmail(false);
+      }
     }
 
     setIsSubmitting(true);
@@ -185,6 +236,12 @@ export default function CheckoutPage() {
       navigate(`/order-success?orderId=${encodeURIComponent(savedOrder.order_number)}`);
     } catch (err) {
       console.error('Order processing failed:', err);
+      if (err.data?.code === 'ACCOUNT_EXISTS' || (err.message && err.message.toLowerCase().includes('already exists'))) {
+        setExistingAccountEmail(formData.email.trim().toLowerCase());
+        showToast('An account with this email already exists. Please log in.', 'error');
+        openAuthModal('login');
+        return;
+      }
       showToast(err.message || 'Unable to process checkout. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
@@ -436,16 +493,44 @@ export default function CheckoutPage() {
                   />
                   {errors.lastName && <span className="text-[10px] text-red-600">{errors.lastName}</span>}
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address *</label>
+                <div className="sm:col-span-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700">Email Address *</label>
+                    {isCheckingEmail && (
+                      <span className="text-[10px] text-slate-400 animate-pulse">Checking account...</span>
+                    )}
+                  </div>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                    onBlur={handleEmailBlur}
+                    placeholder="you@example.com"
+                    className={`w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:bg-white transition-colors ${
+                      existingAccountEmail ? 'border-amber-400 bg-amber-50/30' : 'border-slate-300 focus:border-[#8EF705]'
+                    }`}
                   />
-                  {errors.email && <span className="text-[10px] text-red-600">{errors.email}</span>}
+                  {errors.email && <span className="text-[10px] text-red-600 block mt-1">{errors.email}</span>}
+
+                  {existingAccountEmail && (
+                    <div className="mt-2.5 p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 animate-in fade-in">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span className="text-[11px] leading-tight">
+                          We found an account for <strong>{existingAccountEmail}</strong>! Please log in to complete your checkout.
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openAuthModal('login')}
+                        className="shrink-0 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <User className="w-3.5 h-3.5" />
+                        <span>Log In</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number *</label>
