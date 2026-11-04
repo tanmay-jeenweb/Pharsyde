@@ -1,0 +1,90 @@
+# ==============================================================================
+# Pharsyde Web Application - Apache Configuration (.htaccess)
+# Domain: pharsyde.jeenhost.in
+# ==============================================================================
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # ----------------------------------------------------------------------
+  # 1. Force HTTPS
+  # ----------------------------------------------------------------------
+  RewriteCond %{HTTPS} off
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # ----------------------------------------------------------------------
+  # 2. Reverse Proxy API & Uploads to Node.js Backend (Port 5000)
+  # ----------------------------------------------------------------------
+  <IfModule mod_proxy.c>
+    # Proxy /api requests to backend
+    RewriteRule ^api/(.*)$ http://127.0.0.1:5000/api/$1 [P,L]
+    RewriteRule ^api$ http://127.0.0.1:5000/api [P,L]
+
+    # Proxy /uploads requests to backend
+    RewriteRule ^uploads/(.*)$ http://127.0.0.1:5000/uploads/$1 [P,L]
+  </IfModule>
+
+  # ----------------------------------------------------------------------
+  # 3. React SPA Client-Side Routing
+  # ----------------------------------------------------------------------
+  # Allow existing files & directories to be served directly
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Exclude API and Uploads from SPA rewrites
+  RewriteCond %{REQUEST_URI} ^/(api|uploads) [NC]
+  RewriteRule ^ - [L]
+
+  # Fallback all other routes to React index.html
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# ----------------------------------------------------------------------
+# 4. Security Headers
+# ----------------------------------------------------------------------
+<IfModule mod_headers.c>
+  # Clickjacking Protection
+  Header always set X-Frame-Options "SAMEORIGIN"
+
+  # Prevent MIME type sniffing
+  Header always set X-Content-Type-Options "nosniff"
+
+  # XSS Filter Protection
+  Header always set X-XSS-Protection "1; mode=block"
+
+  # Referrer Policy
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # Do NOT cache index.html (guarantees users always get latest React build)
+  <FilesMatch "^(index\.html)?$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+
+  # Cache static assets (Vite hashed bundles: js, css, images, fonts)
+  <FilesMatch "\.(js|css|webp|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$">
+    Header set Cache-Control "max-age=31536000, public, immutable"
+  </FilesMatch>
+</IfModule>
+
+# ----------------------------------------------------------------------
+# 5. Gzip Compression (mod_deflate)
+# ----------------------------------------------------------------------
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/x-javascript application/json application/xml application/rss+xml image/svg+xml
+</IfModule>
+
+# ----------------------------------------------------------------------
+# 6. Block Sensitive Files & Prevent Directory Listing
+# ----------------------------------------------------------------------
+<FilesMatch "(^\.env|\.git|\.gitignore|package\.json|package-lock\.json)">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+
+Options -Indexes
+
