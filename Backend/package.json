@@ -12,6 +12,7 @@
     "sync:all": "node scripts/syncProducts.js && node scripts/syncProductImages.js",
     "update-images": "node scripts/updateProductImages.js",
     "create-admin": "node scripts/createAdminUser.js",
+    "create-admin-user": "node scripts/createAdminUser.js",
     "update:test-image": "node scripts/updateTestProductImage.js"
   },
   "keywords": [
