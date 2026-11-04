@@ -412,3 +412,25 @@ export async function updateOfficeSettingApi(key, value) {
   });
   return handleResponse(res);
 }
+
+// ─────────────────────────────────────────────────────────────
+// Mobile App Version & Force Update
+// ─────────────────────────────────────────────────────────────
+
+export async function checkAppVersionApi(version) {
+  const query = version ? `?version=${encodeURIComponent(version)}` : '';
+  const res = await fetch(`/api/app/check-update${query}`, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return handleResponse(res);
+}
+
+export async function updateAppVersionSettingsApi(payload) {
+  const res = await fetch(`/api/app/version`, {
+    method: 'POST',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+}
+
