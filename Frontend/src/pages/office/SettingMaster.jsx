@@ -61,8 +61,8 @@ export default function SettingMaster() {
   const [originalLatestVersion, setOriginalLatestVersion] = useState('1.0.0');
   const [mobileMinVersion, setMobileMinVersion] = useState('1.0.0');
   const [originalMinVersion, setOriginalMinVersion] = useState('1.0.0');
-  const [mobileApkUrl, setMobileApkUrl] = useState('https://pharsyde.jeenhost.in/uploads/apk/app-release.apk');
-  const [originalApkUrl, setOriginalApkUrl] = useState('https://pharsyde.jeenhost.in/uploads/apk/app-release.apk');
+  const [mobileApkUrl, setMobileApkUrl] = useState('https://pharsyde.jeenhost.in/uploads/app-release.apk');
+  const [originalApkUrl, setOriginalApkUrl] = useState('https://pharsyde.jeenhost.in/uploads/app-release.apk');
   const [mobileForceUpdate, setMobileForceUpdate] = useState(true);
   const [originalForceUpdate, setOriginalForceUpdate] = useState(true);
   const [mobileReleaseNotes, setMobileReleaseNotes] = useState('Performance improvements, checkout optimizations, and bug fixes.');
@@ -526,7 +526,7 @@ export default function SettingMaster() {
           </Link>
 
           <a
-            href="/download/apk"
+            href="/api/app/download"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors cursor-pointer shadow-xs"
@@ -1335,7 +1335,7 @@ export default function SettingMaster() {
               </label>
               <div className="flex items-center gap-2">
                 <a
-                  href="/download/apk"
+                  href="/api/app/download"
                   target="_blank"
                   rel="noreferrer"
                   className="text-[11px] font-bold text-purple-700 hover:text-purple-800 inline-flex items-center gap-1"
@@ -1360,7 +1360,7 @@ export default function SettingMaster() {
                 type="text"
                 value={mobileApkUrl}
                 onChange={(e) => setMobileApkUrl(e.target.value)}
-                placeholder="https://pharsyde.jeenhost.in/uploads/apk/app-release.apk"
+                placeholder="https://pharsyde.jeenhost.in/uploads/app-release.apk"
                 className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs font-mono text-slate-900 outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 bg-white pr-20"
               />
               <button

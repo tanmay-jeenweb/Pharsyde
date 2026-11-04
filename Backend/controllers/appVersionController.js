@@ -8,7 +8,7 @@ const uploadConfig = require('../config/uploadConfig');
 // =========================================================================
 const HARDCODED_APP_VERSION = '1.0.0';
 const HARDCODED_MIN_VERSION = '1.0.0';
-const HARDCODED_APK_URL = 'https://pharsyde.jeenhost.in/uploads/apk/app-release.apk';
+const HARDCODED_APK_URL = 'https://pharsyde.jeenhost.in/uploads/app-release.apk';
 const HARDCODED_FORCE_UPDATE = 'true';
 const HARDCODED_RELEASE_NOTES = 'Performance improvements, checkout optimizations, and bug fixes.';
 
@@ -91,10 +91,14 @@ const getAppVersionConfig = async () => {
  */
 const findLocalApk = () => {
   const candidatePaths = [
-    path.join(uploadConfig.uploadDir, 'apk', 'app-release.apk'),
     path.join(uploadConfig.uploadDir, 'app-release.apk'),
-    path.resolve(__dirname, '..', 'uploads', 'apk', 'app-release.apk'),
+    path.join(uploadConfig.uploadDir, 'apk', 'app-release.apk'),
     path.resolve(__dirname, '..', 'uploads', 'app-release.apk'),
+    path.resolve(__dirname, '..', 'uploads', 'apk', 'app-release.apk'),
+    path.resolve(process.cwd(), 'uploads', 'app-release.apk'),
+    path.resolve(process.cwd(), 'uploads', 'apk', 'app-release.apk'),
+    path.resolve(process.cwd(), 'Backend', 'uploads', 'app-release.apk'),
+    path.resolve(__dirname, '..', '..', 'uploads', 'app-release.apk'),
   ];
 
   for (const filePath of candidatePaths) {
