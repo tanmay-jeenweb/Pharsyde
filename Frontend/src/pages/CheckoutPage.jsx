@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { createOrderApi, checkEmailApi } from '../services/orderService';
-import { createOrderApi } from '../services/orderService';
 import { uploadDocumentApi } from '../services/uploadService';
 import { preloadPaymentApi, setMonerisPaymentSession } from '../services/paymentService';
 import { calculateCartTaxes } from '../utils/taxCalculator';
@@ -253,7 +252,11 @@ export default function CheckoutPage() {
         address: formData.address,
         city: formData.city,
         postalCode: formData.postalCode,
+        govIdUrl: uploadedDoc?.fileUrl || null,
+        gov_id_url: uploadedDoc?.fileUrl || null,
       },
+      govIdUrl: uploadedDoc?.fileUrl || null,
+      gov_id_url: uploadedDoc?.fileUrl || null,
       fulfillmentType: formData.fulfillmentType,
       address: formData.address,
       city: formData.city,
