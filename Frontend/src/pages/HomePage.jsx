@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import ProductCard from '../components/common/ProductCard';
+import AppDownloadBadge from '../components/common/AppDownloadBadge';
 import {
   getBestSellersProductsApi,
   getNewArrivalsProductsApi,
@@ -258,6 +259,9 @@ export default function HomePage() {
                 >
                   Visit Winnipeg Store
                 </button>
+
+                {/* Google Play Store Mobile App Download Badge */}
+                <AppDownloadBadge />
               </div>
             </div>
 
