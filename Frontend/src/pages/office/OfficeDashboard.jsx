@@ -18,7 +18,8 @@ import {
   Clock, 
   Activity,
   Plus,
-  Zap
+  Zap,
+  Sliders
 } from 'lucide-react';
 
 export default function OfficeDashboard() {
@@ -462,6 +463,21 @@ export default function OfficeDashboard() {
               <div>
                 <h3 className="font-bold text-slate-900 text-sm group-hover:text-emerald-800">Product Image Master</h3>
                 <p className="text-xs text-slate-500">Batch image URLs & sync</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            to="/office/setting-master"
+            className="p-4 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all group cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-800 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <Sliders className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm group-hover:text-emerald-800">Setting Master</h3>
+                <p className="text-xs text-slate-500">New arrivals limit & store configs</p>
               </div>
             </div>
           </Link>

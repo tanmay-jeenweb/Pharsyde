@@ -13,12 +13,17 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 const { testConnection } = require('./config/db');
 const { initModelTables } = require('./models/index');
 
+// Upload Configuration (referenced from Jasmin-CRM)
+const uploadConfig = require('./config/uploadConfig');
+
 // Route Handlers
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const officeRoutes = require('./routes/officeRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const { getPublicSettings } = require('./controllers/settingController');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 // Middlewares
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
@@ -28,7 +33,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Security & Utility Middlewares
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 app.use(
   cors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
@@ -39,6 +46,19 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Serve uploaded files statically if set to express (matching Jasmin-CRM)
+if (uploadConfig.serveMethod === 'express') {
+  console.log(`[UploadConfig] Serving uploaded files statically from: ${uploadConfig.uploadDir}`);
+  app.use(
+    '/uploads',
+    express.static(uploadConfig.uploadDir, {
+      setHeaders: (res) => {
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      },
+    })
+  );
+}
 
 // Root & Health Check Endpoints
 app.get('/', (req, res) => {
@@ -64,6 +84,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/office', officeRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments/moneris', paymentRoutes);
+app.get('/api/settings/public', getPublicSettings);
+app.use('/api/upload', uploadRoutes);
 
 // 404 & Error Handling Middlewares
 app.use(notFound);
@@ -88,6 +110,7 @@ const startServer = async () => {
     console.log(`🔗 API Base URL: http://localhost:${PORT}`);
     console.log(`📦 Orders API: http://localhost:${PORT}/api/orders`);
     console.log(`🏢 Office API: http://localhost:${PORT}/api/office`);
+    console.log(`📁 Upload API: http://localhost:${PORT}/api/upload/document`);
     console.log(`🩺 Health check: http://localhost:${PORT}/api/health`);
     console.log(`===============================================`);
   });

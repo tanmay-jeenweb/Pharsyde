@@ -1,6 +1,9 @@
 const OrderModel = require('../models/orderModel');
 const UserModel = require('../models/userModel');
+const pool = require('../config/db');
 const { syncOrderToTechPOS } = require('../services/techposOrderService');
+const { calculateOrderTaxes } = require('../utils/taxCalculator');
+const { validateCannabisLimit } = require('../utils/cannabisLimit');
 
 /**
  * Generate a unique formatted order number (e.g. PHAR-847291)
@@ -26,6 +29,7 @@ const createOrder = async (req, res, next) => {
       postalCode = '',
       paymentMethod = 'card',
       notes = '',
+      gov_id_url = null,
     } = req.body;
 
     // Disallow in-store pay / COD
@@ -121,10 +125,56 @@ const createOrder = async (req, res, next) => {
       }
     }
 
-    // Manitoba Tax (5% GST + 7% PST = 12%) on subtotal after loyalty discount
-    const discountedSubtotal = Math.max(0, subtotal - pointsDiscount);
-    const tax = Math.round(discountedSubtotal * 0.12 * 100) / 100;
-    const total = Math.max(0, Math.round((discountedSubtotal + tax + shipping) * 100) / 100);
+    // Resolve product categories from DB if missing on incoming items
+    const missingProductIds = items
+      .filter((i) => !i.category && !i.product?.category)
+      .map((i) => i.product_id || i.productId || i.pk || i.id)
+      .filter(Boolean);
+
+    let categoryMap = {};
+    if (missingProductIds.length > 0) {
+      try {
+        const [rows] = await pool.query(
+          `SELECT pk, category, equivalent_g FROM products WHERE pk IN (${missingProductIds.map(() => '?').join(',')})`,
+          missingProductIds
+        );
+        for (const row of rows) {
+          categoryMap[row.pk] = { category: row.category, equivalent_g: row.equivalent_g };
+        }
+      } catch (catErr) {
+        console.warn('[Order Tax] DB category lookup warning:', catErr.message);
+      }
+    }
+
+    const itemsForTax = items.map((i) => {
+      const pid = String(i.product_id || i.productId || i.pk || i.id || '');
+      return {
+        ...i,
+        category: i.category || i.product?.category || categoryMap[pid]?.category || '',
+        equivalent_g: i.equivalent_g ?? i.product?.equivalent_g ?? categoryMap[pid]?.equivalent_g,
+      };
+    });
+
+    // 30-Gram Legal Cannabis Purchase Limit Check (Canadian Cannabis Act)
+    const limitValidation = validateCannabisLimit(itemsForTax);
+    if (!limitValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        code: 'CANNABIS_LIMIT_EXCEEDED',
+        message: limitValidation.message,
+        totalGrams: limitValidation.totalGrams,
+        maxGrams: limitValidation.maxGrams,
+        excessGrams: limitValidation.excessGrams,
+      });
+    }
+
+    // Dynamic tax calculation: 5% Cannabis, 7% Nicotine (proportionally discounted)
+    const taxSummary = calculateOrderTaxes(itemsForTax, {
+      discount: pointsDiscount,
+      shipping,
+    });
+    const tax = taxSummary.tax;
+    const total = taxSummary.total;
 
     const orderNumber = generateOrderNumber();
 
@@ -165,6 +215,7 @@ const createOrder = async (req, res, next) => {
         payment_status: 'Paid',
         order_status: 'Confirmed',
         notes: resolvedNotes,
+        gov_id_url: customer.govIdUrl || customer.gov_id_url || gov_id_url || req.body.govIdUrl || null,
       },
       items: normalizedItems,
     });

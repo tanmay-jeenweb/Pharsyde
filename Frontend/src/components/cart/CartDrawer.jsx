@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { X, Trash2, Plus, Minus, ArrowRight, ShoppingBag, ShieldCheck, Truck, Sparkles } from 'lucide-react';
+import { calculateCartTaxes } from '../../utils/taxCalculator';
+import { X, Trash2, Plus, Minus, ArrowRight, ShoppingBag, ShieldCheck, Truck, Sparkles, AlertTriangle } from 'lucide-react';
 
 export default function CartDrawer() {
-  const { isCartOpen, setIsCartOpen, cart, updateQuantity, removeFromCart, cartSubtotal, navigateTo } = useApp();
+  const { isCartOpen, setIsCartOpen, cart, updateQuantity, removeFromCart, cartSubtotal, navigateTo, cartCannabisGrams = 0, isCannabisLimitExceeded = false } = useApp();
   const [promoCode, setPromoCode] = useState('');
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoApplied, setPromoApplied] = useState(false);
@@ -15,11 +16,17 @@ export default function CartDrawer() {
   const progressPercent = Math.min(100, (cartSubtotal / FREE_SHIPPING_THRESHOLD) * 100);
   const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - cartSubtotal);
 
-  // Manitoba Tax: 5% GST + 7% PST = 12%
-  const taxRate = 0.12;
-  const estimatedTax = (cartSubtotal - promoDiscount) * taxRate;
   const deliveryFee = cartSubtotal >= FREE_SHIPPING_THRESHOLD || cartSubtotal === 0 ? 0 : 9.99;
-  const finalTotal = Math.max(0, cartSubtotal - promoDiscount + estimatedTax + deliveryFee);
+
+  const taxSummary = calculateCartTaxes(cart, {
+    discount: promoDiscount,
+    shipping: deliveryFee,
+  });
+  const estimatedTax = taxSummary.totalTax;
+  const finalTotal = taxSummary.finalTotal;
+
+
+
 
   const handleApplyPromo = (e) => {
     e.preventDefault();
@@ -222,9 +229,14 @@ export default function CartDrawer() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>Estimated Tax (MB 12% GST+PST)</span>
+                  <span>{taxSummary.hasCannabis && taxSummary.hasNicotine ? 'Estimated Taxes (5% Cannabis / 12% Nicotine)' : taxSummary.hasNicotine ? 'Nicotine Tax (5% GST + 7% PST = 12%)' : 'Cannabis Tax (5% GST)'}</span>
                   <span className="font-mono text-slate-900">${estimatedTax.toFixed(2)} CAD</span>
                 </div>
+                {taxSummary.hasCannabis && taxSummary.hasNicotine && (
+                  <div className="flex justify-between text-[11px] text-slate-400 pl-2">
+                    <span>• Cannabis 5% GST: ${taxSummary.cannabisTax.toFixed(2)} | Nicotine 12% (5% GST+7% PST): ${taxSummary.nicotineTax.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Winnipeg Delivery / Pickup</span>
                   <span className="font-mono text-slate-900">
@@ -237,13 +249,26 @@ export default function CartDrawer() {
                 </div>
               </div>
 
-              {/* Checkout Button in #8EF705 */}
+              {/* Cannabis Limit Warning Banner */}
+              {isCannabisLimitExceeded && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
+                  <span>Cart exceeds 30.0g legal limit by {(cartCannabisGrams - 30.0).toFixed(1)}g. Please reduce items to checkout.</span>
+                </div>
+              )}
+
+              {/* Checkout Button */}
               <button
                 onClick={handleProceedToCheckout}
-                className="w-full py-3.5 px-4 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-heading font-extrabold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#8EF705]/25"
+                disabled={isCannabisLimitExceeded}
+                className={
+                  isCannabisLimitExceeded
+                    ? "w-full py-3.5 px-4 rounded-xl bg-slate-200 text-slate-400 font-heading font-extrabold text-xs uppercase tracking-widest cursor-not-allowed flex items-center justify-center gap-2"
+                    : "w-full py-3.5 px-4 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-heading font-extrabold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#8EF705]/25"
+                }
               >
-                <span>Proceed to Secure Checkout</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>{isCannabisLimitExceeded ? `Exceeds 30.0g Limit (${cartCannabisGrams.toFixed(1)}g)` : 'Proceed to Secure Checkout'}</span>
+                {!isCannabisLimitExceeded && <ArrowRight className="w-4 h-4" />}
               </button>
 
               <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500">

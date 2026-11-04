@@ -1,6 +1,8 @@
 const express = require('express');
 const {
   getProducts,
+  getNewArrivals,
+  getBestSellers,
   getProductById,
   createProduct,
   bulkUpsertProducts,
@@ -28,6 +30,8 @@ router.get('/sync-all', syncAllTechPOS);
 
 // Public product queries
 router.get('/', getProducts);
+router.get('/new-arrivals', getNewArrivals);
+router.get('/best-sellers', getBestSellers);
 router.get('/:id', getProductById);
 
 // Admin-protected routes

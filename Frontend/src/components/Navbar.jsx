@@ -110,6 +110,15 @@ export default function Navbar({ title = "ERP Admin" }) {
             color: "bg-teal-50 text-teal-700 border border-teal-100/50",
             activeColor: "bg-teal-100 text-teal-800",
             desc: "TechPOS image repository and synchronization"
+        },
+        {
+            name: "Setting Master",
+            path: "/office/setting-master",
+            masterKey: "setting_master",
+            icon: "fa-solid fa-sliders",
+            color: "bg-indigo-50 text-indigo-700 border border-indigo-100/50",
+            activeColor: "bg-indigo-100 text-indigo-800",
+            desc: "Storefront product limits, defaults & ERP configuration"
         }
     ];
 
