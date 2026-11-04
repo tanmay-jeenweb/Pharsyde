@@ -158,24 +158,39 @@ export default function UserMaster() {
     {
       key: 'reward_points',
       label: 'Reward Points',
-      minWidth: '130px',
+      minWidth: '120px',
       render: (row) => {
         if (row.user_type !== 'Customer' && row.role !== 'user') {
           return <span className="text-xs text-slate-400 font-medium">—</span>;
         }
         const pts = Number(row.reward_points) || 0;
-        const val = Number(row.reward_points_dollar_value) || 0;
         return (
-          <div className="flex flex-col">
-            <span className={`inline-flex items-center gap-1 text-xs font-bold ${pts > 0 ? 'text-amber-700' : 'text-slate-500'}`}>
-              <span>⭐ {pts} pts</span>
-            </span>
-            {val > 0 && (
-              <span className="text-[10px] text-slate-400 font-mono">
-                (${val.toFixed(2)} CAD)
-              </span>
-            )}
-          </div>
+          <span className={`inline-flex items-center gap-1 text-xs font-bold ${pts > 0 ? 'text-amber-700' : 'text-slate-500'}`}>
+            <span>⭐ {pts} pts</span>
+          </span>
+        );
+      },
+    },
+    {
+      key: 'reward_points_dollar_value',
+      label: 'Reward Value ($ CAD)',
+      minWidth: '145px',
+      render: (row) => {
+        if (row.user_type !== 'Customer' && row.role !== 'user') {
+          return <span className="text-xs text-slate-400 font-medium">—</span>;
+        }
+        const pts = Number(row.reward_points) || 0;
+        const storedVal = Number(row.reward_points_dollar_value) || 0;
+        const val = storedVal > 0 ? storedVal : (pts > 0 ? pts * 1.00 : 0);
+        return (
+          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-mono font-bold ${
+            val > 0 
+              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+              : 'text-slate-400'
+          }`}>
+            <span>💵</span>
+            <span>${val.toFixed(2)} CAD</span>
+          </span>
         );
       },
     },
@@ -353,7 +368,7 @@ export default function UserMaster() {
 
       {/* Main DataTable (ERP Format) */}
       <DataTable
-        tableId="admin_user_master"
+        tableId="admin_user_master_v2"
         title="User Master"
         data={users}
         columns={userColumns}
