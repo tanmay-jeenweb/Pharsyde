@@ -24,14 +24,14 @@ export default function ForceUpdateModal({ updateData, onDismiss }) {
   const {
     latestVersion = '1.0.0',
     currentVersion = '1.0.0',
-    downloadUrl = '/download/apk',
+    downloadUrl = '/api/app/download',
     forceUpdate = true,
     releaseNotes = '',
   } = updateData;
 
   const handleUpdateClick = () => {
     // Open APK download URL in browser / system download manager
-    window.location.href = downloadUrl || '/download/apk';
+    window.location.href = downloadUrl || '/api/app/download';
   };
 
   return (

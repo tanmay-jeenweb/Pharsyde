@@ -54,8 +54,12 @@ if (uploadConfig.serveMethod === 'express') {
   app.use(
     '/uploads',
     express.static(uploadConfig.uploadDir, {
-      setHeaders: (res) => {
+      setHeaders: (res, filePath) => {
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        if (filePath && filePath.endsWith('.apk')) {
+          res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+          res.setHeader('Content-Disposition', 'attachment; filename="app-release.apk"');
+        }
       },
     })
   );
