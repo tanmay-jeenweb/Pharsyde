@@ -12,6 +12,8 @@ import ScrollToTop from './components/common/ScrollToTop';
 // Storefront Pages
 import HomePage from './pages/HomePage';
 import CatalogPage from './pages/CatalogPage';
+import NewArrivalsPage from './pages/NewArrivalsPage';
+import BestSellersPage from './pages/BestSellersPage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
 import CheckoutPage from './pages/CheckoutPage';
 import PaymentPage from './pages/PaymentPage';
@@ -36,6 +38,7 @@ import CreateProductPage from './pages/office/CreateProductPage';
 import ProductImageMaster from './pages/office/ProductImageMaster';
 import ActivityReport from './pages/office/ActivityReport';
 import OrderMaster from './pages/office/OrderMaster';
+import SettingMaster from './pages/office/SettingMaster';
 
 function MainStoreApp() {
   return (
@@ -53,6 +56,10 @@ function MainStoreApp() {
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/new-arrivals" element={<NewArrivalsPage />} />
+          <Route path="/new-arrival" element={<Navigate to="/new-arrivals" replace />} />
+          <Route path="/best-sellers" element={<BestSellersPage />} />
+          <Route path="/best-seller" element={<Navigate to="/best-sellers" replace />} />
           <Route path="/catalog" element={<CatalogPage />} />
 
           {/* Catalog route aliases */}
@@ -222,6 +229,22 @@ export default function App() {
           element={
             <OfficeProtectedRoute>
               <OrderMaster />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route
+          path="/office/setting-master"
+          element={
+            <OfficeProtectedRoute>
+              <SettingMaster />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route
+          path="/office/settings"
+          element={
+            <OfficeProtectedRoute>
+              <SettingMaster />
             </OfficeProtectedRoute>
           }
         />

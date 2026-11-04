@@ -30,6 +30,11 @@ const {
   getTechPosLiveOrders,
   getTechPosOrderItems,
 } = require('../controllers/officeController');
+const {
+  getOfficeSettings,
+  getOfficeSettingByKey,
+  updateOfficeSetting,
+} = require('../controllers/settingController');
 const { verifyToken } = require('../utils/jwt');
 const pool = require('../config/db');
 
@@ -102,5 +107,10 @@ router.get('/orders', getOfficeOrders);
 router.get('/purchase-orders', getTechPosPurchaseOrders);
 router.get('/pos-live-orders', getTechPosLiveOrders);
 router.get('/pos-order-items/:orderId', getTechPosOrderItems);
+
+// 9. Setting Master
+router.get('/settings', getOfficeSettings);
+router.get('/settings/:key', getOfficeSettingByKey);
+router.put('/settings/:key', updateOfficeSetting);
 
 module.exports = router;

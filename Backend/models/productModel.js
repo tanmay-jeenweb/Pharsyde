@@ -211,7 +211,7 @@ const ProductModel = {
     }
 
     // Safe sorting whitelist
-    const allowedSortFields = ['modified', 'product_name', 'retail_price', 'cost', 'qty_available', 'brand', 'pk'];
+    const allowedSortFields = ['modified', 'created_at', 'product_name', 'retail_price', 'cost', 'qty_available', 'brand', 'pk'];
     const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'modified';
     const safeSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
@@ -219,6 +219,23 @@ const ProductModel = {
     params.push(Number(limit), Number(offset));
 
     const [rows] = await pool.query(query, params);
+    return rows;
+  },
+
+  /**
+   * Get newest arrival products with valid images
+   */
+  async findNewArrivals({ limit = 24 } = {}) {
+    const query = `
+      SELECT * FROM products
+      WHERE active = 1
+        AND imageUrl IS NOT NULL
+        AND imageUrl != ''
+        AND imageUrl != '[]'
+      ORDER BY created_at DESC, modified DESC
+      LIMIT ?
+    `;
+    const [rows] = await pool.query(query, [Number(limit)]);
     return rows;
   },
 
@@ -280,6 +297,37 @@ const ProductModel = {
   async findByPk(pk) {
     const [rows] = await pool.query('SELECT * FROM products WHERE pk = ?', [String(pk)]);
     return rows[0] || null;
+  },
+
+  /**
+   * Find multiple products by primary keys (pks) maintaining selection order.
+   * Defaults to hasImage = true so only products with valid images are returned (matching All Products catalog).
+   */
+  async findByPks(pks = [], { hasImage = true } = {}) {
+    if (!Array.isArray(pks) || pks.length === 0) return [];
+    const validPks = pks.map(String).filter(Boolean);
+    if (validPks.length === 0) return [];
+
+    const placeholders = validPks.map(() => '?').join(', ');
+    let query = `
+      SELECT * FROM products
+      WHERE pk IN (${placeholders})
+    `;
+    if (hasImage) {
+      query += ` AND imageUrl IS NOT NULL AND imageUrl != '' AND imageUrl != '[]'`;
+    }
+
+    const [rows] = await pool.query(query, validPks);
+
+    // Preserve the original order of the pks
+    const rowMap = new Map(rows.map(r => [String(r.pk), r]));
+    const ordered = [];
+    for (const pk of validPks) {
+      if (rowMap.has(pk)) {
+        ordered.push(rowMap.get(pk));
+      }
+    }
+    return ordered;
   },
 
   /**

@@ -25,6 +25,8 @@ export default function Navbar() {
 
   const navLinks = [
     { path: '/', label: 'Home' },
+    { path: '/new-arrivals', label: 'New Arrivals' },
+    { path: '/best-sellers', label: 'Best Sellers' },
     { path: '/catalog', label: 'All Products' },
     ...(isCustomerLoggedIn ? [{ path: '/orders', label: 'My Orders' }] : []),
     { path: '/about', label: 'About Us' },
