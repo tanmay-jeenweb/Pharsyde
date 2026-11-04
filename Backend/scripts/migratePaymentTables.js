@@ -56,7 +56,7 @@ async function migrate() {
   `);
   console.log('[Migration] ✓ payment_attempts table verified.');
 
-  // 3. Add Moneris Columns to orders Table
+  // 3. Add Moneris & Compliance Columns to orders Table
   const [cols] = await pool.query('SHOW COLUMNS FROM orders');
   const existingColNames = cols.map((c) => c.Field);
 
@@ -67,6 +67,7 @@ async function migrate() {
     { name: 'moneris_auth_code', type: 'VARCHAR(100) NULL' },
     { name: 'card_brand', type: 'VARCHAR(50) NULL' },
     { name: 'card_last4', type: 'VARCHAR(4) NULL' },
+    { name: 'gov_id_url', type: 'VARCHAR(500) NULL' },
   ];
 
   for (const col of columnsToAdd) {
@@ -89,4 +90,3 @@ if (require.main === module) {
 }
 
 module.exports = migrate;
-

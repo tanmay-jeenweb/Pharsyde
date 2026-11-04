@@ -46,6 +46,7 @@ const ORDER_TABLES_SCHEMA = `
     payment_status VARCHAR(50) DEFAULT 'Pending',
     order_status VARCHAR(50) DEFAULT 'Pending',
     notes TEXT NULL,
+    gov_id_url VARCHAR(500) NULL,
     techpos_order_id VARCHAR(100) NULL,
     techpos_external_identifier VARCHAR(100) NULL,
     sync_status VARCHAR(50) DEFAULT 'pending',
@@ -86,6 +87,7 @@ const OrderModel = {
       await pool.query(ORDER_TABLES_SCHEMA);
       await pool.query(ORDER_ITEMS_TABLE_SCHEMA);
       try { await require('../scripts/migratePaymentTables')(); } catch (mErr) { console.warn('[Migration Warning]', mErr.message); }
+      try { await require('../scripts/migrateGovIdColumn')(); } catch (gErr) { console.warn('[Gov ID Migration Warning]', gErr.message); }
       console.log('[OrderModel] Orders & Order Items tables verified/created successfully.');
     } catch (err) {
       console.warn('[OrderModel Warning] Could not create orders table in MySQL:', err.message);
@@ -114,6 +116,7 @@ const OrderModel = {
       payment_status = 'Pending',
       order_status = 'Pending',
       notes = '',
+      gov_id_url = null,
       payment_attempt_id = null,
       moneris_ticket = null,
       moneris_reference_no = null,
@@ -129,8 +132,8 @@ const OrderModel = {
           order_number, user_id, customer_name, customer_email, customer_phone,
           fulfillment_type, address, city, postal_code,
           subtotal, tax, shipping, total,
-          payment_method, payment_status, order_status, notes, sync_status, payment_attempt_id, moneris_ticket, moneris_reference_no, moneris_auth_code, card_brand, card_last4
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)`,
+          payment_method, payment_status, order_status, notes, gov_id_url, sync_status, payment_attempt_id, moneris_ticket, moneris_reference_no, moneris_auth_code, card_brand, card_last4
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)`,
         [
           order_number,
           user_id || null,
@@ -149,6 +152,7 @@ const OrderModel = {
           payment_status,
           order_status,
           notes,
+          gov_id_url || null,
           payment_attempt_id || null,
           moneris_ticket || null,
           moneris_reference_no || null,

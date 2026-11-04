@@ -226,13 +226,18 @@ export default function ProductDetailsPage() {
       category: productCategory
     };
 
-    addToCart(
+    const success = addToCart(
       normalizedProduct,
       { id: 'default', label: productSize || 'Standard Pack', price: effectivePrice },
       quantity
     );
-    setAddedAnim(true);
-    setTimeout(() => setAddedAnim(false), 2000);
+    if (success !== false) {
+      setAddedAnim(true);
+      setTimeout(() => setAddedAnim(false), 2000);
+  
+    }
+
+
   };
 
   // Strain color theme
