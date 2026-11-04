@@ -73,12 +73,22 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(null);
 
+  // Loyalty Rewards State & Calculations
+  const [redeemRewards, setRedeemRewards] = useState(false);
+  const availablePoints = isCustomerLoggedIn ? Number(customerUser?.reward_points || 0) : 0;
+  const pointRate = (Number(customerUser?.reward_points_dollar_value) > 0 && availablePoints > 0)
+    ? (Number(customerUser.reward_points_dollar_value) / availablePoints)
+    : 1.00;
+  const maxRedeemablePoints = Math.min(availablePoints, Math.floor(cartSubtotal / pointRate));
+  const rewardDiscount = redeemRewards ? Math.round(maxRedeemablePoints * pointRate * 100) / 100 : 0.00;
+
   // Calculations
   const FREE_SHIPPING_THRESHOLD = 75.0;
   const isPickup = formData.fulfillmentType === 'pickup';
   const shippingFee = isPickup || cartSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 9.99;
-  const manitobaTax = Math.round(cartSubtotal * 0.12 * 100) / 100; // 5% GST + 7% PST
-  const orderTotal = Math.round((cartSubtotal + shippingFee + manitobaTax) * 100) / 100;
+  const discountedSubtotal = Math.max(0, cartSubtotal - rewardDiscount);
+  const manitobaTax = Math.round(discountedSubtotal * 0.12 * 100) / 100; // 5% GST + 7% PST
+  const orderTotal = Math.max(0, Math.round((discountedSubtotal + shippingFee + manitobaTax) * 100) / 100);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -150,6 +160,8 @@ export default function CheckoutPage() {
       postalCode: formData.postalCode,
       paymentMethod: formData.paymentMethod,
       notes: formData.specialInstructions,
+      redeem_rewards: redeemRewards,
+      redeemed_points: redeemRewards ? maxRedeemablePoints : 0,
     };
 
     try {
@@ -646,8 +658,38 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
+              {/* Loyalty Rewards Redemption Card */}
+              {isCustomerLoggedIn && availablePoints > 0 && (
+                <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                      <Sparkles className="w-4 h-4 text-amber-600" />
+                      <span>Redeem Loyalty Rewards</span>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-amber-800">
+                      ⭐ {availablePoints} pts
+                    </span>
+                  </div>
+                  <label className="flex items-center gap-2.5 cursor-pointer pt-1 text-xs text-amber-950 font-medium select-none">
+                    <input
+                      type="checkbox"
+                      checked={redeemRewards}
+                      onChange={(e) => setRedeemRewards(e.target.checked)}
+                      className="w-4 h-4 accent-amber-600 rounded cursor-pointer"
+                    />
+                    <span>Redeem {maxRedeemablePoints} points for -${(maxRedeemablePoints * pointRate).toFixed(2)} CAD off</span>
+                  </label>
+                </div>
+              )}
+
               {/* Financial Breakdown */}
               <div className="pt-4 border-t border-slate-100 space-y-2 text-xs text-slate-600">
+                {redeemRewards && rewardDiscount > 0 && (
+                  <div className="flex justify-between text-amber-700 font-bold">
+                    <span>Loyalty Points Discount</span>
+                    <span className="font-mono">-${rewardDiscount.toFixed(2)} CAD</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span className="font-mono text-slate-900 font-semibold">${cartSubtotal.toFixed(2)} CAD</span>

@@ -5,6 +5,7 @@ const ProductModel = require('../models/productModel');
 const ProductImageModel = require('../models/productImageModel');
 const AuditLogModel = require('../models/auditLogModel');
 const OrderModel = require('../models/orderModel');
+const { syncUsersBiDirectional } = require('../services/techposMemberService');
 const { generateToken } = require('../utils/jwt');
 
 /**
@@ -478,6 +479,27 @@ const deleteUser = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: 'User deleted successfully',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const syncTechPOSUsers = async (req, res, next) => {
+  try {
+    const result = await syncUsersBiDirectional({ maxPages: 20, pageSize: 500 });
+    await AuditLogModel.log({
+      userId: req.user?.id || null,
+      username: req.user?.name || req.user?.email || 'admin',
+      masterName: 'user_master',
+      changeType: 'SYNC',
+      afterData: result.stats,
+      ipAddress: req.ip,
+    });
+    res.status(200).json({
+      success: true,
+      message: 'TechPOS customer synchronization completed successfully',
+      stats: result.stats,
     });
   } catch (err) {
     next(err);
@@ -1001,6 +1023,7 @@ module.exports = {
   updateUser,
   toggleUserActive,
   deleteUser,
+  syncTechPOSUsers,
   getUserTypes,
   getUserTypeById,
   createUserType,

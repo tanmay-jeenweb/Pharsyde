@@ -156,6 +156,14 @@ export async function deleteOfficeUserApi(id) {
   return handleResponse(res);
 }
 
+export async function syncOfficeTechPOSUsersApi() {
+  const res = await fetch(`${API_BASE}/users/sync-techpos`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
 // ─────────────────────────────────────────────────────────────
 // User Type Master
 // ─────────────────────────────────────────────────────────────
