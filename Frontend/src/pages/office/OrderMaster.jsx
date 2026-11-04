@@ -871,6 +871,34 @@ export default function OrderMaster() {
                       </strong>
                     </div>
                   </div>
+                  {/* Government ID Verification */}
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                    <div>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">Government ID Document</span>
+                      {selectedOrder.gov_id_url ? (
+                        <span className="font-bold text-emerald-700 flex items-center gap-1 mt-0.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          Document Uploaded Online
+                        </span>
+                      ) : (
+                        <span className="font-semibold text-slate-500 mt-0.5 block">
+                          Not provided online (Inspect physical ID at counter/courier)
+                        </span>
+                      )}
+                    </div>
+                    {selectedOrder.gov_id_url && (
+                      <a
+                        href={selectedOrder.gov_id_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-[11px] flex items-center gap-1.5 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>View ID Document</span>
+                      </a>
+                    )}
+                  </div>
+
 
                   <div className="space-y-2">
                     <span className="font-bold text-slate-900 uppercase tracking-wider text-[11px] block">

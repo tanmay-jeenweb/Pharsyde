@@ -6,6 +6,13 @@ import {
   getCustomerProfileApi,
 } from '../services/orderService';
 
+import {
+  MAX_CANNABIS_GRAMS,
+  getProductCannabisGrams,
+  calculateCartCannabisGrams,
+  validateCannabisLimit,
+} from '../utils/cannabisLimit';
+
 const AppContext = createContext();
 
 export function AppProvider({ children }) {
@@ -161,6 +168,18 @@ export function AppProvider({ children }) {
     const targetVariant =
       variant || (product.variants && product.variants[0]) || { id: 'default', label: 'Standard', price: product.price };
 
+    const itemGrams = getProductCannabisGrams({ product, variant: targetVariant });
+    const additionalGrams = itemGrams * quantity;
+    const currentGrams = calculateCartCannabisGrams(cart);
+
+    if (currentGrams + additionalGrams > MAX_CANNABIS_GRAMS) {
+      showToast(
+        `Cannot add: Exceeds 30.0g legal limit for cannabis (current: ${currentGrams.toFixed(1)}g, adding: ${additionalGrams.toFixed(1)}g).`,
+        'warning'
+      );
+      return false;
+    }
+
     setCart((prevCart) => {
       const existingIndex = prevCart.findIndex(
         (item) => item.product.id === product.id && item.variant.id === targetVariant.id
@@ -183,13 +202,23 @@ export function AppProvider({ children }) {
       removeFromCart(productId, variantId);
       return;
     }
-    setCart((prev) =>
-      prev.map((item) =>
-        item.product.id === productId && item.variant.id === variantId
-          ? { ...item, quantity: qty }
-          : item
-      )
+    const proposedCart = cart.map((item) =>
+      item.product.id === productId && item.variant.id === variantId
+        ? { ...item, quantity: qty }
+        : item
     );
+    const proposedGrams = calculateCartCannabisGrams(proposedCart);
+
+    if (proposedGrams > MAX_CANNABIS_GRAMS) {
+      const currentGrams = calculateCartCannabisGrams(cart);
+      showToast(
+        `Cannot increase quantity: Exceeds 30.0g legal cannabis limit (current: ${currentGrams.toFixed(1)}g, proposed: ${proposedGrams.toFixed(1)}g).`,
+        'warning'
+      );
+      return false;
+    }
+
+    setCart(proposedCart);
   };
 
   const removeFromCart = (productId, variantId) => {
@@ -206,6 +235,8 @@ export function AppProvider({ children }) {
   // Calculate Totals
   const cartSubtotal = cart.reduce((sum, item) => sum + item.variant.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCannabisGrams = calculateCartCannabisGrams(cart);
+  const isCannabisLimitExceeded = cartCannabisGrams > MAX_CANNABIS_GRAMS;
 
   // Age verification action
   const confirmAge = () => {
@@ -255,6 +286,9 @@ export function AppProvider({ children }) {
         clearCart,
         cartSubtotal,
         cartCount,
+        cartCannabisGrams,
+        MAX_CANNABIS_GRAMS,
+        isCannabisLimitExceeded,
         isCartOpen,
         setIsCartOpen,
         isSearchOpen,

@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { createOrderApi } from '../services/orderService';
+import { uploadDocumentApi } from '../services/uploadService';
 import { preloadPaymentApi, setMonerisPaymentSession } from '../services/paymentService';
+import { calculateCartTaxes } from '../utils/taxCalculator';
 import { STORE_INFO } from '../data/products';
 import {
   ShieldCheck,
@@ -19,6 +21,10 @@ import {
   FileCheck,
   User,
   Sparkles,
+  Scale,
+  UploadCloud,
+  X,
+  Loader2,
 } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -33,6 +39,8 @@ export default function CheckoutPage() {
     customerToken,
     isCustomerLoggedIn,
     openAuthModal,
+    cartCannabisGrams = 0,
+    isCannabisLimitExceeded = false,
   } = useApp();
 
   // Form State
@@ -69,6 +77,36 @@ export default function CheckoutPage() {
     }
   }, [customerUser]);
 
+  // Government ID Upload State (Optional)
+  const [uploadedDoc, setUploadedDoc] = useState(null);
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  const [uploadDocError, setUploadDocError] = useState(null);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadDocError(null);
+    setIsUploadingDoc(true);
+    try {
+      const res = await uploadDocumentApi(file);
+      setUploadedDoc(res);
+      showToast('Government ID uploaded successfully.', 'success');
+    } catch (err) {
+      console.error('ID Upload failed:', err);
+      setUploadDocError(err.message || 'Failed to upload document.');
+      showToast(err.message || 'Failed to upload document.', 'error');
+    } finally {
+      setIsUploadingDoc(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveDoc = () => {
+    setUploadedDoc(null);
+    setUploadDocError(null);
+  };
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(null);
@@ -86,9 +124,12 @@ export default function CheckoutPage() {
   const FREE_SHIPPING_THRESHOLD = 75.0;
   const isPickup = formData.fulfillmentType === 'pickup';
   const shippingFee = isPickup || cartSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 9.99;
-  const discountedSubtotal = Math.max(0, cartSubtotal - rewardDiscount);
-  const manitobaTax = Math.round(discountedSubtotal * 0.12 * 100) / 100; // 5% GST + 7% PST
-  const orderTotal = Math.max(0, Math.round((discountedSubtotal + shippingFee + manitobaTax) * 100) / 100);
+  const taxSummary = calculateCartTaxes(cart, {
+    discount: rewardDiscount,
+    shipping: shippingFee,
+  });
+  const discountedSubtotal = taxSummary.discountedSubtotal;
+  const orderTotal = taxSummary.finalTotal;
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -140,6 +181,10 @@ export default function CheckoutPage() {
         techpos_product_id: item.product.techpos_product_id || item.product.pk,
         sku: item.product.sku,
         product_name: item.product.name || item.product.product_name,
+        category: item.product.category,
+        subCategory: item.product.subCategory,
+        isCannabis: item.product.isCannabis ?? item.product.is_cannabis,
+        equivalent_g: item.product.equivalent_g ?? item.product.dfe,
         variant_label: item.variant.label,
         quantity: item.quantity,
         unit_price: item.variant.price,
@@ -457,6 +502,102 @@ export default function CheckoutPage() {
                   {errors.phone && <span className="text-[10px] text-red-600">{errors.phone}</span>}
                 </div>
               </div>
+            
+              {/* Optional Government-Approved ID Upload */}
+              <div className="pt-4 border-t border-slate-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileCheck className="w-4 h-4 text-[#488203]" />
+                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                      Government-Approved ID
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wider">
+                    Optional
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Upload a photo or PDF of your Driver's License, Passport, or Age of Majority card to expedite pickup &amp; delivery confirmation. <strong className="text-slate-700">Physical ID will still be physically verified upon collection or courier arrival.</strong>
+                </p>
+
+                {!uploadedDoc ? (
+                  <div>
+                    <label
+                      className={`relative flex flex-col items-center justify-center p-5 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${
+                        isUploadingDoc
+                          ? 'bg-slate-50 border-slate-300 opacity-60 cursor-not-allowed'
+                          : 'bg-slate-50 hover:bg-[#8EF705]/5 border-slate-300 hover:border-[#8EF705]'
+                      }`}
+                    >
+                      <input
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+                        onChange={handleFileUpload}
+                        disabled={isUploadingDoc}
+                        className="sr-only"
+                      />
+                      {isUploadingDoc ? (
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                          <Loader2 className="w-5 h-5 animate-spin text-[#488203]" />
+                          <span>Uploading and securing document...</span>
+                        </div>
+                      ) : (
+                        <div className="text-center space-y-1.5">
+                          <div className="w-10 h-10 mx-auto rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-center text-slate-600">
+                            <UploadCloud className="w-5 h-5 text-slate-600" />
+                          </div>
+                          <div>
+                            <span className="block text-xs font-bold text-slate-800">
+                              Click to select or drag &amp; drop document
+                            </span>
+                            <span className="block text-[10px] text-slate-400 mt-0.5">
+                              JPG, PNG, WEBP, or PDF • Max 10MB
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </label>
+                    {uploadDocError && (
+                      <p className="mt-1.5 text-[11px] text-red-600 font-medium">{uploadDocError}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block text-xs font-bold text-slate-900 truncate">
+                          {uploadedDoc.originalName || 'Government ID Uploaded'}
+                        </span>
+                        <span className="block text-[10px] text-emerald-700 font-medium">
+                          Uploaded successfully • {uploadedDoc.size ? (uploadedDoc.size / (1024 * 1024)).toFixed(2) + ' MB' : 'Ready'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <a
+                        href={uploadedDoc.fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2.5 py-1 text-[11px] font-bold text-emerald-800 hover:text-emerald-950 bg-white border border-emerald-200 rounded-lg transition-colors"
+                      >
+                        Preview
+                      </a>
+                      <button
+                        type="button"
+                        onClick={handleRemoveDoc}
+                        className="p-1 text-slate-400 hover:text-red-600 transition-colors rounded-lg hover:bg-white"
+                        title="Remove document"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Step 3: Fulfillment Method */}
@@ -701,30 +842,60 @@ export default function CheckoutPage() {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Manitoba 12% Tax (5% GST + 7% PST)</span>
-                  <span className="font-mono text-slate-900">${manitobaTax.toFixed(2)} CAD</span>
+                  <span>{taxSummary.hasCannabis && taxSummary.hasNicotine ? 'Estimated Taxes (5% Cannabis / 12% Nicotine)' : taxSummary.hasNicotine ? 'Nicotine Tax (5% GST + 7% PST = 12%)' : 'Cannabis Tax (5% GST)'}</span>
+                  <span className="font-mono text-slate-900">${taxSummary.totalTax.toFixed(2)} CAD</span>
                 </div>
+                {taxSummary.hasCannabis && taxSummary.hasNicotine && (
+                  <div className="flex justify-between text-[11px] text-slate-400 pl-2">
+                    <span>• Cannabis 5% GST: ${taxSummary.cannabisTax.toFixed(2)} | Nicotine 12%: ${taxSummary.nicotineTax.toFixed(2)}</span>
+                  </div>
+                )}
+                {cartCannabisGrams > 0 && (
+                  <div className="flex justify-between items-center text-xs pt-1">
+                    <span className="flex items-center gap-1.5 text-slate-600">
+                      <Scale className="w-3.5 h-3.5 text-slate-700" />
+                      <span>Cannabis Weight</span>
+                    </span>
+                    <span className={`font-mono font-bold ${isCannabisLimitExceeded ? 'text-red-600' : 'text-slate-900'}`}>
+                      {cartCannabisGrams.toFixed(1)}g / 30.0g
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-base font-bold text-slate-900 pt-3 border-t border-slate-200">
                   <span>Total Due</span>
                   <span className="font-mono text-[#488203] font-black">${orderTotal.toFixed(2)} CAD</span>
                 </div>
               </div>
 
+              {/* Cannabis Limit Exceeded Warning */}
+              {isCannabisLimitExceeded && (
+                <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2.5">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
+                  <span>Order exceeds 30.0g legal limit for cannabis products ({cartCannabisGrams.toFixed(1)}g). Please reduce items to proceed.</span>
+                </div>
+              )}
+
               {/* Submit CTA */}
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="w-full py-4 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-heading font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-[#8EF705]/25 flex items-center justify-center gap-2"
+                disabled={isSubmitting || isCannabisLimitExceeded}
+                className={
+                  isCannabisLimitExceeded
+                    ? "w-full py-4 rounded-xl bg-slate-200 text-slate-400 font-heading font-black text-xs uppercase tracking-widest cursor-not-allowed flex items-center justify-center gap-2"
+                    : "w-full py-4 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-heading font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-[#8EF705]/25 flex items-center justify-center gap-2"
+                }
               >
                 {isSubmitting ? (
                   <span>Processing Manitoba Order...</span>
+                ) : isCannabisLimitExceeded ? (
+                  <span>Cannabis Limit Exceeded ({cartCannabisGrams.toFixed(1)}g / 30.0g)</span>
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
                     <span>
                       {formData.paymentMethod === 'card'
-                        ? `Proceed to Payment • $${orderTotal.toFixed(2)} CAD`
-                        : `Confirm Order • $${orderTotal.toFixed(2)} CAD`}
+                        ? `Proceed to Payment • ${orderTotal.toFixed(2)} CAD`
+                        : `Confirm Order • ${orderTotal.toFixed(2)} CAD`}
                     </span>
                   </>
                 )}

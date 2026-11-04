@@ -1,4 +1,7 @@
 const crypto = require('crypto');
+const pool = require('../config/db');
+const { calculateOrderTaxesCents } = require('../utils/taxCalculator');
+const { validateCannabisLimit } = require('../utils/cannabisLimit');
 const PaymentAttemptModel = require('../models/paymentAttemptModel');
 const OrderModel = require('../models/orderModel');
 const { getNextOrderNumber } = require('../services/orderSequenceService');
@@ -44,6 +47,7 @@ const initiatePaymentAttempt = async (req, res, next) => {
       city = 'Winnipeg',
       postalCode = '',
       notes = '',
+      gov_id_url = null,
     } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
@@ -139,17 +143,67 @@ const initiatePaymentAttempt = async (req, res, next) => {
         unit_price_cents: unitPriceCents,
         line_total: lineTotalCents / 100,
         line_total_cents: lineTotalCents,
+        category: item.category || item.product?.category || null,
         image_url: item.image_url || item.image || item.imageUrl || null,
       });
     }
 
-    // Manitoba Taxes (5% GST + 7% PST = 12%)
+    // Fetch missing categories from DB for accurate item-level tax classification
+    const missingProductIds = normalizedItems
+      .filter((i) => !i.category)
+      .map((i) => i.product_id || i.techpos_product_id)
+      .filter(Boolean);
+
+    let categoryMap = {};
+    if (missingProductIds.length > 0) {
+      try {
+        const [rows] = await pool.query(
+          `SELECT pk, category, equivalent_g FROM products WHERE pk IN (${missingProductIds.map(() => '?').join(',')})`,
+          missingProductIds
+        );
+        for (const row of rows) {
+          categoryMap[row.pk] = { category: row.category, equivalent_g: row.equivalent_g };
+        }
+      } catch (catErr) {
+        console.warn('[Payment Tax] DB category lookup warning:', catErr.message);
+      }
+    }
+
+    const itemsForTax = normalizedItems.map((i) => {
+      const pid = String(i.product_id || i.techpos_product_id || '');
+      return {
+        ...i,
+        category: i.category || categoryMap[pid]?.category || '',
+        equivalent_g: i.equivalent_g ?? categoryMap[pid]?.equivalent_g,
+      };
+    });
+
+    // 30-Gram Legal Cannabis Purchase Limit Check (Canadian Cannabis Act)
+    const limitValidation = validateCannabisLimit(itemsForTax);
+    if (!limitValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        code: 'CANNABIS_LIMIT_EXCEEDED',
+        message: limitValidation.message,
+        totalGrams: limitValidation.totalGrams,
+        maxGrams: limitValidation.maxGrams,
+        excessGrams: limitValidation.excessGrams,
+      });
+    }
+
     const FREE_SHIPPING_THRESHOLD_CENTS = 7500; // $75.00 CAD
     const shippingCents = isDelivery && subtotalCents < FREE_SHIPPING_THRESHOLD_CENTS ? 999 : 0;
-    const gstCents = Math.round(subtotalCents * 0.05);
-    const pstCents = Math.round(subtotalCents * 0.07);
-    const taxCents = gstCents + pstCents;
-    const totalCents = subtotalCents + shippingCents + taxCents;
+
+    // Differential Tax Calculation: 5% Cannabis, 7% Nicotine
+    const taxSummary = calculateOrderTaxesCents(itemsForTax, {
+      discountCents: 0,
+      shippingCents,
+    });
+
+    const gstCents = taxSummary.totalGstCents;
+    const pstCents = taxSummary.totalPstCents;
+    const taxCents = taxSummary.totalTaxCents;
+    const totalCents = taxSummary.totalCents;
 
     // Generate Identifiers
     const merchantOrderNumber = generateMerchantOrderNumber();
@@ -183,6 +237,7 @@ const initiatePaymentAttempt = async (req, res, next) => {
         fullName: customerName,
         email: customerEmail,
         phone: customerPhone,
+        govIdUrl: customer.govIdUrl || customer.gov_id_url || gov_id_url || req.body.govIdUrl || null,
         notes,
       },
       shipping_address: isDelivery
@@ -442,6 +497,7 @@ const finalizePayment = async (req, res, next) => {
         payment_status: 'Paid',
         order_status: 'Confirmed',
         notes: customerInfo.notes || '',
+        gov_id_url: customerInfo.govIdUrl || null,
         payment_attempt_id: attempt.id,
         moneris_ticket: verificationTicket,
         moneris_reference_no: receipt.referenceNumber || null,
