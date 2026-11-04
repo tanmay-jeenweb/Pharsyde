@@ -384,3 +384,31 @@ export async function getTechPosOrderItemsApi(orderId, date = '') {
   });
   return handleResponse(res);
 }
+
+
+// ─────────────────────────────────────────────────────────────
+// Setting Master
+// ─────────────────────────────────────────────────────────────
+
+export async function getOfficeSettingsApi() {
+  const res = await fetch(`${API_BASE}/settings`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function getOfficeSettingByKeyApi(key) {
+  const res = await fetch(`${API_BASE}/settings/${encodeURIComponent(key)}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function updateOfficeSettingApi(key, value) {
+  const res = await fetch(`${API_BASE}/settings/${encodeURIComponent(key)}`, {
+    method: 'PUT',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify({ value }),
+  });
+  return handleResponse(res);
+}

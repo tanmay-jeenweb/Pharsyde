@@ -151,8 +151,11 @@ const register = async (req, res, next) => {
         techposMemberId = matched.id || matched.memberId || null;
         eliteStartDate = matched.eliteMemberStartDate || null;
         eliteEndDate = matched.eliteMemberEndDate || null;
+        const pointDollarRate = process.env.REWARD_POINT_DOLLAR_RATE ? Number(process.env.REWARD_POINT_DOLLAR_RATE) : 1.00;
         rewardPoints = Number(matched.rewardPoints) || 0.00;
-        rewardDollarValue = Number(matched.rewardPointsDollarValue) || 0.00;
+        rewardDollarValue = Number(matched.rewardPointsDollarValue) > 0
+          ? Number(matched.rewardPointsDollarValue)
+          : Number((rewardPoints * pointDollarRate).toFixed(2));
         cardNumber = matched.cardNumber || null;
         isElite = Boolean(matched.isElite);
         visitCount = Number(matched.visitCount) || 0;
@@ -318,9 +321,33 @@ const getAllUsers = async (req, res, next) => {
   }
 };
 
+/**
+ * @route   GET /api/auth/check-email
+ * @route   POST /api/auth/check-email
+ * @desc    Check if an account exists for a given email
+ * @access  Public
+ */
+const checkEmail = async (req, res, next) => {
+  try {
+    const email = (req.query.email || req.body.email || '').trim().toLowerCase();
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+    const user = await UserModel.findByEmail(email);
+    return res.status(200).json({
+      success: true,
+      exists: Boolean(user),
+      message: user ? 'An account with this email already exists.' : 'Email is available.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
   getMe,
   getAllUsers,
+  checkEmail,
 };

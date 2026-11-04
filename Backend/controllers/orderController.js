@@ -62,6 +62,18 @@ const createOrder = async (req, res, next) => {
       });
     }
 
+    // If guest checkout, verify email does not belong to an existing registered user
+    if (!authUser && customerEmail) {
+      const existingUser = await UserModel.findByEmail(customerEmail.trim().toLowerCase());
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          code: 'ACCOUNT_EXISTS',
+          message: 'An account with this email already exists. Please log in to complete your order.',
+        });
+      }
+    }
+
     // Validate delivery address if courier delivery
     if (fulfillmentType === 'delivery') {
       const deliveryStreet = address || customer.address;

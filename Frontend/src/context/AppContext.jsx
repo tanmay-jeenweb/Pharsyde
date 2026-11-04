@@ -101,9 +101,9 @@ export function AppProvider({ children }) {
     }
   }, [cart]);
 
-  // Sync Customer Profile on Token changes
+  // Sync Customer Profile & live reward points on mount or Token changes
   useEffect(() => {
-    if (customerToken && !customerUser) {
+    if (customerToken) {
       getCustomerProfileApi(customerToken)
         .then((user) => {
           if (user) {

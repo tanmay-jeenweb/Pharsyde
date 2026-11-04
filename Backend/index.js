@@ -22,6 +22,7 @@ const productRoutes = require('./routes/productRoutes');
 const officeRoutes = require('./routes/officeRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const { getPublicSettings } = require('./controllers/settingController');
 const uploadRoutes = require('./routes/uploadRoutes');
 
 // Middlewares
@@ -83,6 +84,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/office', officeRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments/moneris', paymentRoutes);
+app.get('/api/settings/public', getPublicSettings);
 app.use('/api/upload', uploadRoutes);
 
 // 404 & Error Handling Middlewares

@@ -4,6 +4,7 @@ const ProductImageModel = require('./productImageModel');
 const UserTypeModel = require('./userTypeModel');
 const AuditLogModel = require('./auditLogModel');
 const OrderModel = require('./orderModel');
+const SettingModel = require('./settingModel');
 
 /**
  * Initialize database tables defined inside all models in correct order
@@ -21,6 +22,8 @@ const initModelTables = async () => {
   await ProductImageModel.createTable();
   // 6. Orders and Order Items tables
   await OrderModel.createTable();
+  // 7. System & App Settings table
+  await SettingModel.createTable();
 };
 
 module.exports = {
@@ -31,4 +34,5 @@ module.exports = {
   UserTypeModel,
   AuditLogModel,
   OrderModel,
+  SettingModel,
 };

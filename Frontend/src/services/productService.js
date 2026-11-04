@@ -187,3 +187,73 @@ export async function syncAllApi({ quick = false, maxPages, pageSize, sortId } =
     throw error;
   }
 }
+
+
+/**
+ * Fetch latest new arrivals products
+ * Automatically applies the admin-configured limit unless overridden
+ */
+export async function getNewArrivalsProductsApi({ limit } = {}) {
+  const params = new URLSearchParams();
+  if (limit) params.append('limit', String(limit));
+
+  const url = `${API_BASE}/products/new-arrivals${params.toString() ? '?' + params.toString() : ''}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
+    return await res.json();
+  } catch (error) {
+    try {
+      const fallbackUrl = `http://localhost:5000/api/products/new-arrivals${params.toString() ? '?' + params.toString() : ''}`;
+      const resFallback = await fetch(fallbackUrl);
+      if (resFallback.ok) {
+        return await resFallback.json();
+      }
+    } catch {}
+    throw error;
+  }
+}
+
+/**
+ * Fetch public settings (e.g. new_arrivals_limit)
+ */
+export async function getPublicSettingsApi() {
+  const url = `${API_BASE}/settings/public`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
+    return await res.json();
+  } catch (error) {
+    try {
+      const fallbackUrl = 'http://localhost:5000/api/settings/public';
+      const resFallback = await fetch(fallbackUrl);
+      if (resFallback.ok) {
+        return await resFallback.json();
+      }
+    } catch {}
+    throw error;
+  }
+}
+
+
+/**
+ * Fetch configured best seller products
+ */
+export async function getBestSellersProductsApi() {
+  const url = `${API_BASE}/products/best-sellers`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
+    return await res.json();
+  } catch (error) {
+    try {
+      const fallbackUrl = 'http://localhost:5000/api/products/best-sellers';
+      const resFallback = await fetch(fallbackUrl);
+      if (resFallback.ok) {
+        return await resFallback.json();
+      }
+    } catch {}
+    throw error;
+  }
+}

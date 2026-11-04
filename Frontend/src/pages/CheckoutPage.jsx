@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { createOrderApi, checkEmailApi } from '../services/orderService';
 import { createOrderApi } from '../services/orderService';
 import { uploadDocumentApi } from '../services/uploadService';
 import { preloadPaymentApi, setMonerisPaymentSession } from '../services/paymentService';
@@ -117,6 +118,9 @@ export default function CheckoutPage() {
   const pointRate = (Number(customerUser?.reward_points_dollar_value) > 0 && availablePoints > 0)
     ? (Number(customerUser.reward_points_dollar_value) / availablePoints)
     : 1.00;
+  const availableDollarValue = Number(customerUser?.reward_points_dollar_value) > 0
+    ? Number(customerUser.reward_points_dollar_value)
+    : availablePoints * pointRate;
   const maxRedeemablePoints = Math.min(availablePoints, Math.floor(cartSubtotal / pointRate));
   const rewardDiscount = redeemRewards ? Math.round(maxRedeemablePoints * pointRate * 100) / 100 : 0.00;
 
@@ -131,6 +135,9 @@ export default function CheckoutPage() {
   const discountedSubtotal = taxSummary.discountedSubtotal;
   const orderTotal = taxSummary.finalTotal;
 
+  const [existingAccountEmail, setExistingAccountEmail] = useState(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -140,6 +147,31 @@ export default function CheckoutPage() {
     // clear error for that field
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
+    }
+    if (name === 'email' && existingAccountEmail && value.trim().toLowerCase() !== existingAccountEmail) {
+      setExistingAccountEmail(null);
+    }
+  };
+
+  const handleEmailBlur = async () => {
+    if (isCustomerLoggedIn) return;
+    const emailToTest = (formData.email || '').trim().toLowerCase();
+    if (!emailToTest || !emailToTest.includes('@')) {
+      setExistingAccountEmail(null);
+      return;
+    }
+    try {
+      setIsCheckingEmail(true);
+      const res = await checkEmailApi(emailToTest);
+      if (res && res.exists) {
+        setExistingAccountEmail(emailToTest);
+      } else {
+        setExistingAccountEmail(null);
+      }
+    } catch (err) {
+      console.warn('Check email failed:', err);
+    } finally {
+      setIsCheckingEmail(false);
     }
   };
 
@@ -171,6 +203,29 @@ export default function CheckoutPage() {
     if (!validateForm()) {
       showToast('Please correct highlighted fields before submitting', 'error');
       return;
+    }
+
+    // If guest, verify email doesn't belong to an existing account
+    if (!isCustomerLoggedIn && formData.email) {
+      const emailToTest = formData.email.trim().toLowerCase();
+      try {
+        setIsCheckingEmail(true);
+        const checkRes = await checkEmailApi(emailToTest);
+        if (checkRes && checkRes.exists) {
+          setExistingAccountEmail(emailToTest);
+          setErrors((prev) => ({
+            ...prev,
+            email: 'An account with this email already exists. Please log in to complete your order.',
+          }));
+          showToast('An account with this email already exists. Please log in.', 'error');
+          openAuthModal('login');
+          return;
+        }
+      } catch (checkErr) {
+        console.warn('Pre-checkout email check failed:', checkErr);
+      } finally {
+        setIsCheckingEmail(false);
+      }
     }
 
     setIsSubmitting(true);
@@ -227,6 +282,12 @@ export default function CheckoutPage() {
       navigate(`/order-success?orderId=${encodeURIComponent(savedOrder.order_number)}`);
     } catch (err) {
       console.error('Order processing failed:', err);
+      if (err.data?.code === 'ACCOUNT_EXISTS' || (err.message && err.message.toLowerCase().includes('already exists'))) {
+        setExistingAccountEmail(formData.email.trim().toLowerCase());
+        showToast('An account with this email already exists. Please log in.', 'error');
+        openAuthModal('login');
+        return;
+      }
       showToast(err.message || 'Unable to process checkout. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
@@ -478,16 +539,44 @@ export default function CheckoutPage() {
                   />
                   {errors.lastName && <span className="text-[10px] text-red-600">{errors.lastName}</span>}
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address *</label>
+                <div className="sm:col-span-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700">Email Address *</label>
+                    {isCheckingEmail && (
+                      <span className="text-[10px] text-slate-400 animate-pulse">Checking account...</span>
+                    )}
+                  </div>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                    onBlur={handleEmailBlur}
+                    placeholder="you@example.com"
+                    className={`w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:bg-white transition-colors ${
+                      existingAccountEmail ? 'border-amber-400 bg-amber-50/30' : 'border-slate-300 focus:border-[#8EF705]'
+                    }`}
                   />
-                  {errors.email && <span className="text-[10px] text-red-600">{errors.email}</span>}
+                  {errors.email && <span className="text-[10px] text-red-600 block mt-1">{errors.email}</span>}
+
+                  {existingAccountEmail && (
+                    <div className="mt-2.5 p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 animate-in fade-in">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span className="text-[11px] leading-tight">
+                          We found an account for <strong>{existingAccountEmail}</strong>! Please log in to complete your checkout.
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => openAuthModal('login')}
+                        className="shrink-0 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <User className="w-3.5 h-3.5" />
+                        <span>Log In</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number *</label>
@@ -799,38 +888,89 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              {/* Loyalty Rewards Redemption Card */}
-              {isCustomerLoggedIn && availablePoints > 0 && (
-                <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+              {/* TechPOS Loyalty Reward Tokens Card (Always Visible) */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50/90 via-amber-50/40 to-white border border-amber-200/90 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-700 shrink-0">
                       <Sparkles className="w-4 h-4 text-amber-600" />
-                      <span>Redeem Loyalty Rewards</span>
                     </div>
-                    <span className="text-xs font-mono font-bold text-amber-800">
-                      ⭐ {availablePoints} pts
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                          Reward Tokens
+                        </span>
+                        {isCustomerLoggedIn && customerUser?.techpos_member_id && (
+                          <span className="text-[10px] text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.2 rounded font-mono font-semibold">
+                            #{customerUser.techpos_member_id}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-slate-500 block">
+                        TechPOS Loyalty Program
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-xs font-mono font-black text-amber-900 block">
+                      ⭐ {availablePoints} tokens
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block">
+                      (${availableDollarValue.toFixed(2)} CAD)
                     </span>
                   </div>
-                  <label className="flex items-center gap-2.5 cursor-pointer pt-1 text-xs text-amber-950 font-medium select-none">
-                    <input
-                      type="checkbox"
-                      checked={redeemRewards}
-                      onChange={(e) => setRedeemRewards(e.target.checked)}
-                      className="w-4 h-4 accent-amber-600 rounded cursor-pointer"
-                    />
-                    <span>Redeem {maxRedeemablePoints} points for -${(maxRedeemablePoints * pointRate).toFixed(2)} CAD off</span>
-                  </label>
                 </div>
-              )}
+
+                {isCustomerLoggedIn ? (
+                  availablePoints > 0 ? (
+                    <label className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-amber-200 cursor-pointer text-xs text-slate-900 font-medium select-none hover:border-amber-300 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={redeemRewards}
+                        onChange={(e) => setRedeemRewards(e.target.checked)}
+                        className="w-4 h-4 mt-0.5 accent-amber-600 rounded cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <span className="font-bold text-slate-900 block">
+                          Redeem {maxRedeemablePoints} tokens for instant discount
+                        </span>
+                        <span className="text-[11px] text-[#488203] font-mono font-bold block mt-0.5">
+                          -${(maxRedeemablePoints * pointRate).toFixed(2)} CAD off order total
+                        </span>
+                      </div>
+                    </label>
+                  ) : (
+                    <div className="p-2.5 rounded-xl bg-amber-100/40 border border-amber-200/60 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 text-slate-600">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                        <span className="text-[11px]">
+                          Balance: <strong className="text-slate-900 font-mono">0 tokens ($0.00 CAD)</strong>
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded-md">
+                        +Earn tokens on this order
+                      </span>
+                    </div>
+                  )
+                ) : (
+                  <div className="p-2.5 rounded-xl bg-amber-100/40 border border-amber-200/60 flex items-center justify-between text-xs">
+                    <span className="text-[11px] text-slate-600">
+                      Balance: <strong className="text-slate-900 font-mono">0 tokens</strong> (Guest)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openAuthModal('login')}
+                      className="text-[10px] font-bold text-slate-900 hover:text-black underline cursor-pointer"
+                    >
+                      Sign In to Link Tokens
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {/* Financial Breakdown */}
               <div className="pt-4 border-t border-slate-100 space-y-2 text-xs text-slate-600">
-                {redeemRewards && rewardDiscount > 0 && (
-                  <div className="flex justify-between text-amber-700 font-bold">
-                    <span>Loyalty Points Discount</span>
-                    <span className="font-mono">-${rewardDiscount.toFixed(2)} CAD</span>
-                  </div>
-                )}
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span className="font-mono text-slate-900 font-semibold">${cartSubtotal.toFixed(2)} CAD</span>
@@ -841,6 +981,21 @@ export default function CheckoutPage() {
                     {shippingFee === 0 ? 'FREE' : `$${shippingFee.toFixed(2)} CAD`}
                   </span>
                 </div>
+
+                {/* Reward Tokens Line Item - Always Shown */}
+                <div className="flex justify-between items-center text-xs">
+                  <span className="flex items-center gap-1.5 text-slate-600">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Reward Tokens</span>
+                    <span className="text-[10px] font-mono text-slate-400">
+                      ({availablePoints} tokens avail)
+                    </span>
+                  </span>
+                  <span className={`font-mono font-bold ${redeemRewards && rewardDiscount > 0 ? 'text-[#488203]' : 'text-slate-500'}`}>
+                    {redeemRewards && rewardDiscount > 0 ? `-${rewardDiscount.toFixed(2)} CAD` : '$0.00 CAD'}
+                  </span>
+                </div>
+
                 <div className="flex justify-between">
                   <span>{taxSummary.hasCannabis && taxSummary.hasNicotine ? 'Estimated Taxes (5% Cannabis / 12% Nicotine)' : taxSummary.hasNicotine ? 'Nicotine Tax (5% GST + 7% PST = 12%)' : 'Cannabis Tax (5% GST)'}</span>
                   <span className="font-mono text-slate-900">${taxSummary.totalTax.toFixed(2)} CAD</span>

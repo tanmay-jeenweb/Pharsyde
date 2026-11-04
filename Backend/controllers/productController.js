@@ -1,4 +1,5 @@
 const ProductModel = require('../models/productModel');
+const SettingModel = require('../models/settingModel');
 const { syncTechPOSProducts } = require('../services/techposService');
 const { syncProductImages } = require('../services/techposImageService');
 
@@ -46,6 +47,70 @@ const getProducts = async (req, res, next) => {
       success: true,
       count: products.length,
       total,
+      products,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   GET /api/products/new-arrivals
+ * @desc    Get latest arrivals based on admin setting (default 24)
+ * @access  Public
+ */
+const getNewArrivals = async (req, res, next) => {
+  try {
+    // 1. Check setting from DB, default to 24
+    const configuredLimitStr = await SettingModel.getValue('new_arrivals_limit', '24');
+    let limit = parseInt(configuredLimitStr, 10);
+    if (isNaN(limit) || limit <= 0) {
+      limit = 24;
+    }
+
+    // Allow query param override if explicitly requested
+    if (req.query.limit && !isNaN(parseInt(req.query.limit, 10)) && parseInt(req.query.limit, 10) > 0) {
+      limit = parseInt(req.query.limit, 10);
+    }
+
+    // 2. Fetch new arrivals
+    const products = await ProductModel.findNewArrivals({ limit });
+
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      limit,
+      products,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   GET /api/products/best-sellers
+ * @desc    Get configured best seller products selected from admin Setting Master
+ * @access  Public
+ */
+const getBestSellers = async (req, res, next) => {
+  try {
+    const rawIds = await SettingModel.getValue('best_seller_product_ids', '[]');
+    let productIds = [];
+    try {
+      productIds = typeof rawIds === 'string' ? JSON.parse(rawIds) : (Array.isArray(rawIds) ? rawIds : []);
+    } catch {
+      productIds = [];
+    }
+
+    let products = [];
+    if (Array.isArray(productIds) && productIds.length > 0) {
+      products = await ProductModel.findByPks(productIds);
+    }
+
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      productIds,
       products,
     });
   } catch (error) {
@@ -320,6 +385,8 @@ const syncAllTechPOS = async (req, res, next) => {
 
 module.exports = {
   getProducts,
+  getNewArrivals,
+  getBestSellers,
   getProductById,
   createProduct,
   bulkUpsertProducts,

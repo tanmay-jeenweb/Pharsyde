@@ -16,10 +16,17 @@ export async function preloadPaymentApi(checkoutData, token = null) {
     body: JSON.stringify(checkoutData),
   });
 
-  const data = await res.json();
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Server returned status ${res.status}: ${res.statusText || 'Unable to connect to payment gateway'}`);
+  }
+
   if (!res.ok || !data.success) {
     const error = new Error(data.message || 'Failed to initialize payment session.');
     error.code = data.code;
+    error.data = data;
     error.status = res.status;
     throw error;
   }
@@ -42,7 +49,13 @@ export async function finalizePaymentApi({ paymentAttemptId, ticket }, token = n
     body: JSON.stringify({ paymentAttemptId, ticket }),
   });
 
-  const data = await res.json();
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Server returned status ${res.status}: ${res.statusText || 'Payment finalization failed'}`);
+  }
+
   if (!res.ok || !data.success) {
     const error = new Error(data.message || 'Payment finalization failed.');
     error.code = data.code;
