@@ -1,5 +1,6 @@
 const OrderModel = require('../models/orderModel');
 const UserModel = require('../models/userModel');
+const SettingModel = require('../models/settingModel');
 const pool = require('../config/db');
 const { syncOrderToTechPOS } = require('../services/techposOrderService');
 const { calculateOrderTaxes } = require('../utils/taxCalculator');
@@ -72,6 +73,17 @@ const createOrder = async (req, res, next) => {
           message: 'An account with this email already exists. Please log in to complete your order.',
         });
       }
+    }
+
+    // Check if Government ID upload is mandatory
+    const isGovIdMandatory = (await SettingModel.getValue('gov_id_mandatory', 'false')) === 'true';
+    const uploadedIdUrl = customer.govIdUrl || customer.gov_id_url || gov_id_url || req.body.govIdUrl || null;
+    if (isGovIdMandatory && !uploadedIdUrl) {
+      return res.status(400).json({
+        success: false,
+        code: 'GOV_ID_REQUIRED',
+        message: 'A valid government-approved ID document is required to complete your order.',
+      });
     }
 
     // Validate delivery address if courier delivery

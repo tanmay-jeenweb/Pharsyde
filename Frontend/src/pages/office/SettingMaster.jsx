@@ -25,7 +25,8 @@ import {
   ChevronUp,
   Tag,
   Package,
-  Trash2
+  Trash2,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function SettingMaster() {
@@ -38,6 +39,11 @@ export default function SettingMaster() {
   const [originalLimit, setOriginalLimit] = useState(24);
   const [validationError, setValidationError] = useState('');
   const [savingArrivals, setSavingArrivals] = useState(false);
+
+  // ─── 3. Government ID Mandatory State ────────────────────────
+  const [govIdMandatory, setGovIdMandatory] = useState(false);
+  const [originalGovIdMandatory, setOriginalGovIdMandatory] = useState(false);
+  const [savingGovId, setSavingGovId] = useState(false);
 
   // ─── 2. Best Sellers Multi-Select State ───────────────────────
   const [selectedProductIds, setSelectedProductIds] = useState([]);
@@ -85,6 +91,14 @@ export default function SettingMaster() {
           const safeVal = isNaN(val) || val <= 0 ? 24 : val;
           setNewArrivalsLimit(safeVal);
           setOriginalLimit(safeVal);
+        }
+
+        // Parse Government ID Mandatory Setting
+        const govSetting = res.settings.find((s) => s.key === 'gov_id_mandatory');
+        if (govSetting) {
+          const isMandatory = govSetting.value === 'true' || govSetting.value === true;
+          setGovIdMandatory(isMandatory);
+          setOriginalGovIdMandatory(isMandatory);
         }
 
         // Parse Best Seller Product IDs
@@ -143,7 +157,26 @@ export default function SettingMaster() {
     searchProducts('', 'all');
   }, []);
 
-  // Search for Products inside Multi-Select Dropdown
+
+  const handleSaveGovIdSetting = async () => {
+    try {
+      setSavingGovId(true);
+      const res = await updateOfficeSettingApi('gov_id_mandatory', govIdMandatory ? 'true' : 'false');
+      if (res.success) {
+        setOriginalGovIdMandatory(govIdMandatory);
+        notify(`Government ID requirement successfully set to: ${govIdMandatory ? 'Mandatory' : 'Optional'}`);
+      } else {
+        notify(res.message || 'Failed to update Government ID setting', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to update gov_id_mandatory setting:', err);
+      notify(err.message || 'Error updating setting', 'error');
+    } finally {
+      setSavingGovId(false);
+    }
+  };
+
+    // Search for Products inside Multi-Select Dropdown
   // Loads up to 1,000 products with valid images (matching the storefront All Products catalog)
   const searchProducts = async (term = '', category = dropdownCategory) => {
     try {
@@ -924,6 +957,156 @@ export default function SettingMaster() {
             </div>
           </div>
 
+        </div>
+      </div>
+
+      
+      {/* ========================================================
+          SETTING 3: GOVERNMENT ID UPLOAD REQUIREMENT
+          ======================================================== */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="border-b border-slate-100 px-6 py-4.5 bg-slate-50/60 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold ${
+              govIdMandatory ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
+            }`}>
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">
+                Government-Approved ID Verification Policy
+              </h2>
+              <p className="text-xs text-slate-500">
+                Configure whether customer ID document upload is mandatory or optional at checkout
+              </p>
+            </div>
+          </div>
+
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+            govIdMandatory
+              ? 'bg-amber-50 text-amber-800 border-amber-200'
+              : 'bg-slate-50 text-slate-600 border-slate-200'
+          }`}>
+            {govIdMandatory ? 'Mandatory Enforced' : 'Optional (Discretionary)'}
+          </span>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+              <span className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <span>Checkout Age Verification Document</span>
+                <span className="text-xs font-normal text-slate-400 font-mono">(gov_id_mandatory)</span>
+              </span>
+              <span className="text-xs text-slate-500">
+                Current Mode: <strong className={govIdMandatory ? 'text-amber-700 font-bold' : 'text-slate-700'}>
+                  {govIdMandatory ? 'Strict Verification Required' : 'Optional Upload'}
+                </strong>
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
+              When set to <strong className="text-slate-900">Mandatory</strong>, customers must upload a valid photo ID (Driver's License, Passport, or Age of Majority card) before they are allowed to complete their order or proceed to card payment. When set to <strong className="text-slate-900">Optional</strong>, customers can choose to submit an ID to expedite pickup or courier handover, but it is not strictly required to place an order.
+            </p>
+
+            {/* Toggle Switch Selector */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl pt-2">
+              <button
+                type="button"
+                onClick={() => setGovIdMandatory(false)}
+                className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                  !govIdMandatory
+                    ? 'border-[#488203] bg-[#8EF705]/10 ring-1 ring-[#488203]'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                    Optional (Default)
+                  </span>
+                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                    !govIdMandatory ? 'border-[#488203] bg-[#488203]' : 'border-slate-300'
+                  }`}>
+                    {!govIdMandatory && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Customers may upload an ID to expedite delivery/pickup, but can check out without one. Physical ID checked upon arrival.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setGovIdMandatory(true)}
+                className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                  govIdMandatory
+                    ? 'border-amber-500 bg-amber-50/70 ring-1 ring-amber-500'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-amber-900 uppercase tracking-wide flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                    Mandatory
+                  </span>
+                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                    govIdMandatory ? 'border-amber-600 bg-amber-600' : 'border-slate-300'
+                  }`}>
+                    {govIdMandatory && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Strictly requires customer to upload a document before order submission or payment. Blocks checkout if missing.
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {/* Action Footer */}
+          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-xs text-slate-500">
+              Status:{' '}
+              <strong className={govIdMandatory !== originalGovIdMandatory ? "text-amber-600 font-bold" : "text-emerald-700 font-bold"}>
+                {govIdMandatory !== originalGovIdMandatory ? "Unsaved Changes" : "Synchronized with Database"}
+              </strong>
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {govIdMandatory !== originalGovIdMandatory && (
+                <button
+                  type="button"
+                  onClick={() => setGovIdMandatory(originalGovIdMandatory)}
+                  disabled={savingGovId}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Discard Changes
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleSaveGovIdSetting}
+                disabled={loading || savingGovId || govIdMandatory === originalGovIdMandatory}
+                className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                  govIdMandatory !== originalGovIdMandatory
+                    ? 'bg-slate-900 hover:bg-black text-white shadow-md active:scale-[0.98]'
+                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                {savingGovId ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Saving Policy...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save ID Policy</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
