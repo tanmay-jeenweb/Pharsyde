@@ -86,7 +86,7 @@ export default function Footer() {
             <ul className="space-y-2.5 text-sm">
               <li>
                 <Link
-                  to="/policy"
+                  to="/return-refund-policy"
                   className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
                 >
                   Return, Exchange & Warranty Policy
@@ -94,7 +94,23 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/policy"
+                  to="/terms"
+                  className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
+                >
+                  Terms & Conditions of Service
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/privacy"
+                  className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
+                >
+                  Privacy Policy (PIPEDA & CASL)
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/return-refund-policy#sec-02"
                   className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
                 >
                   Cannabis Final Sale & Recalls
@@ -102,7 +118,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/policy"
+                  to="/return-refund-policy#sec-03"
                   className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
                 >
                   24-Hour Vape Concern Protocol
@@ -110,18 +126,10 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/policy"
+                  to="/terms#tc-04"
                   className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
                 >
                   Age & Identity Verification Rules
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/policy"
-                  className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
-                >
-                  Terms & Conditions of Service
                 </Link>
               </li>
             </ul>

@@ -29,7 +29,7 @@ export function AppProvider({ children }) {
     if (path.startsWith('/product/')) return 'product-detail';
     if (path.startsWith('/checkout')) return 'checkout';
     if (path.startsWith('/account') || path.startsWith('/orders')) return 'account';
-    if (path.startsWith('/policy')) return 'policy';
+    if (path.startsWith('/policy') || path.startsWith('/policies') || path.startsWith('/terms') || path.startsWith('/privacy') || path.startsWith('/return-refund-policy')) return 'policy';
     if (path.startsWith('/about')) return 'about';
     if (path.startsWith('/contact')) return 'contact';
     return 'home';

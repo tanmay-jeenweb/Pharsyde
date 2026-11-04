@@ -24,6 +24,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const { getPublicSettings } = require('./controllers/settingController');
 const uploadRoutes = require('./routes/uploadRoutes');
+const appRoutes = require('./routes/appRoutes');
 
 // Middlewares
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
@@ -86,6 +87,11 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/payments/moneris', paymentRoutes);
 app.get('/api/settings/public', getPublicSettings);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/app', appRoutes);
+
+// Direct shortcut download URLs for easy user clicks / APK distribution
+app.get('/download/app', (req, res) => res.redirect('/api/app/download'));
+app.get('/download/apk', (req, res) => res.redirect('/api/app/download'));
 
 // 404 & Error Handling Middlewares
 app.use(notFound);
@@ -110,6 +116,8 @@ const startServer = async () => {
     console.log(`🔗 API Base URL: http://localhost:${PORT}`);
     console.log(`📦 Orders API: http://localhost:${PORT}/api/orders`);
     console.log(`🏢 Office API: http://localhost:${PORT}/api/office`);
+    console.log(`📱 App Version API: http://localhost:${PORT}/api/app/check-update`);
+    console.log(`📥 App Download URL: http://localhost:${PORT}/download/apk`);
     console.log(`📁 Upload API: http://localhost:${PORT}/api/upload/document`);
     console.log(`🩺 Health check: http://localhost:${PORT}/api/health`);
     console.log(`===============================================`);
