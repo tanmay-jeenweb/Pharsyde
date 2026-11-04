@@ -79,6 +79,9 @@ export default function CheckoutPage() {
   const pointRate = (Number(customerUser?.reward_points_dollar_value) > 0 && availablePoints > 0)
     ? (Number(customerUser.reward_points_dollar_value) / availablePoints)
     : 1.00;
+  const availableDollarValue = Number(customerUser?.reward_points_dollar_value) > 0
+    ? Number(customerUser.reward_points_dollar_value)
+    : availablePoints * pointRate;
   const maxRedeemablePoints = Math.min(availablePoints, Math.floor(cartSubtotal / pointRate));
   const rewardDiscount = redeemRewards ? Math.round(maxRedeemablePoints * pointRate * 100) / 100 : 0.00;
 
@@ -658,38 +661,89 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              {/* Loyalty Rewards Redemption Card */}
-              {isCustomerLoggedIn && availablePoints > 0 && (
-                <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+              {/* TechPOS Loyalty Reward Tokens Card (Always Visible) */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50/90 via-amber-50/40 to-white border border-amber-200/90 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-700 shrink-0">
                       <Sparkles className="w-4 h-4 text-amber-600" />
-                      <span>Redeem Loyalty Rewards</span>
                     </div>
-                    <span className="text-xs font-mono font-bold text-amber-800">
-                      ⭐ {availablePoints} pts
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                          Reward Tokens
+                        </span>
+                        {isCustomerLoggedIn && customerUser?.techpos_member_id && (
+                          <span className="text-[10px] text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.2 rounded font-mono font-semibold">
+                            #{customerUser.techpos_member_id}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-slate-500 block">
+                        TechPOS Loyalty Program
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-xs font-mono font-black text-amber-900 block">
+                      ⭐ {availablePoints} tokens
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-mono block">
+                      (${availableDollarValue.toFixed(2)} CAD)
                     </span>
                   </div>
-                  <label className="flex items-center gap-2.5 cursor-pointer pt-1 text-xs text-amber-950 font-medium select-none">
-                    <input
-                      type="checkbox"
-                      checked={redeemRewards}
-                      onChange={(e) => setRedeemRewards(e.target.checked)}
-                      className="w-4 h-4 accent-amber-600 rounded cursor-pointer"
-                    />
-                    <span>Redeem {maxRedeemablePoints} points for -${(maxRedeemablePoints * pointRate).toFixed(2)} CAD off</span>
-                  </label>
                 </div>
-              )}
+
+                {isCustomerLoggedIn ? (
+                  availablePoints > 0 ? (
+                    <label className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-amber-200 cursor-pointer text-xs text-slate-900 font-medium select-none hover:border-amber-300 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={redeemRewards}
+                        onChange={(e) => setRedeemRewards(e.target.checked)}
+                        className="w-4 h-4 mt-0.5 accent-amber-600 rounded cursor-pointer"
+                      />
+                      <div className="flex-1">
+                        <span className="font-bold text-slate-900 block">
+                          Redeem {maxRedeemablePoints} tokens for instant discount
+                        </span>
+                        <span className="text-[11px] text-[#488203] font-mono font-bold block mt-0.5">
+                          -${(maxRedeemablePoints * pointRate).toFixed(2)} CAD off order total
+                        </span>
+                      </div>
+                    </label>
+                  ) : (
+                    <div className="p-2.5 rounded-xl bg-amber-100/40 border border-amber-200/60 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 text-slate-600">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                        <span className="text-[11px]">
+                          Balance: <strong className="text-slate-900 font-mono">0 tokens ($0.00 CAD)</strong>
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded-md">
+                        +Earn tokens on this order
+                      </span>
+                    </div>
+                  )
+                ) : (
+                  <div className="p-2.5 rounded-xl bg-amber-100/40 border border-amber-200/60 flex items-center justify-between text-xs">
+                    <span className="text-[11px] text-slate-600">
+                      Balance: <strong className="text-slate-900 font-mono">0 tokens</strong> (Guest)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openAuthModal('login')}
+                      className="text-[10px] font-bold text-slate-900 hover:text-black underline cursor-pointer"
+                    >
+                      Sign In to Link Tokens
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {/* Financial Breakdown */}
               <div className="pt-4 border-t border-slate-100 space-y-2 text-xs text-slate-600">
-                {redeemRewards && rewardDiscount > 0 && (
-                  <div className="flex justify-between text-amber-700 font-bold">
-                    <span>Loyalty Points Discount</span>
-                    <span className="font-mono">-${rewardDiscount.toFixed(2)} CAD</span>
-                  </div>
-                )}
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span className="font-mono text-slate-900 font-semibold">${cartSubtotal.toFixed(2)} CAD</span>
@@ -700,6 +754,21 @@ export default function CheckoutPage() {
                     {shippingFee === 0 ? 'FREE' : `$${shippingFee.toFixed(2)} CAD`}
                   </span>
                 </div>
+
+                {/* Reward Tokens Line Item - Always Shown */}
+                <div className="flex justify-between items-center text-xs">
+                  <span className="flex items-center gap-1.5 text-slate-600">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Reward Tokens</span>
+                    <span className="text-[10px] font-mono text-slate-400">
+                      ({availablePoints} tokens avail)
+                    </span>
+                  </span>
+                  <span className={`font-mono font-bold ${redeemRewards && rewardDiscount > 0 ? 'text-[#488203]' : 'text-slate-500'}`}>
+                    {redeemRewards && rewardDiscount > 0 ? `-${rewardDiscount.toFixed(2)} CAD` : '$0.00 CAD'}
+                  </span>
+                </div>
+
                 <div className="flex justify-between">
                   <span>Manitoba 12% Tax (5% GST + 7% PST)</span>
                   <span className="font-mono text-slate-900">${manitobaTax.toFixed(2)} CAD</span>

@@ -151,8 +151,11 @@ const register = async (req, res, next) => {
         techposMemberId = matched.id || matched.memberId || null;
         eliteStartDate = matched.eliteMemberStartDate || null;
         eliteEndDate = matched.eliteMemberEndDate || null;
+        const pointDollarRate = process.env.REWARD_POINT_DOLLAR_RATE ? Number(process.env.REWARD_POINT_DOLLAR_RATE) : 1.00;
         rewardPoints = Number(matched.rewardPoints) || 0.00;
-        rewardDollarValue = Number(matched.rewardPointsDollarValue) || 0.00;
+        rewardDollarValue = Number(matched.rewardPointsDollarValue) > 0
+          ? Number(matched.rewardPointsDollarValue)
+          : Number((rewardPoints * pointDollarRate).toFixed(2));
         cardNumber = matched.cardNumber || null;
         isElite = Boolean(matched.isElite);
         visitCount = Number(matched.visitCount) || 0;
