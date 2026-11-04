@@ -52,6 +52,7 @@ const updateOfficeSetting = async (req, res, next) => {
   try {
     const { key } = req.params;
     const { value, label, description, category } = req.body;
+    let finalValue = typeof value === 'object' ? JSON.stringify(value) : (value !== undefined && value !== null ? String(value).trim() : '');
 
     if (value === undefined || value === null) {
       return res.status(400).json({
@@ -77,8 +78,20 @@ const updateOfficeSetting = async (req, res, next) => {
       }
     }
 
+    // Specific validation for gov_id_mandatory
+    if (key === 'gov_id_mandatory') {
+      const strVal = String(value).trim().toLowerCase();
+      if (strVal !== 'true' && strVal !== 'false') {
+        return res.status(400).json({
+          success: false,
+          message: 'Government ID Mandatory setting must be either "true" or "false".',
+        });
+      }
+      finalValue = strVal;
+    }
+
     // Specific validation for best_seller_product_ids
-    let finalValue = typeof value === 'object' ? JSON.stringify(value) : String(value).trim();
+    
     if (key === 'best_seller_product_ids') {
       try {
         const parsed = JSON.parse(finalValue);
@@ -137,7 +150,7 @@ const getPublicSettings = async (req, res, next) => {
   try {
     const all = await SettingModel.findAll();
     // Whitelist only public safe settings
-    const publicKeys = ['new_arrivals_limit', 'best_seller_product_ids'];
+    const publicKeys = ['new_arrivals_limit', 'best_seller_product_ids', 'gov_id_mandatory'];
     const publicSettings = {};
 
     for (const s of all) {

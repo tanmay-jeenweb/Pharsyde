@@ -6,6 +6,7 @@ import { uploadDocumentApi } from '../services/uploadService';
 import { preloadPaymentApi, setMonerisPaymentSession } from '../services/paymentService';
 import { calculateCartTaxes } from '../utils/taxCalculator';
 import { STORE_INFO } from '../data/products';
+import { getPublicSettingsApi } from '../services/productService';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -44,6 +45,9 @@ export default function CheckoutPage() {
   } = useApp();
 
   // Form State
+  // Store Policy State
+  const [isGovIdMandatory, setIsGovIdMandatory] = useState(false);
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -63,6 +67,23 @@ export default function CheckoutPage() {
     specialInstructions: '',
   });
 
+  // Load Storefront Policy (e.g. Government ID mandatory requirement)
+  useEffect(() => {
+    let isMounted = true;
+    async function loadStorePolicy() {
+      try {
+        const res = await getPublicSettingsApi();
+        if (isMounted && res?.settings?.gov_id_mandatory !== undefined) {
+          setIsGovIdMandatory(res.settings.gov_id_mandatory === 'true' || res.settings.gov_id_mandatory === true);
+        }
+      } catch (err) {
+        console.warn('Could not load public settings:', err);
+      }
+    }
+    loadStorePolicy();
+    return () => { isMounted = false; };
+  }, []);
+
   // Autofill with logged-in customer info if available
   useEffect(() => {
     if (customerUser) {
@@ -76,6 +97,7 @@ export default function CheckoutPage() {
       }));
     }
   }, [customerUser]);
+
 
   // Government ID Upload State (Optional)
   const [uploadedDoc, setUploadedDoc] = useState(null);
@@ -186,6 +208,10 @@ export default function CheckoutPage() {
     }
     if (!formData.idConsent) {
       newErrors.idConsent = 'You must acknowledge valid photo ID is required upon receiving order.';
+    }
+
+    if (isGovIdMandatory && !uploadedDoc) {
+      newErrors.govId = 'A government-approved ID document is required to proceed with checkout.';
     }
 
     if (!isPickup) {
@@ -604,13 +630,25 @@ export default function CheckoutPage() {
                       Government-Approved ID
                     </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wider">
-                    Optional
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    isGovIdMandatory
+                      ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    {isGovIdMandatory ? 'Mandatory *' : 'Optional'}
                   </span>
                 </div>
 
                 <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Upload a photo or PDF of your Driver's License, Passport, or Age of Majority card to expedite pickup &amp; delivery confirmation. <strong className="text-slate-700">Physical ID will still be physically verified upon collection or courier arrival.</strong>
+                  {isGovIdMandatory ? (
+                    <>
+                      <strong className="text-amber-800 font-bold">Age Verification Required:</strong> Upload a photo or PDF of your Driver's License, Passport, or Age of Majority card before placing your order. <strong className="text-slate-700">Physical ID will still be inspected at pickup or courier delivery.</strong>
+                    </>
+                  ) : (
+                    <>
+                      Upload a photo or PDF of your Driver's License, Passport, or Age of Majority card to expedite pickup &amp; delivery confirmation. <strong className="text-slate-700">Physical ID will still be physically verified upon collection or courier arrival.</strong>
+                    </>
+                  )}
                 </p>
 
                 {!uploadedDoc ? (

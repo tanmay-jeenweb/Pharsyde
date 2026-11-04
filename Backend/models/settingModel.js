@@ -26,6 +26,13 @@ const DEFAULT_SETTINGS = [
     label: 'Best Seller Products',
     description: 'JSON array of selected product IDs to display on the customer storefront Best Sellers page.',
     category: 'storefront'
+  },
+  {
+    key: 'gov_id_mandatory',
+    value: 'false',
+    label: 'Government ID Mandatory at Checkout',
+    description: 'When enabled, customers must upload a valid government-approved ID before completing checkout.',
+    category: 'compliance'
   }
 ];
 
