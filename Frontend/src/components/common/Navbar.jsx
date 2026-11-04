@@ -38,27 +38,27 @@ export default function Navbar() {
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
           isScrolled
-            ? 'bg-white/90 backdrop-blur-xl border-b border-slate-200/90 py-3 shadow-[0_4px_24px_rgba(15,23,42,0.06)]'
-            : 'bg-white/75 backdrop-blur-md py-4.5 border-b border-slate-200/40 shadow-xs'
+            ? 'bg-white/95 backdrop-blur-xl border-b border-slate-200/90 py-3 shadow-[0_4px_24px_rgba(15,23,42,0.06)]'
+            : 'bg-white/85 backdrop-blur-md py-4 border-b border-slate-200/50 shadow-xs'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-4">
             {/* Left: Brand Logo */}
             <Link
               to="/"
-              className="group flex items-center text-left focus:outline-none py-1"
+              className="group flex items-center text-left focus:outline-none shrink-0 py-0.5"
               aria-label="Pharsyde Home"
             >
               <img
                 src={logoImg}
                 alt="PHARSYDE"
-                className="h-8 sm:h-10 md:h-11 w-auto object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_2px_12px_rgba(142,247,5,0.45)]"
+                className="h-8 sm:h-9 md:h-10 w-auto object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_2px_12px_rgba(142,247,5,0.45)]"
               />
             </Link>
 
             {/* Centre: Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-1 lg:space-x-1.5 bg-slate-100/90 backdrop-blur-xl px-3 py-1.5 rounded-full border border-slate-200/80 shadow-inner">
+            <nav className="hidden lg:flex items-center space-x-0.5 bg-slate-100/90 backdrop-blur-xl px-1.5 py-1 rounded-full border border-slate-200/80 shadow-inner">
               {navLinks.map((link) => {
                 const isActive = link.path === '/'
                   ? location.pathname === '/'
@@ -67,19 +67,19 @@ export default function Navbar() {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`group relative px-4 py-2 text-xs lg:text-[13px] font-semibold tracking-[0.14em] uppercase transition-all duration-200 rounded-full ${
+                    className={`group relative px-2.5 py-1 text-md   lg:text-[15px] font-semibold tracking-tight uppercase whitespace-nowrap transition-all duration-200 rounded-full shrink-0 ${
                       isActive
-                        ? 'text-slate-900 font-bold bg-white shadow-xs'
+                        ? 'text-slate-900 bg-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                     }`}
                   >
-                    <span>{link.label}</span>
+                    <span className="whitespace-nowrap">{link.label}</span>
 
                     {/* Active Underline in #8EF705 */}
                     <span
-                      className={`absolute bottom-0.5 inset-x-3.5 h-[2.5px] rounded-full transition-all duration-300 ${
+                      className={`absolute bottom-0.5 inset-x-2.5 h-[2px] rounded-full transition-all duration-300 ${
                         isActive
-                          ? 'bg-[#8EF705] shadow-[0_0_10px_#8EF705] opacity-100'
+                          ? 'bg-[#8EF705] shadow-[0_0_8px_#8EF705] opacity-100'
                           : 'bg-[#8EF705]/0 opacity-0 group-hover:opacity-40 group-hover:bg-[#8EF705]'
                       }`}
                     />
@@ -148,7 +148,7 @@ export default function Navbar() {
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 aria-label="Toggle navigation menu"
-                className="md:hidden w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-800 hover:border-[#8EF705] flex items-center justify-center transition-colors shadow-xs"
+                className="lg:hidden w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-800 hover:border-[#8EF705] flex items-center justify-center transition-colors shadow-xs"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5 text-orange-600" /> : <Menu className="w-5 h-5 text-slate-800" />}
               </button>
@@ -159,7 +159,7 @@ export default function Navbar() {
 
       {/* Mobile Animated Slide-in Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 lg:hidden animate-in fade-in duration-200">
           <div
             className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
             onClick={() => setMobileMenuOpen(false)}
