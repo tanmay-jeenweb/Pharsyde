@@ -9,6 +9,7 @@ const {
   updateUser,
   toggleUserActive,
   deleteUser,
+  syncTechPOSUsers,
   getUserTypes,
   getUserTypeById,
   createUserType,
@@ -71,6 +72,7 @@ router.post('/users', createUser);
 router.put('/users/:id', updateUser);
 router.patch('/users/:id/toggle-active', toggleUserActive);
 router.delete('/users/:id', deleteUser);
+router.post('/users/sync-techpos', syncTechPOSUsers);
 
 // 4. User Type Master
 router.get('/user-types', getUserTypes);

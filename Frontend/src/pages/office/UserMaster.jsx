@@ -5,7 +5,8 @@ import {
   getOfficeUsersApi, 
   toggleOfficeUserActiveApi, 
   deleteOfficeUserApi, 
-  getOfficeUserTypesApi 
+  getOfficeUserTypesApi,
+  syncOfficeTechPOSUsersApi,
 } from '../../services/officeApi';
 
 export default function UserMaster() {
@@ -13,12 +14,13 @@ export default function UserMaster() {
   const [users, setUsers] = useState([]);
   const [userTypes, setUserTypes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
   const [notification, setNotification] = useState(null);
 
   const notify = (msg, type = 'success') => {
     setNotification({ msg, type });
-    setTimeout(() => setNotification(null), 4000);
+    setTimeout(() => setNotification(null), 7000);
   };
 
   const fetchData = async () => {
@@ -68,22 +70,55 @@ export default function UserMaster() {
     }
   };
 
-  // Format exactly matching ERP's AdminDashboard user columns
+  const handleSyncTechPOS = async () => {
+    if (syncing) return;
+    try {
+      setSyncing(true);
+      notify('Connecting to TechPOS and synchronizing members...', 'info');
+      const res = await syncOfficeTechPOSUsersApi();
+      const stats = res.stats || {};
+      
+      if (stats.errors && stats.errors.length > 0) {
+        notify(
+          `Sync: ${stats.fetchedFromTechPOS || 0} fetched, ${stats.importedFromTechPOS || 0} imported, ${stats.updatedFromTechPOS || 0} updated. Note: ${stats.errors[0]}`,
+          'error'
+        );
+      } else {
+        notify(
+          `TechPOS Sync Complete: ${stats.fetchedFromTechPOS || 0} fetched, ${stats.importedFromTechPOS || 0} imported, ${stats.updatedFromTechPOS || 0} updated, ${stats.pushedToTechPOS || 0} linked/synced!`,
+          'success'
+        );
+      }
+      await fetchData();
+    } catch (err) {
+      console.error('TechPOS user sync failed:', err);
+      notify(err.message || 'TechPOS synchronization failed', 'error');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Format exactly matching ERP's AdminDashboard user columns with TechPOS integrations
   const userColumns = useMemo(() => [
     {
       key: 'name',
       label: 'Full Name',
       minWidth: '160px',
       render: (row) => (
-        <span className="text-sm font-semibold text-slate-900">
-          {row.name || '—'}
-        </span>
+        <div>
+          <span className="text-sm font-semibold text-slate-900 block">
+            {row.name || [row.first_name, row.last_name].filter(Boolean).join(' ') || '—'}
+          </span>
+          {row.user_type === 'Customer' && (
+            <span className="text-[10px] text-slate-400 font-mono">Store Customer</span>
+          )}
+        </div>
       ),
     },
     {
       key: 'username',
       label: 'Username',
-      minWidth: '130px',
+      minWidth: '120px',
       render: (row) => (
         <span className="text-sm text-slate-600 font-mono">
           {row.username || '—'}
@@ -101,12 +136,81 @@ export default function UserMaster() {
       ),
     },
     {
+      key: 'techpos_member_id',
+      label: 'TechPOS Member ID',
+      minWidth: '150px',
+      render: (row) => {
+        if (row.user_type !== 'Customer' && row.role !== 'user') {
+          return <span className="text-xs text-slate-400 font-medium">—</span>;
+        }
+        return row.techpos_member_id ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-blue-50 text-blue-700 border border-blue-200">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3 text-blue-500">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+            #{row.techpos_member_id}
+          </span>
+        ) : (
+          <span className="text-xs text-slate-400 italic">Unlinked</span>
+        );
+      },
+    },
+    {
+      key: 'reward_points',
+      label: 'Reward Points',
+      minWidth: '130px',
+      render: (row) => {
+        if (row.user_type !== 'Customer' && row.role !== 'user') {
+          return <span className="text-xs text-slate-400 font-medium">—</span>;
+        }
+        const pts = Number(row.reward_points) || 0;
+        const val = Number(row.reward_points_dollar_value) || 0;
+        return (
+          <div className="flex flex-col">
+            <span className={`inline-flex items-center gap-1 text-xs font-bold ${pts > 0 ? 'text-amber-700' : 'text-slate-500'}`}>
+              <span>⭐ {pts} pts</span>
+            </span>
+            {val > 0 && (
+              <span className="text-[10px] text-slate-400 font-mono">
+                (${val.toFixed(2)} CAD)
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'password_set',
+      label: 'Online Access',
+      minWidth: '120px',
+      render: (row) => {
+        if (row.user_type !== 'Customer' && row.role !== 'user') {
+          return <span className="text-xs text-slate-400 font-medium">—</span>;
+        }
+        return row.password_set ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active Web
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200" title="In-store customer, hasn't set web password yet">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400" /> In-Store Only
+          </span>
+        );
+      },
+    },
+    {
       key: 'user_type',
       label: 'User Type',
-      minWidth: '130px',
+      minWidth: '120px',
       render: (row) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-[#064e3b] border border-emerald-200">
-          {row.user_group_name || row.user_type || '—'}
+        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+          row.user_type === 'Customer'
+            ? 'bg-sky-50 text-sky-800 border-sky-200'
+            : row.role === 'admin' || row.user_type === 'Admin'
+            ? 'bg-purple-50 text-purple-800 border-purple-200'
+            : 'bg-emerald-50 text-[#064e3b] border-emerald-200'
+        }`}>
+          {row.user_group_name || row.user_type || 'Staff'}
         </span>
       ),
     },
@@ -131,23 +235,38 @@ export default function UserMaster() {
       },
     },
     {
-      key: 'date_of_join',
-      label: 'Date of Join',
-      minWidth: '120px',
+      key: 'techpos_sync_status',
+      label: 'Sync Status',
+      minWidth: '110px',
       render: (row) => {
-        if (!row.date_of_join) return <span className="text-sm text-slate-400 italic">—</span>;
-        const date = new Date(row.date_of_join);
-        if (isNaN(date.getTime())) return <span className="text-sm text-slate-400 italic">—</span>;
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return <span className="text-sm text-slate-600">{`${day}/${month}/${year}`}</span>;
+        if (row.user_type !== 'Customer' && row.role !== 'user') {
+          return <span className="text-xs text-slate-400 font-medium">—</span>;
+        }
+        if (row.techpos_sync_status === 'synced' || row.techpos_member_id) {
+          return (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Synced
+            </span>
+          );
+        }
+        if (row.techpos_sync_status === 'failed') {
+          return (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" /> Failed
+            </span>
+          );
+        }
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Pending
+          </span>
+        );
       },
     },
     {
       key: 'active',
       label: 'Status',
-      minWidth: '110px',
+      minWidth: '100px',
       render: (row) =>
         row.active ? (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -166,7 +285,7 @@ export default function UserMaster() {
       minWidth: '130px',
       render: (row) => (
         <div className="flex items-center gap-2">
-          {/* Edit User Button (Navigates to Full Page Form) */}
+          {/* Edit User Button */}
           <button
             onClick={() => navigate(`/office/user-master/create?id=${row.id}`)}
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#bcccdc] bg-[#f0f4f8] text-[#064e3b] hover:bg-[#e6ebf0] transition-colors cursor-pointer"
@@ -216,6 +335,8 @@ export default function UserMaster() {
           className={`p-4 rounded-xl text-sm font-semibold flex items-center justify-between shadow-xs ${
             notification.type === 'error'
               ? 'bg-rose-50 text-rose-900 border border-rose-200'
+              : notification.type === 'info'
+              ? 'bg-blue-50 text-blue-900 border border-blue-200'
               : 'bg-emerald-50 text-emerald-900 border border-emerald-200'
           }`}
         >
@@ -237,7 +358,7 @@ export default function UserMaster() {
         data={users}
         columns={userColumns}
         loading={loading}
-        searchPlaceholder="Search users by name or email..."
+        searchPlaceholder="Search users by name, email, or TechPOS ID..."
         toggleActions={
           <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-600 select-none">
             <div
@@ -256,15 +377,42 @@ export default function UserMaster() {
           </label>
         }
         actionButton={
-          <button
-            onClick={() => navigate('/office/user-master/create')}
-            className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#064e3b] text-white hover:bg-[#047857] transition-colors cursor-pointer shadow-sm hover:shadow"
-            title="Create User"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2.5">
+            {/* Sync TechPOS Members Button */}
+            <button
+              onClick={handleSyncTechPOS}
+              disabled={syncing}
+              className={`flex items-center gap-2 px-3.5 h-10 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer border ${
+                syncing
+                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300'
+              }`}
+              title="Synchronize customers with TechPOS members"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                strokeWidth={2} 
+                stroke="currentColor" 
+                className={`w-4 h-4 ${syncing ? 'animate-spin text-emerald-600' : 'text-slate-600'}`}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+              <span>{syncing ? 'Syncing...' : 'Sync TechPOS'}</span>
+            </button>
+
+            {/* Create User Button */}
+            <button
+              onClick={() => navigate('/office/user-master/create')}
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#064e3b] text-white hover:bg-[#047857] transition-colors cursor-pointer shadow-sm hover:shadow"
+              title="Create User"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </button>
+          </div>
         }
       />
 

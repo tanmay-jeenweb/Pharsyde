@@ -44,7 +44,7 @@ function buildTechPosPayload(order, storeId) {
     externalIdentifier: numericExternalId,
     storeId: Number(storeId),
     paymentAmount: Number(order.total) || 0,
-    memberId: null,
+    memberId: order.techpos_member_id || order.member_id || (order.user && order.user.techpos_member_id) ? Number(order.techpos_member_id || order.member_id || order.user.techpos_member_id) : null,
     isPaid: true,
     lastFourDigits: order.card_last4 || null,
     forDelivery: isDelivery,

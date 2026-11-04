@@ -162,6 +162,51 @@ export default function AccountOrdersPage() {
         ) : (
           /* Orders View: Strictly for authenticated customers */
           <>
+            {/* TechPOS Loyalty & Rewards Card */}
+            <div className="p-6 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-transparent border border-amber-200/80 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-700">
+                  <Sparkles className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-heading font-black text-slate-900 uppercase tracking-tight text-base">
+                      TechPOS Loyalty & Rewards
+                    </h3>
+                    {customerUser?.is_elite ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-black uppercase tracking-wider">
+                        VIP Elite
+                      </span>
+                    ) : customerUser?.techpos_member_id ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 uppercase tracking-wider">
+                        Member #{customerUser.techpos_member_id}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Earn points on in-store and online purchases to redeem for instant discounts at checkout.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 sm:gap-6 shrink-0">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Available Balance</span>
+                  <span className="font-mono text-2xl font-black text-amber-900">
+                    ⭐ {Number(customerUser?.reward_points) || 0} <span className="text-xs font-bold text-slate-500">pts</span>
+                  </span>
+                </div>
+                {Number(customerUser?.reward_points_dollar_value) > 0 && (
+                  <div className="pl-4 border-l border-amber-200/60">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Dollar Value</span>
+                    <span className="font-mono text-xl font-black text-[#488203]">
+                      ${Number(customerUser?.reward_points_dollar_value).toFixed(2)} CAD
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Member Profile Stats Summary */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs">
