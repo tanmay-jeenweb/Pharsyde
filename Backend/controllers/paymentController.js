@@ -4,6 +4,7 @@ const { calculateOrderTaxesCents } = require('../utils/taxCalculator');
 const { validateCannabisLimit } = require('../utils/cannabisLimit');
 const PaymentAttemptModel = require('../models/paymentAttemptModel');
 const OrderModel = require('../models/orderModel');
+const SettingModel = require('../models/settingModel');
 const UserModel = require('../models/userModel');
 const { getNextOrderNumber } = require('../services/orderSequenceService');
 const { preloadMonerisCheckout, getMonerisReceipt, getMonerisConfig, MonerisGatewayError } = require('../services/monerisService');
@@ -103,6 +104,17 @@ const initiatePaymentAttempt = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'Delivery address and postal code are required for courier orders.',
+      });
+    }
+
+    // Check if Government ID upload is mandatory
+    const isGovIdMandatory = (await SettingModel.getValue('gov_id_mandatory', 'false')) === 'true';
+    const uploadedIdUrl = customer.govIdUrl || customer.gov_id_url || gov_id_url || req.body.govIdUrl || null;
+    if (isGovIdMandatory && !uploadedIdUrl) {
+      return res.status(400).json({
+        success: false,
+        code: 'GOV_ID_REQUIRED',
+        message: 'A valid government-approved ID document is required to proceed with checkout.',
       });
     }
 
