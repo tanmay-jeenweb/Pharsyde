@@ -108,6 +108,12 @@ export default function Navbar() {
                 >
                   <span className="w-2 h-2 rounded-full bg-[#8EF705] ring-2 ring-[#8EF705]/40" />
                   <span className="text-xs font-bold max-w-[80px] truncate">{customerUser?.name?.split(' ')[0]}</span>
+                  {Number(customerUser?.reward_points) > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-mono font-bold flex items-center gap-0.5" title={`${customerUser.reward_points} TechPOS Loyalty Points`}>
+                      <span>⭐</span>
+                      <span>{Math.floor(Number(customerUser.reward_points))}</span>
+                    </span>
+                  )}
                   <User className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-900" />
                 </Link>
               ) : (

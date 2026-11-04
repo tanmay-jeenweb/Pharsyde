@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { X, Lock, Mail, User, Phone, Calendar, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
+import { X, Lock, Mail, User, Phone, Calendar, ShieldCheck, ArrowRight, Loader2, Sparkles } from 'lucide-react';
 
 export default function AuthModal() {
   const { isAuthModalOpen, setIsAuthModalOpen, authModalTab, setAuthModalTab, customerLogin, customerRegister, showToast } = useApp();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [needsActivation, setNeedsActivation] = useState(false);
 
   // Sign In Form
   const [loginData, setLoginData] = useState({
@@ -29,6 +30,7 @@ export default function AuthModal() {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setNeedsActivation(false);
     if (!loginData.email || !loginData.password) {
       setError('Please provide your email and password.');
       return;
@@ -38,7 +40,13 @@ export default function AuthModal() {
     try {
       await customerLogin(loginData.email, loginData.password);
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      if (err.data?.code === 'IN_STORE_ACCOUNT_NEEDS_ACTIVATION' || (err.message && err.message.toLowerCase().includes('in-store'))) {
+        setNeedsActivation(true);
+        setError(err.message || 'We found your in-store TechPOS membership! Please set your online password to activate it.');
+      } else {
+        setNeedsActivation(false);
+        setError(err.message || 'Login failed. Please check your credentials.');
+      }
     } finally {
       setLoading(false);
     }
@@ -128,9 +136,32 @@ export default function AuthModal() {
           </button>
         </div>
 
-        {/* Error Notice */}
-        {error && (
-          <div className="mx-6 mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">
+        {/* Error or In-Store Activation Notice */}
+        {needsActivation ? (
+          <div className="mx-6 mt-4 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-950 space-y-2.5 animate-in fade-in">
+            <div className="flex items-center gap-1.5 font-bold text-amber-900">
+              <Sparkles className="w-4 h-4 text-amber-600" />
+              <span>In-Store TechPOS Account Found!</span>
+            </div>
+            <p className="text-[11px] text-amber-800 leading-relaxed">
+              Your membership exists in our physical store. Click below to set your website password and activate online ordering!
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setRegisterData((prev) => ({ ...prev, email: loginData.email }));
+                setAuthModalTab('register');
+                setError('');
+                setNeedsActivation(false);
+              }}
+              className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-bold uppercase text-[11px] tracking-wider transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <span>Activate Account & Set Password</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        ) : error && (
+          <div className="mx-6 mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 animate-in fade-in">
             {error}
           </div>
         )}

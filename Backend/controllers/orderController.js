@@ -81,11 +81,44 @@ const createOrder = async (req, res, next) => {
     const isPickup = fulfillmentType === 'pickup';
     const shipping = isPickup || subtotal >= FREE_SHIPPING_THRESHOLD ? 0.0 : 9.99;
 
-    // Manitoba Tax (5% GST + 7% PST = 12%)
-    const tax = Math.round(subtotal * 0.12 * 100) / 100;
-    const total = Math.round((subtotal + tax + shipping) * 100) / 100;
+    // Reward points redemption logic
+    let pointsDiscount = 0.00;
+    let pointsRedeemed = 0;
+    const { redeem_rewards, redeemed_points } = req.body;
+
+    if (authUser && (redeem_rewards || Number(redeemed_points) > 0)) {
+      const dbUser = await UserModel.findById(authUser.id);
+      const userPoints = Number(dbUser?.reward_points || 0);
+
+      if (userPoints > 0) {
+        // Calculate point conversion: default 1 pt = $1.00 (or ratio from TechPOS dollar value)
+        const dollarRate = (Number(dbUser.reward_points_dollar_value) > 0 && userPoints > 0)
+          ? (Number(dbUser.reward_points_dollar_value) / userPoints)
+          : 1.00;
+
+        const maxPoints = Math.min(userPoints, Math.floor(subtotal / dollarRate));
+        pointsRedeemed = redeemed_points ? Math.min(Number(redeemed_points), maxPoints) : maxPoints;
+        pointsDiscount = Math.round(pointsRedeemed * dollarRate * 100) / 100;
+
+        // Deduct points immediately to lock against re-use
+        if (pointsRedeemed > 0) {
+          await UserModel.deductRewardPoints(authUser.id, pointsRedeemed);
+          console.log(`[Order Rewards] Customer ID ${authUser.id} redeemed ${pointsRedeemed} reward points (-$${pointsDiscount.toFixed(2)} CAD).`);
+        }
+      }
+    }
+
+    // Manitoba Tax (5% GST + 7% PST = 12%) on subtotal after loyalty discount
+    const discountedSubtotal = Math.max(0, subtotal - pointsDiscount);
+    const tax = Math.round(discountedSubtotal * 0.12 * 100) / 100;
+    const total = Math.max(0, Math.round((discountedSubtotal + tax + shipping) * 100) / 100);
 
     const orderNumber = generateOrderNumber();
+
+    const resolvedNotes = [
+      notes,
+      pointsRedeemed > 0 ? `Redeemed ${pointsRedeemed} TechPOS loyalty points (-$${pointsDiscount.toFixed(2)} CAD discount)` : null,
+    ].filter(Boolean).join(' | ');
 
     // Prepare normalized items list
     const normalizedItems = items.map((item) => ({
@@ -118,10 +151,13 @@ const createOrder = async (req, res, next) => {
         payment_method: paymentMethod || 'card',
         payment_status: 'Paid',
         order_status: 'Confirmed',
-        notes,
+        notes: resolvedNotes,
       },
       items: normalizedItems,
     });
+
+    // Attach techpos_member_id if customer is logged in
+    createdOrder.techpos_member_id = authUser?.techpos_member_id || null;
 
     // Attempt live dispatch to TechPOS OpenAPI
     let syncResult = { success: false, message: 'Sync not attempted' };
