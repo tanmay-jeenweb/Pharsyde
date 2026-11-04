@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { PRODUCTS } from '../data/products';
 import ProductCard from '../components/common/ProductCard';
+import AppDownloadBadge from '../components/common/AppDownloadBadge';
 import heroBg from '../assets/hero-bg.png';
 import {
   ArrowRight,
@@ -180,6 +181,9 @@ export default function HomePage() {
                 >
                   Visit Winnipeg Store
                 </button>
+
+                {/* Google Play Store Mobile App Download Badge */}
+                <AppDownloadBadge />
               </div>
             </div>
 

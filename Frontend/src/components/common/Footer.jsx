@@ -4,6 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { STORE_INFO } from '../../data/products';
 import { MapPin, Phone, Mail, Clock, ShieldAlert, Award, ArrowUpRight } from 'lucide-react';
 import logoImg from '../../assets/image.webp';
+import AppDownloadBadge from './AppDownloadBadge';
 
 export default function Footer() {
   const { navigateTo } = useApp();
@@ -30,6 +31,9 @@ export default function Footer() {
               Winnipeg's premier dispensary and lifestyle destination. Curating exceptional craft cannabis, 
               precision nicotine vapes, and refined accessories for the discerning consumer.
             </p>
+            <div className="pt-2">
+              <AppDownloadBadge />
+            </div>
           </div>
 
           {/* Col 2: Navigation Links */}
@@ -175,9 +179,6 @@ export default function Footer() {
           <p>© {new Date().getFullYear()} PHARSYDE Inc. All rights reserved.</p>
           <div className="flex items-center space-x-6">
             <span>Winnipeg, Manitoba, Canada</span>
-            <a href="/office/login" className="text-emerald-700 hover:text-emerald-900 font-bold underline">
-              Staff Office Portal
-            </a>
             <span>Secure SSL 256-Bit Encrypted</span>
           </div>
         </div>
