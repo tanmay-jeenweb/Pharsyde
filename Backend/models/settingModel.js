@@ -26,6 +26,48 @@ const DEFAULT_SETTINGS = [
     label: 'Best Seller Products',
     description: 'JSON array of selected product IDs to display on the customer storefront Best Sellers page.',
     category: 'storefront'
+  },
+  {
+    key: 'gov_id_mandatory',
+    value: 'false',
+    label: 'Government ID Mandatory at Checkout',
+    description: 'When enabled, customers must upload a valid government-approved ID before completing checkout.',
+    category: 'compliance'
+  },
+  {
+    key: 'mobile_latest_version',
+    value: '1.0.0',
+    label: 'Latest Mobile App Version',
+    description: 'The active latest production version code of the mobile app (e.g. 1.0.0).',
+    category: 'mobile_app'
+  },
+  {
+    key: 'mobile_min_supported_version',
+    value: '1.0.0',
+    label: 'Minimum Supported Mobile Version',
+    description: 'Any mobile app version strictly below this will always be forced to update immediately.',
+    category: 'mobile_app'
+  },
+  {
+    key: 'mobile_apk_url',
+    value: 'https://pharsyde.jeenhost.in/uploads/apk/app-release.apk',
+    label: 'Mobile APK Download URL',
+    description: 'Direct public URL to download the latest Android application package (APK).',
+    category: 'mobile_app'
+  },
+  {
+    key: 'mobile_force_update',
+    value: 'true',
+    label: 'Force Mobile App Update',
+    description: 'When enabled, users with an outdated or mismatched version cannot dismiss the update screen.',
+    category: 'mobile_app'
+  },
+  {
+    key: 'mobile_release_notes',
+    value: 'Performance improvements, checkout optimizations, and bug fixes.',
+    label: 'Mobile Release Notes',
+    description: 'Release changelog notes displayed to the user inside the update modal.',
+    category: 'mobile_app'
   }
 ];
 
@@ -106,4 +148,3 @@ const SettingModel = {
 };
 
 module.exports = SettingModel;
-

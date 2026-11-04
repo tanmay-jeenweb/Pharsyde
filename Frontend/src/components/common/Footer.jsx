@@ -4,6 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { STORE_INFO } from '../../data/products';
 import { MapPin, Phone, Mail, Clock, ShieldAlert, Award, ArrowUpRight } from 'lucide-react';
 import logoImg from '../../assets/image.webp';
+import AppDownloadBadge from './AppDownloadBadge';
 
 export default function Footer() {
   const { navigateTo } = useApp();
@@ -30,6 +31,9 @@ export default function Footer() {
               Winnipeg's premier dispensary and lifestyle destination. Curating exceptional craft cannabis, 
               precision nicotine vapes, and refined accessories for the discerning consumer.
             </p>
+            <div className="pt-2">
+              <AppDownloadBadge />
+            </div>
           </div>
 
           {/* Col 2: Navigation Links */}
@@ -82,7 +86,7 @@ export default function Footer() {
             <ul className="space-y-2.5 text-sm">
               <li>
                 <Link
-                  to="/policy"
+                  to="/return-refund-policy"
                   className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
                 >
                   Return, Exchange & Warranty Policy
@@ -90,7 +94,23 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/policy"
+                  to="/terms"
+                  className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
+                >
+                  Terms & Conditions of Service
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/privacy"
+                  className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
+                >
+                  Privacy Policy (PIPEDA & CASL)
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/return-refund-policy#sec-02"
                   className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
                 >
                   Cannabis Final Sale & Recalls
@@ -98,7 +118,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/policy"
+                  to="/return-refund-policy#sec-03"
                   className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
                 >
                   24-Hour Vape Concern Protocol
@@ -106,18 +126,10 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/policy"
+                  to="/terms#tc-04"
                   className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
                 >
                   Age & Identity Verification Rules
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/policy"
-                  className="hover:text-slate-900 transition-colors text-left text-slate-600 block"
-                >
-                  Terms & Conditions of Service
                 </Link>
               </li>
             </ul>
@@ -175,9 +187,6 @@ export default function Footer() {
           <p>© {new Date().getFullYear()} PHARSYDE Inc. All rights reserved.</p>
           <div className="flex items-center space-x-6">
             <span>Winnipeg, Manitoba, Canada</span>
-            <a href="/office/login" className="text-emerald-700 hover:text-emerald-900 font-bold underline">
-              Staff Office Portal
-            </a>
             <span>Secure SSL 256-Bit Encrypted</span>
           </div>
         </div>

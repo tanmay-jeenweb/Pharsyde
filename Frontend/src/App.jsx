@@ -86,9 +86,16 @@ function MainStoreApp() {
           {/* Informational pages */}
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
-          <Route path="/policy" element={<PolicyPage />} />
+          <Route path="/policy" element={<PolicyPage defaultTab="returns" />} />
           <Route path="/policies" element={<Navigate to="/policy" replace />} />
-          <Route path="/terms" element={<Navigate to="/policy" replace />} />
+          <Route path="/return-refund-policy" element={<PolicyPage defaultTab="returns" />} />
+          <Route path="/return-policy" element={<Navigate to="/return-refund-policy" replace />} />
+          <Route path="/refund-policy" element={<Navigate to="/return-refund-policy" replace />} />
+          <Route path="/terms" element={<PolicyPage defaultTab="terms" />} />
+          <Route path="/terms-and-conditions" element={<Navigate to="/terms" replace />} />
+          <Route path="/privacy" element={<PolicyPage defaultTab="privacy" />} />
+          <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
+
 
           {/* 404 Catch-All */}
           <Route path="*" element={<NotFoundPage />} />

@@ -25,7 +25,13 @@ import {
   ChevronUp,
   Tag,
   Package,
-  Trash2
+  Trash2,
+  ShieldCheck,
+  Smartphone,
+  Download,
+  ArrowUpCircle,
+  Copy,
+  FileText
 } from 'lucide-react';
 
 export default function SettingMaster() {
@@ -39,11 +45,29 @@ export default function SettingMaster() {
   const [validationError, setValidationError] = useState('');
   const [savingArrivals, setSavingArrivals] = useState(false);
 
+  // ─── 3. Government ID Mandatory State ────────────────────────
+  const [govIdMandatory, setGovIdMandatory] = useState(false);
+  const [originalGovIdMandatory, setOriginalGovIdMandatory] = useState(false);
+  const [savingGovId, setSavingGovId] = useState(false);
+
   // ─── 2. Best Sellers Multi-Select State ───────────────────────
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [originalBestSellerIds, setOriginalBestSellerIds] = useState([]);
   const [selectedProductsData, setSelectedProductsData] = useState([]);
   const [savingBestSellers, setSavingBestSellers] = useState(false);
+
+  // ─── 4. Mobile App Version & Force Update State ──────────────
+  const [mobileLatestVersion, setMobileLatestVersion] = useState('1.0.0');
+  const [originalLatestVersion, setOriginalLatestVersion] = useState('1.0.0');
+  const [mobileMinVersion, setMobileMinVersion] = useState('1.0.0');
+  const [originalMinVersion, setOriginalMinVersion] = useState('1.0.0');
+  const [mobileApkUrl, setMobileApkUrl] = useState('https://pharsyde.jeenhost.in/uploads/apk/app-release.apk');
+  const [originalApkUrl, setOriginalApkUrl] = useState('https://pharsyde.jeenhost.in/uploads/apk/app-release.apk');
+  const [mobileForceUpdate, setMobileForceUpdate] = useState(true);
+  const [originalForceUpdate, setOriginalForceUpdate] = useState(true);
+  const [mobileReleaseNotes, setMobileReleaseNotes] = useState('Performance improvements, checkout optimizations, and bug fixes.');
+  const [originalReleaseNotes, setOriginalReleaseNotes] = useState('Performance improvements, checkout optimizations, and bug fixes.');
+  const [savingMobileSettings, setSavingMobileSettings] = useState(false);
 
   // Dropdown Product Search & Picker State
   const [productSearch, setProductSearch] = useState('');
@@ -87,6 +111,14 @@ export default function SettingMaster() {
           setOriginalLimit(safeVal);
         }
 
+        // Parse Government ID Mandatory Setting
+        const govSetting = res.settings.find((s) => s.key === 'gov_id_mandatory');
+        if (govSetting) {
+          const isMandatory = govSetting.value === 'true' || govSetting.value === true;
+          setGovIdMandatory(isMandatory);
+          setOriginalGovIdMandatory(isMandatory);
+        }
+
         // Parse Best Seller Product IDs
         const bestSellerSetting = res.settings.find((s) => s.key === 'best_seller_product_ids');
         if (bestSellerSetting) {
@@ -101,6 +133,38 @@ export default function SettingMaster() {
           } catch (e) {
             console.error('Failed to parse best_seller_product_ids setting:', e);
           }
+        }
+
+        // Parse Mobile App Version Settings
+        const latestVerSetting = res.settings.find((s) => s.key === 'mobile_latest_version');
+        if (latestVerSetting && latestVerSetting.value) {
+          setMobileLatestVersion(latestVerSetting.value);
+          setOriginalLatestVersion(latestVerSetting.value);
+        }
+
+        const minVerSetting = res.settings.find((s) => s.key === 'mobile_min_supported_version');
+        if (minVerSetting && minVerSetting.value) {
+          setMobileMinVersion(minVerSetting.value);
+          setOriginalMinVersion(minVerSetting.value);
+        }
+
+        const apkUrlSetting = res.settings.find((s) => s.key === 'mobile_apk_url');
+        if (apkUrlSetting && apkUrlSetting.value) {
+          setMobileApkUrl(apkUrlSetting.value);
+          setOriginalApkUrl(apkUrlSetting.value);
+        }
+
+        const forceSetting = res.settings.find((s) => s.key === 'mobile_force_update');
+        if (forceSetting) {
+          const isForce = forceSetting.value === 'true' || forceSetting.value === true;
+          setMobileForceUpdate(isForce);
+          setOriginalForceUpdate(isForce);
+        }
+
+        const notesSetting = res.settings.find((s) => s.key === 'mobile_release_notes');
+        if (notesSetting && notesSetting.value) {
+          setMobileReleaseNotes(notesSetting.value);
+          setOriginalReleaseNotes(notesSetting.value);
         }
       }
     } catch (err) {
@@ -143,7 +207,26 @@ export default function SettingMaster() {
     searchProducts('', 'all');
   }, []);
 
-  // Search for Products inside Multi-Select Dropdown
+
+  const handleSaveGovIdSetting = async () => {
+    try {
+      setSavingGovId(true);
+      const res = await updateOfficeSettingApi('gov_id_mandatory', govIdMandatory ? 'true' : 'false');
+      if (res.success) {
+        setOriginalGovIdMandatory(govIdMandatory);
+        notify(`Government ID requirement successfully set to: ${govIdMandatory ? 'Mandatory' : 'Optional'}`);
+      } else {
+        notify(res.message || 'Failed to update Government ID setting', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to update gov_id_mandatory setting:', err);
+      notify(err.message || 'Error updating setting', 'error');
+    } finally {
+      setSavingGovId(false);
+    }
+  };
+
+    // Search for Products inside Multi-Select Dropdown
   // Loads up to 1,000 products with valid images (matching the storefront All Products catalog)
   const searchProducts = async (term = '', category = dropdownCategory) => {
     try {
@@ -299,6 +382,55 @@ export default function SettingMaster() {
     }
   };
 
+  // ─── Mobile Version Handlers ────────────────────────────────
+  const handleBumpVersion = (type = 'patch') => {
+    try {
+      const parts = String(mobileLatestVersion).trim().replace(/^v/, '').split('.').map((p) => parseInt(p, 10) || 0);
+      while (parts.length < 3) parts.push(0);
+
+      if (type === 'patch') {
+        parts[2] += 1;
+      } else if (type === 'minor') {
+        parts[1] += 1;
+        parts[2] = 0;
+      } else if (type === 'major') {
+        parts[0] += 1;
+        parts[1] = 0;
+        parts[2] = 0;
+      }
+      setMobileLatestVersion(parts.join('.'));
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleSaveMobileSettings = async (e) => {
+    if (e) e.preventDefault();
+    try {
+      setSavingMobileSettings(true);
+      await Promise.all([
+        updateOfficeSettingApi('mobile_latest_version', String(mobileLatestVersion).trim()),
+        updateOfficeSettingApi('mobile_min_supported_version', String(mobileMinVersion).trim()),
+        updateOfficeSettingApi('mobile_apk_url', String(mobileApkUrl).trim()),
+        updateOfficeSettingApi('mobile_force_update', mobileForceUpdate ? 'true' : 'false'),
+        updateOfficeSettingApi('mobile_release_notes', String(mobileReleaseNotes).trim()),
+      ]);
+
+      setOriginalLatestVersion(mobileLatestVersion);
+      setOriginalMinVersion(mobileMinVersion);
+      setOriginalApkUrl(mobileApkUrl);
+      setOriginalForceUpdate(mobileForceUpdate);
+      setOriginalReleaseNotes(mobileReleaseNotes);
+
+      notify('Mobile App Version & Force Update settings successfully saved!');
+    } catch (err) {
+      console.error('Failed to update mobile app settings:', err);
+      notify(err.message || 'Error updating mobile settings', 'error');
+    } finally {
+      setSavingMobileSettings(false);
+    }
+  };
+
   // Unsaved changes flags
   const hasArrivalsChanges = Number(newArrivalsLimit) !== Number(originalLimit);
   const hasBestSellerChanges = useMemo(() => {
@@ -306,6 +438,13 @@ export default function SettingMaster() {
     const origSet = new Set(originalBestSellerIds.map(String));
     return selectedProductIds.some((id) => !origSet.has(String(id)));
   }, [selectedProductIds, originalBestSellerIds]);
+
+  const hasMobileChanges = 
+    mobileLatestVersion !== originalLatestVersion ||
+    mobileMinVersion !== originalMinVersion ||
+    mobileApkUrl !== originalApkUrl ||
+    mobileForceUpdate !== originalForceUpdate ||
+    mobileReleaseNotes !== originalReleaseNotes;
 
   return (
     <div className="space-y-8 flex-1 flex flex-col font-sans max-w-5xl mx-auto w-full pb-16">
@@ -385,6 +524,18 @@ export default function SettingMaster() {
             <span>Best Sellers</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </Link>
+
+          <a
+            href="/download/apk"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors cursor-pointer shadow-xs"
+            title="Download latest mobile app release APK"
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            <span>Mobile APK (v{mobileLatestVersion})</span>
+            <Download className="w-3.5 h-3.5" />
+          </a>
         </div>
       </div>
 
@@ -927,6 +1078,441 @@ export default function SettingMaster() {
         </div>
       </div>
 
+      
+      {/* ========================================================
+          SETTING 3: GOVERNMENT ID UPLOAD REQUIREMENT
+          ======================================================== */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="border-b border-slate-100 px-6 py-4.5 bg-slate-50/60 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold ${
+              govIdMandatory ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
+            }`}>
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">
+                Government-Approved ID Verification Policy
+              </h2>
+              <p className="text-xs text-slate-500">
+                Configure whether customer ID document upload is mandatory or optional at checkout
+              </p>
+            </div>
+          </div>
+
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+            govIdMandatory
+              ? 'bg-amber-50 text-amber-800 border-amber-200'
+              : 'bg-slate-50 text-slate-600 border-slate-200'
+          }`}>
+            {govIdMandatory ? 'Mandatory Enforced' : 'Optional (Discretionary)'}
+          </span>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+              <span className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <span>Checkout Age Verification Document</span>
+                <span className="text-xs font-normal text-slate-400 font-mono">(gov_id_mandatory)</span>
+              </span>
+              <span className="text-xs text-slate-500">
+                Current Mode: <strong className={govIdMandatory ? 'text-amber-700 font-bold' : 'text-slate-700'}>
+                  {govIdMandatory ? 'Strict Verification Required' : 'Optional Upload'}
+                </strong>
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
+              When set to <strong className="text-slate-900">Mandatory</strong>, customers must upload a valid photo ID (Driver's License, Passport, or Age of Majority card) before they are allowed to complete their order or proceed to card payment. When set to <strong className="text-slate-900">Optional</strong>, customers can choose to submit an ID to expedite pickup or courier handover, but it is not strictly required to place an order.
+            </p>
+
+            {/* Toggle Switch Selector */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl pt-2">
+              <button
+                type="button"
+                onClick={() => setGovIdMandatory(false)}
+                className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                  !govIdMandatory
+                    ? 'border-[#488203] bg-[#8EF705]/10 ring-1 ring-[#488203]'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                    Optional (Default)
+                  </span>
+                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                    !govIdMandatory ? 'border-[#488203] bg-[#488203]' : 'border-slate-300'
+                  }`}>
+                    {!govIdMandatory && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Customers may upload an ID to expedite delivery/pickup, but can check out without one. Physical ID checked upon arrival.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setGovIdMandatory(true)}
+                className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                  govIdMandatory
+                    ? 'border-amber-500 bg-amber-50/70 ring-1 ring-amber-500'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-amber-900 uppercase tracking-wide flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                    Mandatory
+                  </span>
+                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                    govIdMandatory ? 'border-amber-600 bg-amber-600' : 'border-slate-300'
+                  }`}>
+                    {govIdMandatory && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Strictly requires customer to upload a document before order submission or payment. Blocks checkout if missing.
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {/* Action Footer */}
+          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-xs text-slate-500">
+              Status:{' '}
+              <strong className={govIdMandatory !== originalGovIdMandatory ? "text-amber-600 font-bold" : "text-emerald-700 font-bold"}>
+                {govIdMandatory !== originalGovIdMandatory ? "Unsaved Changes" : "Synchronized with Database"}
+              </strong>
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {govIdMandatory !== originalGovIdMandatory && (
+                <button
+                  type="button"
+                  onClick={() => setGovIdMandatory(originalGovIdMandatory)}
+                  disabled={savingGovId}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Discard Changes
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleSaveGovIdSetting}
+                disabled={loading || savingGovId || govIdMandatory === originalGovIdMandatory}
+                className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                  govIdMandatory !== originalGovIdMandatory
+                    ? 'bg-slate-900 hover:bg-black text-white shadow-md active:scale-[0.98]'
+                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                {savingGovId ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Saving Policy...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save ID Policy</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================
+          SETTING 4: MOBILE APP VERSION & FORCE UPDATE CONFIGURATION
+          ======================================================== */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="border-b border-slate-100 px-6 py-4.5 bg-slate-50/60 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
+              <Smartphone className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">
+                Mobile App Version & Force Update Control
+              </h2>
+              <p className="text-xs text-slate-500">
+                Manage Android APK release versions, download endpoints, and configure mandatory app updates
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+              mobileForceUpdate
+                ? 'bg-purple-50 text-purple-800 border-purple-200'
+                : 'bg-slate-50 text-slate-600 border-slate-200'
+            }`}>
+              {mobileForceUpdate ? 'Force Update Active' : 'Soft Prompt Only'}
+            </span>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-900 text-white font-mono">
+              v{mobileLatestVersion}
+            </span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSaveMobileSettings} className="p-6 space-y-6">
+          
+          {/* Version Inputs Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* 1. Latest App Version */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <ArrowUpCircle className="w-3.5 h-3.5 text-purple-600" />
+                  <span>Latest Production App Version</span>
+                  <span className="text-[10px] font-normal text-slate-400 font-mono">(mobile_latest_version)</span>
+                </label>
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] text-slate-400 font-semibold mr-1">Bump:</span>
+                  <button
+                    type="button"
+                    onClick={() => handleBumpVersion('patch')}
+                    className="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-purple-100 hover:text-purple-700 text-[10px] font-mono font-bold text-slate-600 transition-colors cursor-pointer"
+                    title="Bump patch version (+0.0.1)"
+                  >
+                    +0.0.1
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleBumpVersion('minor')}
+                    className="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-purple-100 hover:text-purple-700 text-[10px] font-mono font-bold text-slate-600 transition-colors cursor-pointer"
+                    title="Bump minor version (+0.1.0)"
+                  >
+                    +0.1.0
+                  </button>
+                </div>
+              </div>
+              <input
+                type="text"
+                value={mobileLatestVersion}
+                onChange={(e) => setMobileLatestVersion(e.target.value)}
+                placeholder="1.0.0"
+                className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-bold text-slate-900 font-mono outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 bg-white"
+              />
+              <p className="text-[11px] text-slate-500">
+                Any mobile client connecting with a version different from this will be marked for update.
+              </p>
+            </div>
+
+            {/* 2. Minimum Supported Version */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-slate-600" />
+                <span>Minimum Supported Version</span>
+                <span className="text-[10px] font-normal text-slate-400 font-mono">(mobile_min_supported_version)</span>
+              </label>
+              <input
+                type="text"
+                value={mobileMinVersion}
+                onChange={(e) => setMobileMinVersion(e.target.value)}
+                placeholder="1.0.0"
+                className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-bold text-slate-900 font-mono outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 bg-white"
+              />
+              <p className="text-[11px] text-slate-500">
+                Any installed app version strictly below this will ALWAYS be hard-blocked from continuing.
+              </p>
+            </div>
+          </div>
+
+          {/* 3. Direct APK Download Link */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <Download className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Direct APK Download URL</span>
+                <span className="text-[10px] font-normal text-slate-400 font-mono">(mobile_apk_url)</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <a
+                  href="/download/apk"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[11px] font-bold text-purple-700 hover:text-purple-800 inline-flex items-center gap-1"
+                >
+                  <span>Test Download</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                <span className="text-slate-300">•</span>
+                <a
+                  href="/api/app/check-update?version=0.9.0"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[11px] font-bold text-slate-600 hover:text-slate-900 inline-flex items-center gap-1"
+                >
+                  <span>API Test</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                value={mobileApkUrl}
+                onChange={(e) => setMobileApkUrl(e.target.value)}
+                placeholder="https://pharsyde.jeenhost.in/uploads/apk/app-release.apk"
+                className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs font-mono text-slate-900 outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 bg-white pr-20"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(mobileApkUrl);
+                  notify('APK URL copied to clipboard!');
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[10px] font-bold text-slate-600 transition-colors cursor-pointer inline-flex items-center gap-1"
+              >
+                <Copy className="w-3 h-3" />
+                <span>Copy</span>
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Shortcut redirect available at <code className="px-1.5 py-0.5 rounded bg-slate-100 font-mono text-[11px]">/download/apk</code> and <code className="px-1.5 py-0.5 rounded bg-slate-100 font-mono text-[11px]">/download/app</code>.
+            </p>
+          </div>
+
+          {/* 4. Force Update Mode Toggle */}
+          <div className="space-y-3 pt-1">
+            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+              <span>Update Enforcement Policy</span>
+              <span className="text-[10px] font-normal text-slate-400 font-mono">(mobile_force_update)</span>
+            </span>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setMobileForceUpdate(true)}
+                className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                  mobileForceUpdate
+                    ? 'border-purple-500 bg-purple-50/50 ring-1 ring-purple-500'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-purple-900 uppercase tracking-wide flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                    Strict Force Update (Mandatory)
+                  </span>
+                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                    mobileForceUpdate ? 'border-purple-600 bg-purple-600' : 'border-slate-300'
+                  }`}>
+                    {mobileForceUpdate && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Matches Jasmin ERP flow. Blocks all app access with a non-dismissible modal until the user installs the new APK.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMobileForceUpdate(false)}
+                className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                  !mobileForceUpdate
+                    ? 'border-slate-800 bg-slate-100/70 ring-1 ring-slate-800'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                    Soft Prompt (Optional Update)
+                  </span>
+                  <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                    !mobileForceUpdate ? 'border-slate-900 bg-slate-900' : 'border-slate-300'
+                  }`}>
+                    {!mobileForceUpdate && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Notifies users that an update is available, but provides a "Remind Me Later" option unless version is below minimum.
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {/* 5. Release Notes */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-slate-600" />
+              <span>Release Notes & Changelog</span>
+              <span className="text-[10px] font-normal text-slate-400 font-mono">(mobile_release_notes)</span>
+            </label>
+            <textarea
+              rows={3}
+              value={mobileReleaseNotes}
+              onChange={(e) => setMobileReleaseNotes(e.target.value)}
+              placeholder="Describe new features, critical bug fixes, or performance enhancements..."
+              className="w-full rounded-xl border border-slate-300 p-3 text-xs text-slate-900 outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 bg-white"
+            />
+            <p className="text-[11px] text-slate-500">
+              This text is displayed inside the mobile app update modal to inform users what's new.
+            </p>
+          </div>
+
+          {/* Form Action Footer */}
+          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-xs text-slate-500">
+              Status:{' '}
+              <strong className={hasMobileChanges ? "text-amber-600 font-bold" : "text-emerald-700 font-bold"}>
+                {hasMobileChanges ? "Unsaved Mobile Settings" : "Synchronized with Database"}
+              </strong>
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {hasMobileChanges && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileLatestVersion(originalLatestVersion);
+                    setMobileMinVersion(originalMinVersion);
+                    setMobileApkUrl(originalApkUrl);
+                    setMobileForceUpdate(originalForceUpdate);
+                    setMobileReleaseNotes(originalReleaseNotes);
+                  }}
+                  disabled={savingMobileSettings}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Discard Changes
+                </button>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading || savingMobileSettings || !hasMobileChanges}
+                className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                  hasMobileChanges
+                    ? 'bg-purple-700 hover:bg-purple-800 text-white shadow-purple-700/20 shadow-md active:scale-[0.98]'
+                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                {savingMobileSettings ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Saving Mobile Settings...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Mobile App Settings</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
       {/* Helper FAQ Accordion / Information Card */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-700 mb-2">
@@ -934,6 +1520,10 @@ export default function SettingMaster() {
           <span>Setting Master Help & Guidelines</span>
         </div>
         <div className="space-y-3 text-xs text-slate-600">
+          <div>
+            <h3 className="font-bold text-slate-800">How does the Mobile Force Update work?</h3>
+            <p className="mt-0.5">When a mobile device launches the app, it hits <code className="px-1.5 py-0.5 rounded bg-slate-100 font-mono text-[11px]">/api/app/check-update</code> with its current version. If different from the latest version and Force Update is active, the app blocks the UI and opens <code className="px-1.5 py-0.5 rounded bg-slate-100 font-mono text-[11px]">/download/apk</code> to update.</p>
+          </div>
           <div>
             <h3 className="font-bold text-slate-800">How does the Best Sellers multi-select work?</h3>
             <p className="mt-0.5">Click into the search field to filter products across your entire inventory. Check/uncheck products to add or remove them. Once you click "Save Best Sellers", those exact products will immediately appear on the customer-facing /best-sellers page.</p>
