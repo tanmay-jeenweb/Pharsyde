@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const PaymentAttemptModel = require('../models/paymentAttemptModel');
 const OrderModel = require('../models/orderModel');
+const UserModel = require('../models/userModel');
 const { getNextOrderNumber } = require('../services/orderSequenceService');
 const { preloadMonerisCheckout, getMonerisReceipt, getMonerisConfig, MonerisGatewayError } = require('../services/monerisService');
 const { getLiveTechPosStock } = require('../services/techposInventoryService');
@@ -68,6 +69,18 @@ const initiatePaymentAttempt = async (req, res, next) => {
         success: false,
         message: 'A valid email address is required for receipt delivery.',
       });
+    }
+
+    // If guest, verify email does not belong to an existing registered user
+    if (isGuest && customerEmail) {
+      const existingUser = await UserModel.findByEmail(customerEmail.toLowerCase());
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          code: 'ACCOUNT_EXISTS',
+          message: 'An account with this email already exists. Please log in to complete your order.',
+        });
+      }
     }
 
     if (!customerPhone) {

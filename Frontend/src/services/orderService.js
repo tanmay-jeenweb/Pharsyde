@@ -201,3 +201,31 @@ export async function getCustomerProfileApi(token = null) {
   }
 }
 
+
+
+/**
+ * Check if an email belongs to an existing registered user
+ */
+export async function checkEmailApi(email) {
+  const cleanEmail = (email || '').trim().toLowerCase();
+  if (!cleanEmail) return { exists: false };
+  const url = `${API_BASE}/auth/check-email?email=${encodeURIComponent(cleanEmail)}`;
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return await handleResponse(res);
+  } catch (error) {
+    if (!url.startsWith('http')) {
+      try {
+        const fallbackRes = await fetch(`http://localhost:5000/api/auth/check-email?email=${encodeURIComponent(cleanEmail)}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        return await handleResponse(fallbackRes);
+      } catch {}
+    }
+    throw error;
+  }
+}
