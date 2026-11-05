@@ -1,6 +1,7 @@
 const OrderModel = require('../models/orderModel');
 const UserModel = require('../models/userModel');
 const SettingModel = require('../models/settingModel');
+const OtpModel = require('../models/otpModel');
 const pool = require('../config/db');
 const { syncOrderToTechPOS } = require('../services/techposOrderService');
 const { calculateOrderTaxes } = require('../utils/taxCalculator');
@@ -63,14 +64,31 @@ const createOrder = async (req, res, next) => {
       });
     }
 
-    // If guest checkout, verify email does not belong to an existing registered user
+    // If guest checkout, verify email does not belong to an existing registered user and is OTP verified
+    let guestVerificationToken = null;
     if (!authUser && customerEmail) {
-      const existingUser = await UserModel.findByEmail(customerEmail.trim().toLowerCase());
+      const cleanEmail = customerEmail.trim().toLowerCase();
+      const existingUser = await UserModel.findByEmail(cleanEmail);
       if (existingUser) {
         return res.status(400).json({
           success: false,
           code: 'ACCOUNT_EXISTS',
           message: 'An account with this email already exists. Please log in to complete your order.',
+        });
+      }
+
+      guestVerificationToken = req.body.verificationToken || req.body.verification_token || customer.verificationToken || customer.verification_token;
+      const isTokenValid = await OtpModel.validateVerificationToken({
+        email: cleanEmail,
+        purpose: 'guest_checkout',
+        verificationToken: guestVerificationToken,
+      });
+
+      if (!isTokenValid) {
+        return res.status(400).json({
+          success: false,
+          code: 'EMAIL_VERIFICATION_REQUIRED',
+          message: 'Email verification is required for guest checkout. Please verify your email with the 6-digit code.',
         });
       }
     }
@@ -259,6 +277,10 @@ const createOrder = async (req, res, next) => {
       }
     } catch (syncErr) {
       console.warn('[TechPOS Sync Non-blocking Error]', syncErr.message);
+    }
+
+    if (guestVerificationToken) {
+      await OtpModel.consumeVerificationToken(guestVerificationToken);
     }
 
     res.status(201).json({

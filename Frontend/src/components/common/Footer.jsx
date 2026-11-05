@@ -4,6 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { STORE_INFO } from '../../data/products';
 import { MapPin, Phone, Mail, Clock, ShieldAlert, Award, ArrowUpRight } from 'lucide-react';
 import logoImg from '../../assets/image.webp';
+import jwLogo from '../../assets/jwLogo.jpeg';
 import AppDownloadBadge from './AppDownloadBadge';
 
 export default function Footer() {
@@ -184,8 +185,23 @@ export default function Footer() {
         </div>
 
         {/* Bottom Line */}
-        <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+        <div className="pt-6 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 gap-4">
           <p>© {new Date().getFullYear()} PHARSYDE Inc. All rights reserved.</p>
+
+          <a
+            href="https://www.jeenweb.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-xs text-slate-500 hover:text-slate-900 transition-colors group"
+          >
+            <span className="font-medium">Design by Jeenweb Technologists</span>
+            <img
+              src={jwLogo}
+              alt="Jeenweb Technologists"
+              className="h-7 w-auto object-contain rounded-xs transition-transform group-hover:scale-105"
+            />
+          </a>
+
           <div className="flex items-center space-x-6">
             <span>Winnipeg, Manitoba, Canada</span>
             <span>Secure SSL 256-Bit Encrypted</span>

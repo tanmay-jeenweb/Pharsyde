@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { checkEmailApi } from '../services/orderService';
+import { checkEmailApi, sendOtpApi, verifyOtpApi } from '../services/orderService';
 
 import { uploadDocumentApi } from '../services/uploadService';
 import { preloadPaymentApi, setMonerisPaymentSession } from '../services/paymentService';
@@ -24,6 +24,8 @@ import {
   UploadCloud,
   X,
   Loader2,
+  Mail,
+  RotateCcw,
 } from 'lucide-react';
 
 export default function CheckoutPage() {
@@ -94,7 +96,7 @@ export default function CheckoutPage() {
         ...prev,
         firstName: prev.firstName || names[0] || '',
         lastName: prev.lastName || names.slice(1).join(' ') || '',
-        email: prev.email || customerUser.email || '',
+        email: customerUser.email || prev.email || '',
         phone: prev.phone || customerUser.mob_no || '',
       }));
     }
@@ -159,6 +161,25 @@ export default function CheckoutPage() {
   const [existingAccountEmail, setExistingAccountEmail] = useState(null);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
+  // Guest Email OTP Verification State
+  const [guestVerificationToken, setGuestVerificationToken] = useState(null);
+  const [isGuestEmailVerified, setIsGuestEmailVerified] = useState(false);
+  const [verifiedEmail, setVerifiedEmail] = useState('');
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -169,8 +190,94 @@ export default function CheckoutPage() {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
     }
-    if (name === 'email' && existingAccountEmail && value.trim().toLowerCase() !== existingAccountEmail) {
-      setExistingAccountEmail(null);
+    if (name === 'email') {
+      const cleanVal = (value || '').trim().toLowerCase();
+      if (verifiedEmail && cleanVal !== verifiedEmail) {
+        setIsGuestEmailVerified(false);
+        setGuestVerificationToken(null);
+        setVerifiedEmail('');
+      }
+      if (existingAccountEmail && cleanVal !== existingAccountEmail) {
+        setExistingAccountEmail(null);
+      }
+    }
+  };
+
+  const handleTriggerGuestOtp = async () => {
+    const cleanEmail = (formData.email || '').trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setErrors((prev) => ({ ...prev, email: 'Please enter a valid email address first.' }));
+      return false;
+    }
+
+    if (existingAccountEmail) {
+      openAuthModal('login');
+      return false;
+    }
+
+    setOtpLoading(true);
+    setOtpError('');
+    try {
+      const res = await sendOtpApi({ email: cleanEmail, purpose: 'guest_checkout' });
+      setResendCooldown(res.cooldownSeconds || 60);
+      setOtpCode('');
+      setIsOtpModalOpen(true);
+      showToast(`Verification code sent to ${cleanEmail}`, 'info');
+      return true;
+    } catch (err) {
+      setOtpError(err.message || 'Failed to send verification code.');
+      showToast(err.message || 'Failed to send verification code.', 'error');
+      return false;
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleResendGuestOtp = async () => {
+    if (resendCooldown > 0 || otpLoading) return;
+    const cleanEmail = (formData.email || '').trim().toLowerCase();
+    setOtpLoading(true);
+    setOtpError('');
+    try {
+      const res = await sendOtpApi({ email: cleanEmail, purpose: 'guest_checkout' });
+      setResendCooldown(res.cooldownSeconds || 60);
+      showToast('A new verification code has been sent.', 'info');
+    } catch (err) {
+      setOtpError(err.message || 'Failed to resend verification code.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyGuestOtp = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const cleanEmail = (formData.email || '').trim().toLowerCase();
+    const cleanOtp = otpCode.trim();
+
+    if (cleanOtp.length < 6) {
+      setOtpError('Please enter the full 6-digit code.');
+      return;
+    }
+
+    setOtpLoading(true);
+    setOtpError('');
+    try {
+      const res = await verifyOtpApi({
+        email: cleanEmail,
+        otp: cleanOtp,
+        purpose: 'guest_checkout',
+      });
+
+      setGuestVerificationToken(res.verificationToken);
+      setIsGuestEmailVerified(true);
+      setVerifiedEmail(cleanEmail);
+      setIsOtpModalOpen(false);
+      setOtpCode('');
+      showToast('Email verified successfully! You can now complete your order.', 'success');
+    } catch (err) {
+      setOtpError(err.message || 'Verification failed. Please check the code.');
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -251,6 +358,14 @@ export default function CheckoutPage() {
       } finally {
         setIsCheckingEmail(false);
       }
+
+      // Check if guest email is OTP verified
+      const cleanEmail = formData.email.trim().toLowerCase();
+      if (!isGuestEmailVerified || !guestVerificationToken || verifiedEmail !== cleanEmail) {
+        showToast('Please verify your email address to proceed.', 'info');
+        await handleTriggerGuestOtp();
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -280,7 +395,11 @@ export default function CheckoutPage() {
         postalCode: formData.postalCode,
         govIdUrl: uploadedDoc?.fileUrl || null,
         gov_id_url: uploadedDoc?.fileUrl || null,
+        verificationToken: guestVerificationToken,
+        verification_token: guestVerificationToken,
       },
+      verificationToken: guestVerificationToken,
+      verification_token: guestVerificationToken,
       govIdUrl: uploadedDoc?.fileUrl || null,
       gov_id_url: uploadedDoc?.fileUrl || null,
       fulfillmentType: formData.fulfillmentType,
@@ -560,9 +679,34 @@ export default function CheckoutPage() {
                 <div className="sm:col-span-1">
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-xs font-semibold text-slate-700">Email Address *</label>
-                    {isCheckingEmail && (
-                      <span className="text-[10px] text-slate-400 animate-pulse">Checking account...</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {isCheckingEmail && (
+                        <span className="text-[10px] text-slate-400 animate-pulse">Checking...</span>
+                      )}
+                      {isCustomerLoggedIn ? (
+                        <span className="px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-[10px] font-bold flex items-center gap-1">
+                          <Lock className="w-2.5 h-2.5 text-slate-500" />
+                          <span>Account Email</span>
+                        </span>
+                      ) : isGuestEmailVerified ? (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 text-[10px] font-bold flex items-center gap-1 animate-in fade-in">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          <span>Verified</span>
+                        </span>
+                      ) : (
+                        formData.email && formData.email.includes('@') && !existingAccountEmail && (
+                          <button
+                            type="button"
+                            onClick={handleTriggerGuestOtp}
+                            disabled={otpLoading}
+                            className="px-2 py-0.5 rounded-full bg-[#8EF705]/20 hover:bg-[#8EF705] border border-[#8EF705]/50 text-[#3f7202] hover:text-black text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                          >
+                            <Mail className="w-2.5 h-2.5" />
+                            <span>Verify Email</span>
+                          </button>
+                        )
+                      )}
+                    </div>
                   </div>
                   <input
                     type="email"
@@ -570,12 +714,31 @@ export default function CheckoutPage() {
                     value={formData.email}
                     onChange={handleInputChange}
                     onBlur={handleEmailBlur}
+                    readOnly={isCustomerLoggedIn}
+                    tabIndex={isCustomerLoggedIn ? -1 : 0}
                     placeholder="you@example.com"
-                    className={`w-full bg-slate-50 border rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:bg-white transition-colors ${
-                      existingAccountEmail ? 'border-amber-400 bg-amber-50/30' : 'border-slate-300 focus:border-[#8EF705]'
+                    className={`w-full border rounded-xl px-3.5 py-2.5 text-xs transition-colors ${
+                      isCustomerLoggedIn
+                        ? 'bg-slate-100/90 border-slate-200 text-slate-500 font-medium cursor-not-allowed select-none'
+                        : existingAccountEmail
+                        ? 'bg-amber-50/30 border-amber-400 text-slate-900 focus:outline-none focus:bg-white'
+                        : isGuestEmailVerified
+                        ? 'bg-emerald-50/20 border-emerald-400 text-slate-900 focus:outline-none focus:bg-white'
+                        : 'bg-slate-50 border-slate-300 focus:border-[#8EF705] text-slate-900 focus:outline-none focus:bg-white'
                     }`}
                   />
                   {errors.email && <span className="text-[10px] text-red-600 block mt-1">{errors.email}</span>}
+                  {isCustomerLoggedIn && (
+                    <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+                      <Lock className="w-2.5 h-2.5 text-slate-400" />
+                      <span>Linked to your signed-in customer account.</span>
+                    </p>
+                  )}
+                  {!isCustomerLoggedIn && !isGuestEmailVerified && !existingAccountEmail && formData.email && formData.email.includes('@') && (
+                    <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
+                      <span>🔒 A 6-digit code will be emailed to verify your guest order.</span>
+                    </p>
+                  )}
 
                   {existingAccountEmail && (
                     <div className="mt-2.5 p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 animate-in fade-in">
@@ -1114,6 +1277,105 @@ export default function CheckoutPage() {
           </div>
         </form>
       </div>
+
+      {/* Guest Email OTP Verification Modal */}
+      {isOtpModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#8EF705]/20 border border-[#8EF705]/40 flex items-center justify-center text-[#488203]">
+                  <Mail className="w-4 h-4 text-[#488203]" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-base font-bold text-slate-900 tracking-tight uppercase">
+                    Verify Your Email
+                  </h3>
+                  <p className="text-[11px] text-slate-500">Guest Order Confirmation</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOtpModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <form onSubmit={handleVerifyGuestOtp} className="p-6 space-y-4">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-1">
+                <p className="text-xs text-slate-600">
+                  We've sent a 6-digit verification code to:
+                </p>
+                <p className="text-sm font-bold text-slate-900 font-mono">
+                  {formData.email}
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  This protects your order receipt and tracking updates.
+                </p>
+              </div>
+
+              {otpError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0" />
+                  <p className="leading-tight">{otpError}</p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5 text-center">
+                  Enter 6-Digit Code
+                </label>
+                <input
+                  type="text"
+                  required
+                  maxLength={6}
+                  autoFocus
+                  placeholder="000000"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                  className="w-full bg-slate-50 border-2 border-slate-300 rounded-2xl py-3 text-2xl font-mono font-black text-center tracking-[0.4em] text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white transition-colors"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={otpLoading || otpCode.trim().length !== 6}
+                className="w-full py-3 rounded-xl bg-[#8EF705] hover:bg-[#80de04] disabled:opacity-50 text-black text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#8EF705]/20 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {otpLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Verify & Continue Checkout</span>
+                  </>
+                )}
+              </button>
+
+              <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                <span>Didn't receive code?</span>
+                {resendCooldown > 0 ? (
+                  <span className="font-mono text-slate-400">Resend in {resendCooldown}s</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResendGuestOtp}
+                    disabled={otpLoading}
+                    className="text-[#488203] font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Resend Code</span>
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

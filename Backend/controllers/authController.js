@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const UserModel = require('../models/userModel');
+const OtpModel = require('../models/otpModel');
 const { generateToken } = require('../utils/jwt');
 const {
   createTechPOSMember,
@@ -80,6 +81,22 @@ const register = async (req, res, next) => {
     const finalLastName = last_name || lastName || nameParts.slice(1).join(' ') || 'Pharsyde';
     const resolvedName = fullName || `${finalFirstName} ${finalLastName}`.trim();
 
+    // Verify Email OTP token
+    const verificationToken = req.body.verificationToken || req.body.verification_token;
+    const isTokenValid = await OtpModel.validateVerificationToken({
+      email: cleanEmail,
+      purpose: 'customer_register',
+      verificationToken,
+    });
+
+    if (!isTokenValid) {
+      return res.status(400).json({
+        success: false,
+        code: 'EMAIL_VERIFICATION_REQUIRED',
+        message: 'Email verification is required. Please verify your email with the 6-digit code.',
+      });
+    }
+
     // Check if user already exists locally
     const existingUser = await UserModel.findByEmail(cleanEmail);
 
@@ -108,6 +125,8 @@ const register = async (req, res, next) => {
           email: updatedUser.email,
           role: updatedUser.role,
         });
+
+        await OtpModel.consumeVerificationToken(verificationToken);
 
         return res.status(200).json({
           success: true,
@@ -210,6 +229,8 @@ const register = async (req, res, next) => {
       email: newUser.email,
       role: newUser.role,
     });
+
+    await OtpModel.consumeVerificationToken(verificationToken);
 
     res.status(201).json({
       success: true,
