@@ -70,14 +70,6 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/about"
-                  className="hover:text-slate-900 transition-colors flex items-center gap-1 group text-slate-600"
-                >
-                  <span>About Pharsyde</span>
-                </Link>
-              </li>
-              <li>
-                <Link
                   to="/contact"
                   className="hover:text-slate-900 transition-colors flex items-center gap-1 group text-slate-600"
                 >

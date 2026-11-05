@@ -28,7 +28,6 @@ export default function Navbar() {
     { path: '/cannabis', label: 'Cannabis' },
     { path: '/nicotine', label: 'Nicotine' },
     ...(isCustomerLoggedIn ? [{ path: '/orders', label: 'My Orders' }] : []),
-    { path: '/about', label: 'About Us' },
     { path: '/contact', label: 'Contact' }
   ];
 

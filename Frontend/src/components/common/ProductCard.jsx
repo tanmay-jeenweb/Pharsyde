@@ -186,11 +186,6 @@ export default function ProductCard({ product }) {
                 CBD: <span className="text-slate-900 font-semibold">{cbdVal}</span>
               </span>
             )}
-            {product.sku && (
-              <span className="text-[10px] text-slate-400 font-mono ml-auto">
-                SKU: {product.sku}
-              </span>
-            )}
           </div>
         </div>
 

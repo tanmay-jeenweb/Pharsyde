@@ -6,6 +6,10 @@ const API_BASE = '/api';
  */
 export async function getProductsApi({
   category = '',
+  brand = '',
+  strain = '',
+  minPrice = '',
+  maxPrice = '',
   search = '',
   page = 1,
   limit = 24,
@@ -24,6 +28,32 @@ export async function getProductsApi({
   } else if (category && category !== 'All') {
     params.append('category', category);
   }
+
+  if (Array.isArray(brand) && brand.length > 0) {
+    const validBrands = brand.filter(Boolean);
+    if (validBrands.length > 0) {
+      params.append('brand', validBrands.join(','));
+    }
+  } else if (brand && brand !== 'All') {
+    params.append('brand', brand);
+  }
+
+  if (Array.isArray(strain) && strain.length > 0) {
+    const validStrains = strain.filter(Boolean);
+    if (validStrains.length > 0) {
+      params.append('strain', validStrains.join(','));
+    }
+  } else if (strain && strain !== 'All') {
+    params.append('strain', strain);
+  }
+
+  if (minPrice !== undefined && minPrice !== null && minPrice !== '') {
+    params.append('minPrice', String(minPrice));
+  }
+  if (maxPrice !== undefined && maxPrice !== null && maxPrice !== '') {
+    params.append('maxPrice', String(maxPrice));
+  }
+
   if (search.trim()) {
     params.append('search', search.trim());
   }
@@ -77,6 +107,70 @@ export async function getCategoriesApi({ hasImage = true } = {}) {
       }
     } catch {}
     throw error;
+  }
+}
+
+/**
+ * Fetch distinct brands from the backend (optionally filtered by category)
+ */
+export async function getBrandsApi({ category = '', hasImage = true } = {}) {
+  const params = new URLSearchParams();
+  if (hasImage) params.append('hasImage', 'true');
+  if (Array.isArray(category) && category.length > 0) {
+    params.append('category', category.filter((c) => c && c !== 'All').join(','));
+  } else if (category && category !== 'All') {
+    params.append('category', category);
+  }
+
+  const url = `${API_BASE}/products/meta/brands?${params.toString()}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const data = await res.json();
+    return data.brands || [];
+  } catch (error) {
+    try {
+      const fallbackUrl = `http://localhost:5000/api/products/meta/brands?${params.toString()}`;
+      const resFallback = await fetch(fallbackUrl);
+      if (resFallback.ok) {
+        const data = await resFallback.json();
+        return data.brands || [];
+      }
+    } catch {}
+    return [];
+  }
+}
+
+/**
+ * Fetch distinct strains from the backend (optionally filtered by category)
+ */
+export async function getStrainsApi({ category = '', hasImage = true } = {}) {
+  const params = new URLSearchParams();
+  if (hasImage) params.append('hasImage', 'true');
+  if (Array.isArray(category) && category.length > 0) {
+    params.append('category', category.filter((c) => c && c !== 'All').join(','));
+  } else if (category && category !== 'All') {
+    params.append('category', category);
+  }
+
+  const url = `${API_BASE}/products/meta/strains?${params.toString()}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const data = await res.json();
+    return data.strains || [];
+  } catch (error) {
+    try {
+      const fallbackUrl = `http://localhost:5000/api/products/meta/strains?${params.toString()}`;
+      const resFallback = await fetch(fallbackUrl);
+      if (resFallback.ok) {
+        const data = await resFallback.json();
+        return data.strains || [];
+      }
+    } catch {}
+    return [];
   }
 }
 
