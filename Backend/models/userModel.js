@@ -83,6 +83,15 @@ const UserModel = {
 
     // Seed default Admin user if empty
     await this.seedDefaultAdmin();
+
+    // Auto-migrate reward_points_dollar_value to 1000 points = $1 CAD (0.001 rate)
+    try {
+      await pool.query(
+        'UPDATE users SET reward_points_dollar_value = ROUND(reward_points * 0.001, 2) WHERE reward_points_dollar_value > (reward_points * 0.002)'
+      );
+    } catch (migErr) {
+      // non-blocking
+    }
   },
 
   /**
@@ -306,12 +315,28 @@ const UserModel = {
 
   /**
    * Deduct reward points locally when redeemed on an order
+   * Also updates reward_points_dollar_value (1000 points = $1 CAD => 0.001 rate)
    */
-  async deductRewardPoints(id, pointsToDeduct) {
+  async deductRewardPoints(id, pointsToDeduct, dollarRate = 0.001) {
     if (!id || !pointsToDeduct || pointsToDeduct <= 0) return null;
+    const rate = Number(dollarRate) > 0 ? Number(dollarRate) : 0.001;
     await pool.query(
-      'UPDATE users SET reward_points = GREATEST(0, reward_points - ?) WHERE id = ?',
-      [Number(pointsToDeduct), id]
+      'UPDATE users SET reward_points = GREATEST(0, reward_points - ?), reward_points_dollar_value = ROUND(GREATEST(0, reward_points - ?) * ?, 2) WHERE id = ?',
+      [Number(pointsToDeduct), Number(pointsToDeduct), rate, id]
+    );
+    return this.findById(id);
+  },
+
+  /**
+   * Add reward points locally when earned from an order (1 CAD purchase = 1 reward point)
+   * Also updates reward_points_dollar_value (1000 points = $1 CAD => 0.001 rate)
+   */
+  async addRewardPoints(id, pointsToAdd, dollarRate = 0.001) {
+    if (!id || !pointsToAdd || pointsToAdd <= 0) return null;
+    const rate = Number(dollarRate) > 0 ? Number(dollarRate) : 0.001;
+    await pool.query(
+      'UPDATE users SET reward_points = reward_points + ?, reward_points_dollar_value = ROUND((reward_points + ?) * ?, 2) WHERE id = ?',
+      [Number(pointsToAdd), Number(pointsToAdd), rate, id]
     );
     return this.findById(id);
   },

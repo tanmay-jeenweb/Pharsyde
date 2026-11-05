@@ -242,9 +242,27 @@ const initiatePaymentAttempt = async (req, res, next) => {
     const FREE_SHIPPING_THRESHOLD_CENTS = Math.round(freeDeliveryThreshold * 100);
     const shippingCents = isDelivery && subtotalCents < FREE_SHIPPING_THRESHOLD_CENTS ? 999 : 0;
 
+    // Reward points redemption logic (1000 reward points = $1.00 CAD => 0.001 rate)
+    let pointsDiscountCents = 0;
+    let pointsRedeemed = 0;
+    const pointDollarRate = process.env.REWARD_POINT_DOLLAR_RATE ? Number(process.env.REWARD_POINT_DOLLAR_RATE) : 0.001;
+    const { redeem_rewards, redeemed_points } = req.body;
+
+    if (authUser && (redeem_rewards || Number(redeemed_points) > 0)) {
+      const dbUser = await UserModel.findById(authUser.id);
+      const userPoints = Number(dbUser?.reward_points || 0);
+
+      if (userPoints > 0) {
+        const maxPoints = Math.min(userPoints, Math.floor((subtotalCents / 100) / pointDollarRate));
+        pointsRedeemed = redeemed_points ? Math.min(Number(redeemed_points), maxPoints) : (redeem_rewards ? maxPoints : 0);
+        const pointsDiscount = Math.round(pointsRedeemed * pointDollarRate * 100) / 100;
+        pointsDiscountCents = Math.round(pointsDiscount * 100);
+      }
+    }
+
     // Differential Tax Calculation: 5% Cannabis, 7% Nicotine
     const taxSummary = calculateOrderTaxesCents(itemsForTax, {
-      discountCents: 0,
+      discountCents: pointsDiscountCents,
       shippingCents,
     });
 
@@ -288,6 +306,9 @@ const initiatePaymentAttempt = async (req, res, next) => {
         paymentMethod: paymentMethod || customer.paymentMethod || 'credit',
         govIdUrl: customer.govIdUrl || customer.gov_id_url || gov_id_url || req.body.govIdUrl || null,
         notes,
+        redeemRewards: Boolean(redeem_rewards || pointsRedeemed > 0),
+        redeemedPoints: pointsRedeemed,
+        pointsDiscount: pointsDiscountCents / 100,
       },
       shipping_address: isDelivery
         ? {
@@ -526,6 +547,19 @@ const finalizePayment = async (req, res, next) => {
     const orderNumber = await getNextOrderNumber();
     const customerInfo = attempt.customer_info || {};
     const shippingAddress = attempt.shipping_address || {};
+    const pointDollarRate = process.env.REWARD_POINT_DOLLAR_RATE ? Number(process.env.REWARD_POINT_DOLLAR_RATE) : 0.001;
+
+    // Calculate reward points earned: 1 CAD purchase -> 1 reward point
+    const totalCAD = attempt.total_cents / 100;
+    const pointsEarned = attempt.user_id ? Math.max(0, Math.floor(totalCAD)) : 0;
+    const pointsRedeemed = Number(customerInfo.redeemedPoints || 0);
+
+    const rewardNotes = [
+      pointsRedeemed > 0 ? `Redeemed ${pointsRedeemed} TechPOS loyalty points (-$${Number(customerInfo.pointsDiscount || 0).toFixed(2)} CAD discount)` : null,
+      pointsEarned > 0 ? `Earned ${pointsEarned} loyalty points (1 pt / $1 CAD)` : null,
+    ].filter(Boolean);
+
+    const resolvedNotes = [customerInfo.notes, ...rewardNotes].filter(Boolean).join(' | ');
 
     const createdOrder = await OrderModel.createOrder({
       orderData: {
@@ -545,7 +579,7 @@ const finalizePayment = async (req, res, next) => {
         payment_method: customerInfo.paymentMethod === 'debit' ? 'debit' : 'credit',
         payment_status: 'Paid',
         order_status: 'Confirmed',
-        notes: customerInfo.notes || '',
+        notes: resolvedNotes,
         gov_id_url: customerInfo.govIdUrl || null,
         payment_attempt_id: attempt.id,
         moneris_ticket: verificationTicket,
@@ -565,6 +599,26 @@ const finalizePayment = async (req, res, next) => {
         image_url: it.image_url,
       })),
     });
+
+    // Deduct redeemed reward points
+    if (attempt.user_id && pointsRedeemed > 0) {
+      try {
+        await UserModel.deductRewardPoints(attempt.user_id, pointsRedeemed, pointDollarRate);
+        console.log(`[Moneris Payment Rewards] Customer ID ${attempt.user_id} redeemed ${pointsRedeemed} reward points.`);
+      } catch (deductErr) {
+        console.warn('[Moneris Payment Rewards Warning] Could not deduct points:', deductErr.message);
+      }
+    }
+
+    // Award earned reward points: 1 CAD purchase -> 1 reward point
+    if (attempt.user_id && pointsEarned > 0) {
+      try {
+        await UserModel.addRewardPoints(attempt.user_id, pointsEarned, pointDollarRate);
+        console.log(`[Moneris Payment Rewards] Customer ID ${attempt.user_id} earned ${pointsEarned} reward points for $${totalCAD.toFixed(2)} purchase.`);
+      } catch (awardErr) {
+        console.warn('[Moneris Payment Rewards Warning] Could not award points:', awardErr.message);
+      }
+    }
 
     // 9. Mark Payment Attempt Completed
     await PaymentAttemptModel.markCompleted(attempt.id, {

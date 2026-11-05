@@ -41,11 +41,13 @@ export default function CheckoutPage() {
     openAuthModal,
     cartCannabisGrams = 0,
     isCannabisLimitExceeded = false,
+    cannabisMaxGrams,
+    setCannabisMaxGrams,
     MAX_CANNABIS_GRAMS = 30.0,
     freeDeliveryThreshold = 75.0,
   } = useApp();
 
-  const cannabisMaxLimit = MAX_CANNABIS_GRAMS || 30.0;
+  const cannabisMaxLimit = Number(cannabisMaxGrams) > 0 ? Number(cannabisMaxGrams) : (Number(MAX_CANNABIS_GRAMS) > 0 ? Number(MAX_CANNABIS_GRAMS) : 30.0);
   const FREE_SHIPPING_THRESHOLD = freeDeliveryThreshold || 75.0;
 
   // Form State
@@ -71,14 +73,22 @@ export default function CheckoutPage() {
     specialInstructions: '',
   });
 
-  // Load Storefront Policy (e.g. Government ID mandatory requirement)
+  // Load Storefront Policy (e.g. Government ID mandatory requirement & dynamic cannabis limit)
   useEffect(() => {
     let isMounted = true;
     async function loadStorePolicy() {
       try {
         const res = await getPublicSettingsApi();
-        if (isMounted && res?.settings?.gov_id_mandatory !== undefined) {
-          setIsGovIdMandatory(res.settings.gov_id_mandatory === 'true' || res.settings.gov_id_mandatory === true);
+        if (isMounted && res?.settings) {
+          if (res.settings.gov_id_mandatory !== undefined) {
+            setIsGovIdMandatory(res.settings.gov_id_mandatory === 'true' || res.settings.gov_id_mandatory === true);
+          }
+          if (res.settings.cannabis_max_grams && typeof setCannabisMaxGrams === 'function') {
+            const parsed = parseFloat(res.settings.cannabis_max_grams);
+            if (Number.isFinite(parsed) && parsed > 0) {
+              setCannabisMaxGrams(parsed);
+            }
+          }
         }
       } catch (err) {
         console.warn('Could not load public settings:', err);
@@ -86,7 +96,7 @@ export default function CheckoutPage() {
     }
     loadStorePolicy();
     return () => { isMounted = false; };
-  }, []);
+  }, [setCannabisMaxGrams]);
 
   // Autofill with logged-in customer info if available
   useEffect(() => {
@@ -137,17 +147,13 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderConfirmed] = useState(null);
 
-  // Loyalty Rewards State & Calculations
+  // Loyalty Rewards State & Calculations (1 CAD purchase -> 1 reward point | 1000 reward points -> 1 CAD)
   const [redeemRewards, setRedeemRewards] = useState(false);
+  const POINT_DOLLAR_RATE = 0.001; // 1,000 points = $1.00 CAD ($0.001 CAD per point)
   const availablePoints = isCustomerLoggedIn ? Number(customerUser?.reward_points || 0) : 0;
-  const pointRate = (Number(customerUser?.reward_points_dollar_value) > 0 && availablePoints > 0)
-    ? (Number(customerUser.reward_points_dollar_value) / availablePoints)
-    : 1.00;
-  const availableDollarValue = Number(customerUser?.reward_points_dollar_value) > 0
-    ? Number(customerUser.reward_points_dollar_value)
-    : availablePoints * pointRate;
-  const maxRedeemablePoints = Math.min(availablePoints, Math.floor(cartSubtotal / pointRate));
-  const rewardDiscount = redeemRewards ? Math.round(maxRedeemablePoints * pointRate * 100) / 100 : 0.00;
+  const availableDollarValue = Number((availablePoints * POINT_DOLLAR_RATE).toFixed(2));
+  const maxRedeemablePoints = Math.min(availablePoints, Math.floor(cartSubtotal / POINT_DOLLAR_RATE));
+  const rewardDiscount = redeemRewards ? Math.round(maxRedeemablePoints * POINT_DOLLAR_RATE * 100) / 100 : 0.00;
 
   // Calculations
   const isPickup = formData.fulfillmentType === 'pickup';
@@ -1127,14 +1133,14 @@ export default function CheckoutPage() {
                         )}
                       </div>
                       <span className="text-[11px] text-slate-500 block">
-                        TechPOS Loyalty Program
+                        TechPOS Loyalty (1 CAD = 1 pt • 1,000 pts = $1 CAD)
                       </span>
                     </div>
                   </div>
 
                   <div className="text-right">
                     <span className="text-xs font-mono font-black text-amber-900 block">
-                      ⭐ {availablePoints} tokens
+                      ⭐ {availablePoints} pts
                     </span>
                     <span className="text-[10px] text-slate-500 font-mono block">
                       (${availableDollarValue.toFixed(2)} CAD)
@@ -1153,10 +1159,10 @@ export default function CheckoutPage() {
                       />
                       <div className="flex-1">
                         <span className="font-bold text-slate-900 block">
-                          Redeem {maxRedeemablePoints} tokens for instant discount
+                          Redeem {maxRedeemablePoints} points for instant discount
                         </span>
                         <span className="text-[11px] text-[#488203] font-mono font-bold block mt-0.5">
-                          -${(maxRedeemablePoints * pointRate).toFixed(2)} CAD off order total
+                          -${(maxRedeemablePoints * POINT_DOLLAR_RATE).toFixed(2)} CAD off order total (1,000 pts = $1.00 CAD)
                         </span>
                       </div>
                     </label>
@@ -1165,25 +1171,25 @@ export default function CheckoutPage() {
                       <div className="flex items-center gap-1.5 text-slate-600">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                         <span className="text-[11px]">
-                          Balance: <strong className="text-slate-900 font-mono">0 tokens ($0.00 CAD)</strong>
+                          Balance: <strong className="text-slate-900 font-mono">0 pts ($0.00 CAD)</strong>
                         </span>
                       </div>
                       <span className="text-[10px] font-bold text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded-md">
-                        +Earn tokens on this order
+                        +Earn ~{Math.floor(cartSubtotal)} pts on this order (1 pt / $1 CAD)
                       </span>
                     </div>
                   )
                 ) : (
                   <div className="p-2.5 rounded-xl bg-amber-100/40 border border-amber-200/60 flex items-center justify-between text-xs">
                     <span className="text-[11px] text-slate-600">
-                      Balance: <strong className="text-slate-900 font-mono">0 tokens</strong> (Guest)
+                      Balance: <strong className="text-slate-900 font-mono">0 pts</strong> (Guest)
                     </span>
                     <button
                       type="button"
                       onClick={() => openAuthModal('login')}
                       className="text-[10px] font-bold text-slate-900 hover:text-black underline cursor-pointer"
                     >
-                      Sign In to Link Tokens
+                      Sign In to Earn & Redeem Points
                     </button>
                   </div>
                 )}
@@ -1206,9 +1212,9 @@ export default function CheckoutPage() {
                 <div className="flex justify-between items-center text-xs">
                   <span className="flex items-center gap-1.5 text-slate-600">
                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Reward Tokens</span>
+                    <span>Reward Points Discount</span>
                     <span className="text-[10px] font-mono text-slate-400">
-                      ({availablePoints} tokens avail)
+                      ({availablePoints} pts avail)
                     </span>
                   </span>
                   <span className={`font-mono font-bold ${redeemRewards && rewardDiscount > 0 ? 'text-[#488203]' : 'text-slate-500'}`}>

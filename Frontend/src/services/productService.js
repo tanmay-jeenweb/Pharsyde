@@ -211,11 +211,17 @@ export async function getNewArrivalsProductsApi({ limit } = {}) {
 }
 
 /**
- * Fetch public settings (e.g. new_arrivals_limit)
+ * Fetch public settings (e.g. cannabis_max_grams, new_arrivals_limit, free_delivery_threshold)
  */
 export async function getPublicSettingsApi() {
   try {
-    return await fetchJsonWithFallback('/settings/public');
+    return await fetchJsonWithFallback(`/settings/public?_t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {
+        'Pragma': 'no-cache',
+        'Cache-Control': 'no-cache',
+      },
+    });
   } catch {
     return {};
   }

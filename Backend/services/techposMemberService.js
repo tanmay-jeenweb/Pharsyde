@@ -324,10 +324,8 @@ async function syncUsersBiDirectional({ maxPages = 10, pageSize = 500 } = {}) {
           const eliteStart = m.eliteMemberStartDate ? new Date(m.eliteMemberStartDate) : null;
           const eliteEnd = m.eliteMemberEndDate ? new Date(m.eliteMemberEndDate) : null;
           const rewardPoints = Number(m.rewardPoints) || 0.00;
-          const pointDollarRate = process.env.REWARD_POINT_DOLLAR_RATE ? Number(process.env.REWARD_POINT_DOLLAR_RATE) : 1.00;
-          const rewardDollarValue = Number(m.rewardPointsDollarValue) > 0
-            ? Number(m.rewardPointsDollarValue)
-            : Number((rewardPoints * pointDollarRate).toFixed(2));
+          const pointDollarRate = process.env.REWARD_POINT_DOLLAR_RATE ? Number(process.env.REWARD_POINT_DOLLAR_RATE) : 0.001;
+          const rewardDollarValue = Number((rewardPoints * pointDollarRate).toFixed(2));
           const cardNumber = m.cardNumber || null;
           const isElite = Boolean(m.isElite);
           const visitCount = Number(m.visitCount) || 0;
@@ -461,11 +459,9 @@ async function syncUsersBiDirectional({ maxPages = 10, pageSize = 500 } = {}) {
             console.log(`[Sync Step 2] Customer "${customer.email}" matched existing TechPOS member #${linkedId}`);
             
             // Link locally with rewards
-            const pointDollarRate = process.env.REWARD_POINT_DOLLAR_RATE ? Number(process.env.REWARD_POINT_DOLLAR_RATE) : 1.00;
+            const pointDollarRate = process.env.REWARD_POINT_DOLLAR_RATE ? Number(process.env.REWARD_POINT_DOLLAR_RATE) : 0.001;
             const pts = Number(foundMember.rewardPoints) || customer.reward_points || 0.00;
-            const dollarVal = Number(foundMember.rewardPointsDollarValue) > 0
-              ? Number(foundMember.rewardPointsDollarValue)
-              : Number((pts * pointDollarRate).toFixed(2));
+            const dollarVal = Number((pts * pointDollarRate).toFixed(2));
 
             await UserModel.update(customer.id, {
               techpos_member_id: linkedId,

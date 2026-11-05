@@ -184,7 +184,7 @@ export default function AccountOrdersPage() {
                     ) : null}
                   </div>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Earn points on in-store and online purchases to redeem for instant discounts at checkout.
+                    Earn 1 point per $1 CAD spent. Redeem 1,000 points for $1.00 CAD instant discount at checkout.
                   </p>
                 </div>
               </div>
@@ -196,14 +196,13 @@ export default function AccountOrdersPage() {
                     ⭐ {Number(customerUser?.reward_points) || 0} <span className="text-xs font-bold text-slate-500">pts</span>
                   </span>
                 </div>
-                {Number(customerUser?.reward_points_dollar_value) > 0 && (
-                  <div className="pl-4 border-l border-amber-200/60">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Dollar Value</span>
-                    <span className="font-mono text-xl font-black text-[#488203]">
-                      ${Number(customerUser?.reward_points_dollar_value).toFixed(2)} CAD
-                    </span>
-                  </div>
-                )}
+                <div className="pl-4 border-l border-amber-200/60">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Discount Value</span>
+                  <span className="font-mono text-xl font-black text-[#488203]">
+                    ${((Number(customerUser?.reward_points) || 0) * 0.001).toFixed(2)} CAD
+                  </span>
+                  <span className="text-[9px] text-slate-400 block font-mono">1,000 pts = $1 CAD</span>
+                </div>
               </div>
             </div>
 
