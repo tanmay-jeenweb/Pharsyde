@@ -75,7 +75,7 @@ export default function CartDrawer() {
           {/* Header */}
           <div className="p-3 border-b border-slate-200 flex items-center justify-between bg-white">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-[#8EF705]/25 border border-[#8EF705]/50 text-slate-900">
+              <div className="p-2 rounded-xl bg-[#0166dc]/25 border border-[#0166dc]/50 text-slate-900">
                 <ShoppingBag className="w-5 h-5 text-slate-900" />
               </div>
               <div>
@@ -102,9 +102,9 @@ export default function CartDrawer() {
             <div>
               <div className="flex items-center justify-between mb-1.5 font-medium">
                 <span className="flex items-center gap-1.5 text-slate-700">
-                  <Truck className="w-4 h-4 text-[#529402]" />
+                  <Truck className="w-4 h-4 text-[#0166dc]" />
                   {cartSubtotal >= FREE_SHIPPING_THRESHOLD ? (
-                    <span className="text-[#529402] font-black">Unlocked Free Winnipeg Delivery!</span>
+                    <span className="text-[#0166dc] font-black">Unlocked Free Winnipeg Delivery!</span>
                   ) : (
                     <span>Add <strong className="text-slate-900">${remainingForFreeShipping.toFixed(2)}</strong> for Free Delivery</span>
                   )}
@@ -113,7 +113,7 @@ export default function CartDrawer() {
               </div>
               <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-[#8EF705] to-orange-500 h-full transition-all duration-500 rounded-full"
+                  className="bg-gradient-to-r from-[#0166dc] to-orange-500 h-full transition-all duration-500 rounded-full"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -128,14 +128,14 @@ export default function CartDrawer() {
                       ? 'text-red-600'
                       : cartCannabisGrams >= 25.0
                       ? 'text-orange-500'
-                      : 'text-[#529402]'
+                      : 'text-[#0166dc]'
                   }`} />
                   {isCannabisLimitExceeded ? (
                     <span className="text-red-600 font-bold">
                       Exceeds 30.0g Legal Limit (+{excessCannabis.toFixed(1)}g)
                     </span>
                   ) : cartCannabisGrams >= CANNABIS_LIMIT ? (
-                    <span className="text-[#529402] font-black">
+                    <span className="text-[#0166dc] font-black">
                       Reached 30.0g Legal Purchase Limit
                     </span>
                   ) : (
@@ -160,8 +160,8 @@ export default function CartDrawer() {
                     isCannabisLimitExceeded
                       ? 'bg-red-500'
                       : cannabisProgressPercent >= 80
-                      ? 'bg-gradient-to-r from-[#8EF705] to-orange-500'
-                      : 'bg-gradient-to-r from-[#8EF705] to-[#529402]'
+                      ? 'bg-gradient-to-r from-[#0166dc] to-orange-500'
+                      : 'bg-gradient-to-r from-[#0166dc] to-[#0166dc]'
                   } h-full transition-all duration-500 rounded-full`}
                   style={{ width: `${cannabisProgressPercent}%` }}
                 />
@@ -189,7 +189,7 @@ export default function CartDrawer() {
                     setIsCartOpen(false);
                     navigateTo('catalog');
                   }}
-                  className="px-6 py-2.5 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-extrabold uppercase tracking-wider transition-opacity shadow-sm"
+                  className="px-6 py-2.5 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white font-extrabold uppercase tracking-wider transition-opacity shadow-sm"
                 >
                   Explore Catalogue
                 </button>
@@ -222,7 +222,7 @@ export default function CartDrawer() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      <div className="text-[11px] text-[#529402] font-black">
+                      <div className="text-[11px] text-[#0166dc] font-black">
                         {item.product.brand} • {item.variant.label}
                       </div>
                     </div>
@@ -269,19 +269,19 @@ export default function CartDrawer() {
                   placeholder="Promo Code (e.g. PHARSYDE10)"
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value)}
-                  className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                  className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                 />
                 <button
                   type="submit"
-                  className="px-3.5 py-2 bg-slate-900 hover:bg-[#8EF705] hover:text-black text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
+                  className="px-3.5 py-2 bg-slate-900 hover:bg-[#0166dc] hover:text-black text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
                 >
                   Apply
                 </button>
               </form>
               {promoError && <p className="text-[11px] text-orange-600 font-medium">{promoError}</p>}
               {promoApplied && (
-                <p className="text-[11px] text-[#529402] font-black flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-[#529402]" /> 10% Welcome Discount Applied!
+                <p className="text-[11px] text-[#0166dc] font-black flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-[#0166dc]" /> 10% Welcome Discount Applied!
                 </p>
               )}
 
@@ -292,7 +292,7 @@ export default function CartDrawer() {
                   <span className="font-mono text-slate-900 font-semibold">${cartSubtotal.toFixed(2)} CAD</span>
                 </div>
                 {promoDiscount > 0 && (
-                  <div className="flex justify-between text-[#529402] font-bold">
+                  <div className="flex justify-between text-[#0166dc] font-bold">
                     <span>Discount</span>
                     <span className="font-mono">-${promoDiscount.toFixed(2)} CAD</span>
                   </div>
@@ -325,7 +325,7 @@ export default function CartDrawer() {
                 )}
                 <div className="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200">
                   <span>Estimated Total</span>
-                  <span className="font-mono text-base text-[#529402] font-black">${finalTotal.toFixed(2)} CAD</span>
+                  <span className="font-mono text-base text-[#0166dc] font-black">${finalTotal.toFixed(2)} CAD</span>
                 </div>
               </div>
 
@@ -344,7 +344,7 @@ export default function CartDrawer() {
                 className={
                   isCannabisLimitExceeded
                     ? "w-full py-3.5 px-4 rounded-xl bg-slate-200 text-slate-400 font-heading font-extrabold text-xs uppercase tracking-widest cursor-not-allowed flex items-center justify-center gap-2"
-                    : "w-full py-3.5 px-4 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-heading font-extrabold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#8EF705]/25"
+                    : "w-full py-3.5 px-4 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white font-heading font-extrabold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#0166dc]/25"
                 }
               >
                 <span>{isCannabisLimitExceeded ? `Exceeds ${CANNABIS_LIMIT.toFixed(1)}g Limit (${cartCannabisGrams.toFixed(1)}g)` : 'Proceed to Secure Checkout'}</span>

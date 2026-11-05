@@ -181,7 +181,7 @@ export default function OfficeDashboard() {
                 ? 'bg-amber-100 text-amber-800 border border-amber-300 cursor-wait'
                 : syncing
                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60'
-                : 'bg-[#8EF705] hover:bg-[#80de04] text-slate-950 hover:shadow-md hover:shadow-[#8EF705]/20 active:scale-[0.98]'
+                : 'bg-[#0166dc] hover:bg-[#0153b3] text-slate-950 hover:shadow-md hover:shadow-[#0166dc]/20 active:scale-[0.98]'
             }`}
             title="Quick Sync: Syncs base catalogue and recent product images (~2-3s)"
           >
@@ -539,7 +539,7 @@ export default function OfficeDashboard() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#8EF705]/20 border border-[#8EF705]/40 flex items-center justify-center text-[#488203]">
+            <div className="w-9 h-9 rounded-xl bg-[#0166dc]/20 border border-[#0166dc]/40 flex items-center justify-center text-[#0166dc]">
               <ShoppingBag className="w-5 h-5" />
             </div>
             <div>

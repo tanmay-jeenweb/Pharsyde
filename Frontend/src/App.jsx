@@ -44,7 +44,7 @@ import FormSubmissionMaster from './pages/office/FormSubmissionMaster';
 
 function MainStoreApp() {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans selection:bg-[#8EF705] selection:text-black">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans selection:bg-[#0166dc] selection:text-white">
       {/* Scroll to top automatically on route changes */}
       <ScrollToTop />
 

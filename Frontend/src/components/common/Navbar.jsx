@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { Search, ShoppingBag, User, Menu, X, ShieldCheck, Sparkles, Package } from 'lucide-react';
-import logoImg from '../../assets/image.webp';
+import logoImg from '../../assets/logo.png';
 
 export default function Navbar() {
   const { cartCount, setIsCartOpen, setIsSearchOpen, isAgeVerified, isCustomerLoggedIn, customerUser, openAuthModal } = useApp();
@@ -40,7 +40,7 @@ export default function Navbar() {
             : 'bg-white/85 backdrop-blur-md py-4 sm:py-5 border-b border-slate-200/50 shadow-xs'
         }`}
       >
-        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-14">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-14">
           <div className="flex items-center justify-between gap-6 sm:gap-8">
             {/* Left: Brand Logo */}
             <Link
@@ -51,7 +51,7 @@ export default function Navbar() {
               <img
                 src={logoImg}
                 alt="PHARSYDE"
-                className="h-9 sm:h-10 md:h-11 w-auto object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_2px_12px_rgba(142,247,5,0.45)]"
+                className="h-9 sm:h-10 md:h-11 w-auto object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_2px_12px_rgba(1,102,220,0.35)]"
               />
             </Link>
 
@@ -73,12 +73,12 @@ export default function Navbar() {
                   >
                     <span className="whitespace-nowrap">{link.label}</span>
 
-                    {/* Active Underline in #8EF705 */}
+                    {/* Active Underline in #0166dc */}
                     <span
                       className={`absolute bottom-1 inset-x-4 h-[2px] rounded-full transition-all duration-300 ${
                         isActive
-                          ? 'bg-[#8EF705] shadow-[0_0_8px_#8EF705] opacity-100'
-                          : 'bg-[#8EF705]/0 opacity-0 group-hover:opacity-40 group-hover:bg-[#8EF705]'
+                          ? 'bg-[#0166dc] shadow-[0_0_8px_#0166dc] opacity-100'
+                          : 'bg-[#0166dc]/0 opacity-0 group-hover:opacity-40 group-hover:bg-[#0166dc]'
                       }`}
                     />
                   </Link>
@@ -92,7 +92,7 @@ export default function Navbar() {
               <button
                 onClick={() => setIsSearchOpen(true)}
                 aria-label="Search catalogue"
-                className="w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#8EF705] text-slate-700 hover:text-slate-900 flex items-center justify-center transition-all duration-200 shadow-xs hover:shadow-md hover:scale-105 group cursor-pointer"
+                className="w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#0166dc] text-slate-700 hover:text-slate-900 flex items-center justify-center transition-all duration-200 shadow-xs hover:shadow-md hover:scale-105 group cursor-pointer"
                 title="Search Products"
               >
                 <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
@@ -103,11 +103,11 @@ export default function Navbar() {
                 <Link
                   to="/account"
                   aria-label="My Account and Orders"
-                  className="relative hidden sm:flex h-10 px-3.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#8EF705] text-slate-800 items-center gap-2 transition-all duration-200 shadow-xs hover:shadow-md group"
+                  className="relative hidden sm:flex h-10 px-3.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#0166dc] text-slate-800 items-center gap-2 transition-all duration-200 shadow-xs hover:shadow-md group"
                   title={`Signed in as ${customerUser?.name || 'Customer'}`}
                 >
-                  <span className="w-2 h-2 rounded-full bg-[#8EF705] ring-2 ring-[#8EF705]/40" />
-                  <span className="text-xs font-bold max-w-[80px] truncate">{customerUser?.name?.split(' ')[0]}</span>
+                  <span className="w-2 h-2 rounded-full bg-[#0166dc] ring-2 ring-[#0166dc]/40" />
+                  <span className="text-xs font-bold truncate">{customerUser?.name?.split(' ')[0]}</span>
                   {Number(customerUser?.reward_points) > 0 && (
                     <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-mono font-bold flex items-center gap-0.5" title={`${customerUser.reward_points} TechPOS Loyalty Points`}>
                       <span>⭐</span>
@@ -120,7 +120,7 @@ export default function Navbar() {
                 <button
                   onClick={() => openAuthModal('login')}
                   aria-label="Sign In or Register"
-                  className="hidden sm:flex w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#8EF705] text-slate-700 hover:text-slate-900 items-center justify-center transition-all duration-200 shadow-xs hover:shadow-md hover:scale-105 group"
+                  className="hidden sm:flex w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#0166dc] text-slate-700 hover:text-slate-900 items-center justify-center transition-all duration-200 shadow-xs hover:shadow-md hover:scale-105 group"
                   title="Sign In / Register"
                 >
                   <User className="w-4 h-4 group-hover:scale-110 transition-transform" />
@@ -131,12 +131,12 @@ export default function Navbar() {
               <button
                 onClick={() => setIsCartOpen(true)}
                 aria-label="View shopping bag"
-                className="relative w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#8EF705] text-slate-900 flex items-center justify-center transition-all duration-200 shadow-xs hover:shadow-md hover:scale-105 group cursor-pointer"
+                className="relative w-10 h-10 rounded-full bg-white hover:bg-slate-50 border border-slate-200 hover:border-[#0166dc] text-slate-900 flex items-center justify-center transition-all duration-200 shadow-xs hover:shadow-md hover:scale-105 group cursor-pointer"
                 title="Shopping Bag"
               >
                 <ShoppingBag className="w-4 h-4 group-hover:scale-110 text-slate-800 transition-transform" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-[10px] font-black text-black bg-[#8EF705] rounded-full shadow-md shadow-[#8EF705]/40 ring-2 ring-white animate-pulse">
+                  <span className="absolute -top-1 -right-1 flex items-center justify-center w-5 h-5 text-[10px] font-black text-white bg-[#0166dc] rounded-full shadow-md shadow-[#0166dc]/40 ring-2 ring-white animate-pulse">
                     {cartCount}
                   </span>
                 )}
@@ -146,7 +146,7 @@ export default function Navbar() {
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 aria-label="Toggle navigation menu"
-                className="lg:hidden w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-800 hover:border-[#8EF705] flex items-center justify-center transition-colors shadow-xs"
+                className="lg:hidden w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-800 hover:border-[#0166dc] flex items-center justify-center transition-colors shadow-xs"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5 text-orange-600" /> : <Menu className="w-5 h-5 text-slate-800" />}
               </button>
@@ -169,7 +169,7 @@ export default function Navbar() {
                   <img
                     src={logoImg}
                     alt="PHARSYDE"
-                    className="h-8 w-auto object-contain drop-shadow-[0_2px_8px_rgba(142,247,5,0.4)]"
+                    className="h-8 w-auto object-contain drop-shadow-[0_2px_8px_rgba(1,102,220,0.35)]"
                   />
                 </Link>
                 <button
@@ -193,12 +193,12 @@ export default function Navbar() {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`w-full text-left px-4 py-3.5 rounded-xl text-base font-semibold tracking-wide flex items-center justify-between transition-all ${
                         isActive
-                          ? 'bg-[#8EF705]/20 text-slate-900 font-bold border-l-4 border-[#8EF705]'
+                          ? 'bg-[#0166dc]/10 text-[#0166dc] font-bold border-l-4 border-[#0166dc]'
                           : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
                       }`}
                     >
                       <span>{link.label}</span>
-                      {isActive && <span className="w-5 h-[3px] rounded-full bg-[#8EF705] shadow-[0_0_8px_#8EF705]" />}
+                      {isActive && <span className="w-5 h-[3px] rounded-full bg-[#0166dc] shadow-[0_0_8px_#0166dc]" />}
                     </Link>
                   );
                 })}
@@ -209,7 +209,7 @@ export default function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 hover:bg-slate-100 flex items-center gap-2"
                   >
-                    <Package className="w-4 h-4 text-[#488203]" />
+                    <Package className="w-4 h-4 text-[#0166dc]" />
                     <span>My Orders</span>
                   </Link>
                 ) : (
@@ -220,7 +220,7 @@ export default function Navbar() {
                     }}
                     className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-slate-800 hover:bg-slate-100 flex items-center gap-2 cursor-pointer"
                   >
-                    <User className="w-4 h-4 text-[#488203]" />
+                    <User className="w-4 h-4 text-[#0166dc]" />
                     <span>Sign In / Register</span>
                   </button>
                 )}
@@ -239,7 +239,7 @@ export default function Navbar() {
             <div className="pt-6 border-t border-slate-200 text-xs text-slate-600 space-y-2">
               <p className="text-slate-900 font-semibold">Pharsyde Retail Store</p>
               <p>117 Regent Ave W, Winnipeg, MB</p>
-              <p className="text-[#599e03] font-bold">(204) 222-4753</p>
+              <p className="text-[#0166dc] font-bold">(204) 222-4753</p>
               <p className="text-[11px] text-slate-500">Open Daily • Regulated Manitoba Dispensary</p>
             </div>
           </div>

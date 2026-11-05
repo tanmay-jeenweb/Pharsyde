@@ -47,10 +47,10 @@ export default function HeroScene() {
     const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
     mainGroup.add(coreMesh);
 
-    // Outer subtle wireframe halo with #8EF705
+    // Outer subtle wireframe halo with #0166dc
     const wireGeo = new THREE.IcosahedronGeometry(1.95, 2);
     const wireMat = new THREE.MeshBasicMaterial({
-      color: 0x8ef705,
+      color: 0x0166dc,
       wireframe: true,
       transparent: true,
       opacity: 0.25
@@ -62,10 +62,10 @@ export default function HeroScene() {
     const floatingElements = [];
     const shardGeo = new THREE.OctahedronGeometry(0.28, 0);
     const shardMatGreen = new THREE.MeshStandardMaterial({
-      color: 0x8ef705,
+      color: 0x0166dc,
       metalness: 0.7,
       roughness: 0.2,
-      emissive: 0x5fa803,
+      emissive: 0x004bb5,
       emissiveIntensity: 0.35
     });
     const shardMatCoral = new THREE.MeshStandardMaterial({
@@ -107,7 +107,7 @@ export default function HeroScene() {
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
 
-    const greenColor = new THREE.Color(0x8ef705);
+    const greenColor = new THREE.Color(0x0166dc);
     const coralColor = new THREE.Color(0xea580c);
     const slateColor = new THREE.Color(0x94a3b8);
 
@@ -144,8 +144,8 @@ export default function HeroScene() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 2.2);
     scene.add(ambientLight);
 
-    // #8EF705 Accent Light
-    const greenLight = new THREE.PointLight(0x8ef705, 50, 18);
+    // #0166dc Accent Light
+    const greenLight = new THREE.PointLight(0x0166dc, 50, 18);
     greenLight.position.set(4, 3, 4);
     scene.add(greenLight);
 
@@ -251,7 +251,7 @@ export default function HeroScene() {
     <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
       <div ref={containerRef} className="w-full h-full" />
       <div className="absolute inset-0 bg-gradient-to-t from-[#F8FAFC] via-transparent to-[#F8FAFC]/70" />
-      <div className="absolute inset-0 bg-radial-green pointer-events-none opacity-40" />
+      <div className="absolute inset-0 bg-radial-blue pointer-events-none opacity-40" />
     </div>
   );
 }

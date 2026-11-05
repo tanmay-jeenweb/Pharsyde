@@ -163,8 +163,8 @@ export default function AuthModal() {
         {/* Modal Header */}
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#8EF705]/20 border border-[#8EF705]/40 flex items-center justify-center text-[#488203]">
-              <Lock className="w-4 h-4 text-[#488203]" />
+            <div className="w-9 h-9 rounded-xl bg-[#0166dc]/20 border border-[#0166dc]/40 flex items-center justify-center text-[#0166dc]">
+              <Lock className="w-4 h-4 text-[#0166dc]" />
             </div>
             <div>
               <h3 className="font-heading text-base font-bold text-slate-900 tracking-tight uppercase">
@@ -273,7 +273,7 @@ export default function AuthModal() {
                   placeholder="name@example.com"
                   value={loginData.email}
                   onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                 />
               </div>
             </div>
@@ -288,7 +288,7 @@ export default function AuthModal() {
                   placeholder="••••••••"
                   value={loginData.password}
                   onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                 />
               </div>
             </div>
@@ -296,7 +296,7 @@ export default function AuthModal() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#8EF705]/20 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full mt-2 py-3 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#0166dc]/20 flex items-center justify-center gap-2 cursor-pointer"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>Sign In</span>}
             </button>
@@ -310,7 +310,7 @@ export default function AuthModal() {
                   setRegisterStep('form');
                   setError('');
                 }}
-                className="text-[#488203] font-bold hover:underline cursor-pointer"
+                className="text-[#0166dc] font-bold hover:underline cursor-pointer"
               >
                 Register now
               </button>
@@ -320,8 +320,8 @@ export default function AuthModal() {
           /* Step 2: Email OTP Verification Form */
           <form onSubmit={handleVerifyAndRegister} className="p-6 space-y-4 animate-in fade-in">
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-1">
-              <div className="w-10 h-10 rounded-full bg-[#8EF705]/20 border border-[#8EF705]/40 flex items-center justify-center mx-auto text-[#488203] mb-2">
-                <Mail className="w-5 h-5 text-[#488203]" />
+              <div className="w-10 h-10 rounded-full bg-[#0166dc]/20 border border-[#0166dc]/40 flex items-center justify-center mx-auto text-[#0166dc] mb-2">
+                <Mail className="w-5 h-5 text-[#0166dc]" />
               </div>
               <p className="text-xs text-slate-600">
                 A 6-digit verification code was emailed to:
@@ -335,7 +335,7 @@ export default function AuthModal() {
                   setRegisterStep('form');
                   setError('');
                 }}
-                className="inline-flex items-center gap-1 text-[11px] text-[#488203] hover:underline font-semibold mt-1 cursor-pointer"
+                className="inline-flex items-center gap-1 text-[11px] text-[#0166dc] hover:underline font-semibold mt-1 cursor-pointer"
               >
                 <ArrowLeft className="w-3 h-3" />
                 <span>Change email</span>
@@ -354,14 +354,14 @@ export default function AuthModal() {
                 placeholder="000000"
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                className="w-full bg-slate-50 border-2 border-slate-300 rounded-2xl py-3 text-2xl font-mono font-black text-center tracking-[0.4em] text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white transition-colors"
+                className="w-full bg-slate-50 border-2 border-slate-300 rounded-2xl py-3 text-2xl font-mono font-black text-center tracking-[0.4em] text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white transition-colors"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading || otpCode.trim().length !== 6}
-              className="w-full py-3 rounded-xl bg-[#8EF705] hover:bg-[#80de04] disabled:opacity-50 text-black text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#8EF705]/20 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] disabled:opacity-50 text-black text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#0166dc]/20 flex items-center justify-center gap-2 cursor-pointer"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -382,7 +382,7 @@ export default function AuthModal() {
                   type="button"
                   onClick={handleResendOtp}
                   disabled={loading}
-                  className="text-[#488203] font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                  className="text-[#0166dc] font-bold hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <RotateCcw className="w-3 h-3" />
                   <span>Resend Code</span>
@@ -403,7 +403,7 @@ export default function AuthModal() {
                   placeholder="Jane Doe"
                   value={registerData.name}
                   onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                 />
               </div>
             </div>
@@ -418,7 +418,7 @@ export default function AuthModal() {
                   placeholder="name@example.com"
                   value={registerData.email}
                   onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                 />
               </div>
               <p className="text-[10px] text-slate-400 mt-1">A verification code will be sent to this email.</p>
@@ -434,7 +434,7 @@ export default function AuthModal() {
                     placeholder="(204) 000-0000"
                     value={registerData.phone}
                     onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-2.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-2.5 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                   />
                 </div>
               </div>
@@ -447,7 +447,7 @@ export default function AuthModal() {
                     required
                     value={registerData.dateOfBirth}
                     onChange={(e) => setRegisterData({ ...registerData, dateOfBirth: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-2 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-2 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                   />
                 </div>
               </div>
@@ -463,7 +463,7 @@ export default function AuthModal() {
                   placeholder="Min 6 characters"
                   value={registerData.password}
                   onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                 />
               </div>
             </div>
@@ -473,7 +473,7 @@ export default function AuthModal() {
                 type="checkbox"
                 checked={registerData.ageConsent}
                 onChange={(e) => setRegisterData({ ...registerData, ageConsent: e.target.checked })}
-                className="mt-0.5 rounded border-slate-300 accent-[#8EF705]"
+                className="mt-0.5 rounded border-slate-300 accent-[#0166dc]"
               />
               <span>
                 I confirm I am <strong className="text-slate-900">19+ years of age</strong> (legal age in Manitoba).
@@ -483,7 +483,7 @@ export default function AuthModal() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#8EF705]/20 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full mt-2 py-3 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#0166dc]/20 flex items-center justify-center gap-2 cursor-pointer"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -503,7 +503,7 @@ export default function AuthModal() {
                   setAuthModalTab('login');
                   setError('');
                 }}
-                className="text-[#488203] font-bold hover:underline cursor-pointer"
+                className="text-[#0166dc] font-bold hover:underline cursor-pointer"
               >
                 Sign In
               </button>

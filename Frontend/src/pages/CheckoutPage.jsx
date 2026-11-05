@@ -435,14 +435,14 @@ export default function CheckoutPage() {
   if (orderConfirmed) {
     return (
       <div className="min-h-screen pt-28 pb-24 bg-[#F8FAFC]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="p-8 sm:p-12 rounded-3xl bg-white border border-slate-200 shadow-xl text-center space-y-6">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-[#8EF705]/15 border border-[#8EF705]/40 flex items-center justify-center text-[#488203]">
-              <CheckCircle2 className="w-9 h-9 text-[#488203]" />
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-[#0166dc]/15 border border-[#0166dc]/40 flex items-center justify-center text-[#0166dc]">
+              <CheckCircle2 className="w-9 h-9 text-[#0166dc]" />
             </div>
 
             <div>
-              <span className="text-xs font-mono uppercase tracking-widest text-[#488203] font-bold block mb-1">
+              <span className="text-xs font-mono uppercase tracking-widest text-[#0166dc] font-bold block mb-1">
                 Order Received • Manitoba Compliant
               </span>
               <h1 className="font-heading text-3xl sm:text-4xl font-black text-slate-900 uppercase">
@@ -465,7 +465,7 @@ export default function CheckoutPage() {
               </div>
 
               <div className="space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#488203] block">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#0166dc] block">
                   Curated Selections:
                 </span>
                 {orderConfirmed.items.map((item, idx) => (
@@ -495,7 +495,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex justify-between pt-2 border-t border-slate-200 text-sm font-bold text-slate-900">
                   <span>Total Paid</span>
-                  <span className="font-mono text-[#488203] font-black">${orderConfirmed.total.toFixed(2)} CAD</span>
+                  <span className="font-mono text-[#0166dc] font-black">${orderConfirmed.total.toFixed(2)} CAD</span>
                 </div>
               </div>
             </div>
@@ -519,7 +519,7 @@ export default function CheckoutPage() {
               {isCustomerLoggedIn && (
                 <button
                   onClick={() => navigateTo('orders')}
-                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#8EF705]/25 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#0166dc]/25 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Receipt className="w-4 h-4" />
                   <span>View in Order History</span>
@@ -543,7 +543,7 @@ export default function CheckoutPage() {
   if (cart.length === 0) {
     return (
       <div className="min-h-screen pt-32 pb-24 bg-[#F8FAFC] text-center">
-        <div className="max-w-md mx-auto px-4 space-y-4">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 space-y-4">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400">
             <Receipt className="w-8 h-8 opacity-50" />
           </div>
@@ -553,7 +553,7 @@ export default function CheckoutPage() {
           </p>
           <button
             onClick={() => navigateTo('catalog')}
-            className="px-6 py-3 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#8EF705]/25"
+            className="px-6 py-3 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-black text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#0166dc]/25"
           >
             Explore Catalogue
           </button>
@@ -564,10 +564,10 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen pt-28 pb-24 bg-[#F8FAFC]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
         <div className="mb-10 flex items-center justify-between">
           <div>
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#488203] block mb-1">
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#0166dc] block mb-1">
               SECURE TRANSACTION
             </span>
             <h1 className="font-heading text-3xl sm:text-5xl font-black text-slate-900 tracking-tight uppercase">
@@ -587,8 +587,8 @@ export default function CheckoutPage() {
         {!isCustomerLoggedIn && (
           <div className="mb-8 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#8EF705]/20 flex items-center justify-center text-[#488203]">
-                <Sparkles className="w-4 h-4 text-[#488203]" />
+              <div className="w-8 h-8 rounded-xl bg-[#0166dc]/20 flex items-center justify-center text-[#0166dc]">
+                <Sparkles className="w-4 h-4 text-[#0166dc]" />
               </div>
               <p className="text-xs text-slate-600">
                 Already registered? <strong className="text-slate-900">Sign in to autofill your details and link this order to your account.</strong>
@@ -623,7 +623,7 @@ export default function CheckoutPage() {
                     name="ageConsent"
                     checked={formData.ageConsent}
                     onChange={handleInputChange}
-                    className="mt-0.5 rounded border-slate-300 bg-white accent-[#8EF705] focus:ring-0"
+                    className="mt-0.5 rounded border-slate-300 bg-white accent-[#0166dc] focus:ring-0"
                   />
                   <span>
                     I confirm under penalty of law that I am <strong className="text-slate-900">19 years of age or older</strong> (legal age in Manitoba).
@@ -637,7 +637,7 @@ export default function CheckoutPage() {
                     name="idConsent"
                     checked={formData.idConsent}
                     onChange={handleInputChange}
-                    className="mt-0.5 rounded border-slate-300 bg-white accent-[#8EF705] focus:ring-0"
+                    className="mt-0.5 rounded border-slate-300 bg-white accent-[#0166dc] focus:ring-0"
                   />
                   <span>
                     I acknowledge that <strong className="text-slate-900">valid government-issued photo ID</strong> will be physically inspected upon store pickup or courier delivery.
@@ -661,7 +661,7 @@ export default function CheckoutPage() {
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                   />
                   {errors.firstName && <span className="text-[10px] text-red-600">{errors.firstName}</span>}
                 </div>
@@ -672,7 +672,7 @@ export default function CheckoutPage() {
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                   />
                   {errors.lastName && <span className="text-[10px] text-red-600">{errors.lastName}</span>}
                 </div>
@@ -699,7 +699,7 @@ export default function CheckoutPage() {
                             type="button"
                             onClick={handleTriggerGuestOtp}
                             disabled={otpLoading}
-                            className="px-2 py-0.5 rounded-full bg-[#8EF705]/20 hover:bg-[#8EF705] border border-[#8EF705]/50 text-[#3f7202] hover:text-black text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                            className="px-2 py-0.5 rounded-full bg-[#0166dc]/20 hover:bg-[#0166dc] border border-[#0166dc]/50 text-[#3f7202] hover:text-black text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
                           >
                             <Mail className="w-2.5 h-2.5" />
                             <span>Verify Email</span>
@@ -724,7 +724,7 @@ export default function CheckoutPage() {
                         ? 'bg-amber-50/30 border-amber-400 text-slate-900 focus:outline-none focus:bg-white'
                         : isGuestEmailVerified
                         ? 'bg-emerald-50/20 border-emerald-400 text-slate-900 focus:outline-none focus:bg-white'
-                        : 'bg-slate-50 border-slate-300 focus:border-[#8EF705] text-slate-900 focus:outline-none focus:bg-white'
+                        : 'bg-slate-50 border-slate-300 focus:border-[#0166dc] text-slate-900 focus:outline-none focus:bg-white'
                     }`}
                   />
                   {errors.email && <span className="text-[10px] text-red-600 block mt-1">{errors.email}</span>}
@@ -767,7 +767,7 @@ export default function CheckoutPage() {
                     placeholder="(204) 000-0000"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                   />
                   {errors.phone && <span className="text-[10px] text-red-600">{errors.phone}</span>}
                 </div>
@@ -777,7 +777,7 @@ export default function CheckoutPage() {
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <FileCheck className="w-4 h-4 text-[#488203]" />
+                    <FileCheck className="w-4 h-4 text-[#0166dc]" />
                     <span className="text-xs font-bold text-slate-800 uppercase tracking-wide">
                       Government-Approved ID
                     </span>
@@ -809,7 +809,7 @@ export default function CheckoutPage() {
                       className={`relative flex flex-col items-center justify-center p-5 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${
                         isUploadingDoc
                           ? 'bg-slate-50 border-slate-300 opacity-60 cursor-not-allowed'
-                          : 'bg-slate-50 hover:bg-[#8EF705]/5 border-slate-300 hover:border-[#8EF705]'
+                          : 'bg-slate-50 hover:bg-[#0166dc]/5 border-slate-300 hover:border-[#0166dc]'
                       }`}
                     >
                       <input
@@ -821,7 +821,7 @@ export default function CheckoutPage() {
                       />
                       {isUploadingDoc ? (
                         <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                          <Loader2 className="w-5 h-5 animate-spin text-[#488203]" />
+                          <Loader2 className="w-5 h-5 animate-spin text-[#0166dc]" />
                           <span>Uploading and securing document...</span>
                         </div>
                       ) : (
@@ -892,19 +892,19 @@ export default function CheckoutPage() {
                 <label
                   className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
                     formData.fulfillmentType === 'pickup'
-                      ? 'bg-[#8EF705]/10 border-[#8EF705] text-slate-900 shadow-xs'
+                      ? 'bg-[#0166dc]/10 border-[#0166dc] text-slate-900 shadow-xs'
                       : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <Store className="w-5 h-5 text-[#488203]" />
+                    <Store className="w-5 h-5 text-[#0166dc]" />
                     <input
                       type="radio"
                       name="fulfillmentType"
                       value="pickup"
                       checked={formData.fulfillmentType === 'pickup'}
                       onChange={handleInputChange}
-                      className="accent-[#8EF705]"
+                      className="accent-[#0166dc]"
                     />
                   </div>
                   <div>
@@ -912,7 +912,7 @@ export default function CheckoutPage() {
                     <span className="text-[11px] block text-slate-500 mt-1">
                       117 Regent Ave W, Winnipeg
                     </span>
-                    <span className="text-xs font-bold text-[#488203] mt-2 block font-mono">
+                    <span className="text-xs font-bold text-[#0166dc] mt-2 block font-mono">
                       FREE • Ready in 30 mins
                     </span>
                   </div>
@@ -921,7 +921,7 @@ export default function CheckoutPage() {
                 <label
                   className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
                     formData.fulfillmentType === 'delivery'
-                      ? 'bg-[#8EF705]/10 border-[#8EF705] text-slate-900 shadow-xs'
+                      ? 'bg-[#0166dc]/10 border-[#0166dc] text-slate-900 shadow-xs'
                       : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                   }`}
                 >
@@ -933,7 +933,7 @@ export default function CheckoutPage() {
                       value="delivery"
                       checked={formData.fulfillmentType === 'delivery'}
                       onChange={handleInputChange}
-                      className="accent-[#8EF705]"
+                      className="accent-[#0166dc]"
                     />
                   </div>
                   <div>
@@ -959,7 +959,7 @@ export default function CheckoutPage() {
                       value={formData.address}
                       onChange={handleInputChange}
                       placeholder="123 Main St, Apt 4B"
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                     />
                     {errors.address && <span className="text-[10px] text-red-600">{errors.address}</span>}
                   </div>
@@ -983,7 +983,7 @@ export default function CheckoutPage() {
                         value={formData.postalCode}
                         onChange={handleInputChange}
                         placeholder="R2C 1R1"
-                        className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 uppercase focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                        className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 uppercase focus:outline-none focus:border-[#0166dc] focus:bg-white"
                       />
                       {errors.postalCode && <span className="text-[10px] text-red-600">{errors.postalCode}</span>}
                     </div>
@@ -1008,7 +1008,7 @@ export default function CheckoutPage() {
                 <label
                   className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
                     formData.paymentMethod === 'credit'
-                      ? 'bg-emerald-50/60 border-[#8EF705] ring-2 ring-[#8EF705]/40 shadow-xs'
+                      ? 'bg-emerald-50/60 border-[#0166dc] ring-2 ring-[#0166dc]/40 shadow-xs'
                       : 'bg-slate-50/70 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -1034,7 +1034,7 @@ export default function CheckoutPage() {
                     value="credit"
                     checked={formData.paymentMethod === 'credit'}
                     onChange={handleInputChange}
-                    className="accent-[#8EF705] w-4 h-4 cursor-pointer"
+                    className="accent-[#0166dc] w-4 h-4 cursor-pointer"
                   />
                 </label>
 
@@ -1042,7 +1042,7 @@ export default function CheckoutPage() {
                 <label
                   className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
                     formData.paymentMethod === 'debit'
-                      ? 'bg-emerald-50/60 border-[#8EF705] ring-2 ring-[#8EF705]/40 shadow-xs'
+                      ? 'bg-emerald-50/60 border-[#0166dc] ring-2 ring-[#0166dc]/40 shadow-xs'
                       : 'bg-slate-50/70 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -1068,7 +1068,7 @@ export default function CheckoutPage() {
                     value="debit"
                     checked={formData.paymentMethod === 'debit'}
                     onChange={handleInputChange}
-                    className="accent-[#8EF705] w-4 h-4 cursor-pointer"
+                    className="accent-[#0166dc] w-4 h-4 cursor-pointer"
                   />
                 </label>
               </div>
@@ -1155,7 +1155,7 @@ export default function CheckoutPage() {
                         <span className="font-bold text-slate-900 block">
                           Redeem {maxRedeemablePoints} tokens for instant discount
                         </span>
-                        <span className="text-[11px] text-[#488203] font-mono font-bold block mt-0.5">
+                        <span className="text-[11px] text-[#0166dc] font-mono font-bold block mt-0.5">
                           -${(maxRedeemablePoints * pointRate).toFixed(2)} CAD off order total
                         </span>
                       </div>
@@ -1211,7 +1211,7 @@ export default function CheckoutPage() {
                       ({availablePoints} tokens avail)
                     </span>
                   </span>
-                  <span className={`font-mono font-bold ${redeemRewards && rewardDiscount > 0 ? 'text-[#488203]' : 'text-slate-500'}`}>
+                  <span className={`font-mono font-bold ${redeemRewards && rewardDiscount > 0 ? 'text-[#0166dc]' : 'text-slate-500'}`}>
                     {redeemRewards && rewardDiscount > 0 ? `-${rewardDiscount.toFixed(2)} CAD` : '$0.00 CAD'}
                   </span>
                 </div>
@@ -1238,7 +1238,7 @@ export default function CheckoutPage() {
                 )}
                 <div className="flex justify-between text-base font-bold text-slate-900 pt-3 border-t border-slate-200">
                   <span>Total Due</span>
-                  <span className="font-mono text-[#488203] font-black">${orderTotal.toFixed(2)} CAD</span>
+                  <span className="font-mono text-[#0166dc] font-black">${orderTotal.toFixed(2)} CAD</span>
                 </div>
               </div>
 
@@ -1257,7 +1257,7 @@ export default function CheckoutPage() {
                 className={
                   isCannabisLimitExceeded
                     ? "w-full py-4 rounded-xl bg-slate-200 text-slate-400 font-heading font-black text-xs uppercase tracking-widest cursor-not-allowed flex items-center justify-center gap-2"
-                    : "w-full py-4 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-heading font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-[#8EF705]/25 flex items-center justify-center gap-2"
+                    : "w-full py-4 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-black font-heading font-black text-xs uppercase tracking-widest transition-all shadow-md shadow-[#0166dc]/25 flex items-center justify-center gap-2"
                 }
               >
                 {isSubmitting ? (
@@ -1285,8 +1285,8 @@ export default function CheckoutPage() {
             {/* Header */}
             <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#8EF705]/20 border border-[#8EF705]/40 flex items-center justify-center text-[#488203]">
-                  <Mail className="w-4 h-4 text-[#488203]" />
+                <div className="w-9 h-9 rounded-xl bg-[#0166dc]/20 border border-[#0166dc]/40 flex items-center justify-center text-[#0166dc]">
+                  <Mail className="w-4 h-4 text-[#0166dc]" />
                 </div>
                 <div>
                   <h3 className="font-heading text-base font-bold text-slate-900 tracking-tight uppercase">
@@ -1337,14 +1337,14 @@ export default function CheckoutPage() {
                   placeholder="000000"
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                  className="w-full bg-slate-50 border-2 border-slate-300 rounded-2xl py-3 text-2xl font-mono font-black text-center tracking-[0.4em] text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white transition-colors"
+                  className="w-full bg-slate-50 border-2 border-slate-300 rounded-2xl py-3 text-2xl font-mono font-black text-center tracking-[0.4em] text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white transition-colors"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={otpLoading || otpCode.trim().length !== 6}
-                className="w-full py-3 rounded-xl bg-[#8EF705] hover:bg-[#80de04] disabled:opacity-50 text-black text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#8EF705]/20 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] disabled:opacity-50 text-white text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#0166dc]/20 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {otpLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -1365,7 +1365,7 @@ export default function CheckoutPage() {
                     type="button"
                     onClick={handleResendGuestOtp}
                     disabled={otpLoading}
-                    className="text-[#488203] font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-[#0166dc] font-bold hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <RotateCcw className="w-3 h-3" />
                     <span>Resend Code</span>

@@ -369,7 +369,7 @@ export default function FormSubmissionMaster() {
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
               Form Submissions Master
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#8EF705]/30 text-slate-900 border border-[#8EF705]">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#0166dc]/30 text-slate-900 border border-[#0166dc]">
               Storefront Responses
             </span>
           </div>
@@ -400,7 +400,7 @@ export default function FormSubmissionMaster() {
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 transition-colors shadow-xs cursor-pointer"
             title="Export data to CSV spreadsheet"
           >
-            <Download className="w-3.5 h-3.5 text-[#8EF705]" />
+            <Download className="w-3.5 h-3.5 text-[#0166dc]" />
             <span>Export CSV</span>
           </button>
         </div>
@@ -571,7 +571,7 @@ export default function FormSubmissionMaster() {
             <button
               type="button"
               onClick={handleCopyAllActiveEmails}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#8EF705] hover:bg-[#80de04] text-slate-950 shadow-xs transition-colors cursor-pointer self-start sm:self-auto"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#0166dc] hover:bg-[#0153b3] text-slate-950 shadow-xs transition-colors cursor-pointer self-start sm:self-auto"
               title="Copy comma-separated email list of active subscribers"
             >
               <Copy className="w-3.5 h-3.5" />

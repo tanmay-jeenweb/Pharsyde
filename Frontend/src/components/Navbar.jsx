@@ -1,7 +1,7 @@
 
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import logoImage from "../assets/image.webp";
+import logoImage from "../assets/logo.png";
 
 export default function Navbar({ title = "ERP Admin" }) {
     const navigate = useNavigate();
