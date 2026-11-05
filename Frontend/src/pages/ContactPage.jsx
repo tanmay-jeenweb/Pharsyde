@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { STORE_INFO } from '../data/products';
 import { useApp } from '../context/AppContext';
+import { submitContactInquiryApi } from '../services/formService';
 import {
   MapPin,
   Phone,
@@ -48,7 +49,7 @@ export default function ContactPage() {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) {
       showToast('Please correct highlighted fields before submitting', 'error');
@@ -56,12 +57,14 @@ export default function ContactPage() {
     }
 
     setStatus('loading');
+    setFeedbackMessage('');
 
-    // Simulate backend submission
-    setTimeout(() => {
+    try {
+      const res = await submitContactInquiryApi(form);
       setStatus('success');
       setFeedbackMessage(
-        `Thank you ${form.name}. Your message has been received by our Winnipeg dispensary team. We will reply to ${form.email} shortly.`
+        res?.message ||
+          `Thank you ${form.name}. Your message has been received by our Winnipeg dispensary team. We will reply to ${form.email} shortly.`
       );
       showToast('Message sent to Pharsyde customer care', 'success');
       setForm({
@@ -71,7 +74,12 @@ export default function ContactPage() {
         subject: 'General Inquiry',
         message: ''
       });
-    }, 1200);
+    } catch (err) {
+      setStatus('error');
+      const errText = err.message || 'Failed to send message. Please try again or call our dispensary.';
+      setFeedbackMessage(errText);
+      showToast(errText, 'error');
+    }
   };
 
   return (
@@ -211,8 +219,18 @@ export default function ContactPage() {
             </div>
 
             {feedbackMessage && (
-              <div className="mb-6 p-4 rounded-2xl bg-[#8EF705]/15 border border-[#8EF705]/40 text-[#3d6e03] text-xs flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#488203] shrink-0 mt-0.5" />
+              <div
+                className={`mb-6 p-4 rounded-2xl border text-xs flex items-start gap-3 ${
+                  status === 'error'
+                    ? 'bg-rose-50 border-rose-200 text-rose-800'
+                    : 'bg-[#8EF705]/15 border-[#8EF705]/40 text-[#3d6e03]'
+                }`}
+              >
+                {status === 'error' ? (
+                  <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                ) : (
+                  <CheckCircle2 className="w-5 h-5 text-[#488203] shrink-0 mt-0.5" />
+                )}
                 <p className="leading-relaxed">{feedbackMessage}</p>
               </div>
             )}

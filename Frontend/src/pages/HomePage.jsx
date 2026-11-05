@@ -10,6 +10,7 @@ import {
   getPublicSettingsApi,
   getPublicHomeSectionsApi
 } from '../services/productService';
+import { subscribeNewsletterApi } from '../services/formService';
 import heroBg from '../assets/hero-bg.png';
 import cannabisCategoryImg from '../assets/cannabis-category.png';
 import nicotineCategoryImg from '../assets/nicotine-vape-category.png';
@@ -191,7 +192,7 @@ export default function HomePage() {
     };
   }, []);
 
-  const handleNewsletterSubmit = (e) => {
+  const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
     if (!newsletterEmail || !newsletterEmail.includes('@')) {
       setNewsletterStatus('error');
@@ -200,17 +201,31 @@ export default function HomePage() {
     }
     if (!newsletterConsent) {
       setNewsletterStatus('error');
-      setNewsletterMsg('Please consent to receiving Pharsyde updates.');
+      setNewsletterMsg('Please confirm you are 19+ and consent to receiving Pharsyde updates.');
       return;
     }
 
     setNewsletterStatus('loading');
-    setTimeout(() => {
+    setNewsletterMsg('');
+
+    try {
+      const res = await subscribeNewsletterApi({
+        email: newsletterEmail.trim(),
+        consent: newsletterConsent,
+        source: 'homepage_circle'
+      });
       setNewsletterStatus('success');
-      setNewsletterMsg('Welcome to Pharsyde Circle. Check your inbox for your 10% welcome invitation.');
-      showToast('Successfully subscribed to Pharsyde Circle', 'success');
+      setNewsletterMsg(
+        res?.message || 'Welcome to Pharsyde Circle. Check your inbox for your 10% welcome invitation.'
+      );
+      showToast(res?.message || 'Successfully subscribed to Pharsyde Circle', 'success');
       setNewsletterEmail('');
-    }, 1000);
+    } catch (err) {
+      setNewsletterStatus('error');
+      const errorMsg = err.message || 'Subscription failed. Please check your email and try again.';
+      setNewsletterMsg(errorMsg);
+      showToast(errorMsg, 'error');
+    }
   };
 
   return (

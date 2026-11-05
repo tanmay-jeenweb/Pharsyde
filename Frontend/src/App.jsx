@@ -40,6 +40,7 @@ import ActivityReport from './pages/office/ActivityReport';
 import OrderMaster from './pages/office/OrderMaster';
 import SettingMaster from './pages/office/SettingMaster';
 import HomeSectionMaster from './pages/office/HomeSectionMaster';
+import FormSubmissionMaster from './pages/office/FormSubmissionMaster';
 
 function MainStoreApp() {
   return (
@@ -272,6 +273,16 @@ export default function App() {
             </OfficeProtectedRoute>
           }
         />
+        <Route
+          path="/office/form-submissions"
+          element={
+            <OfficeProtectedRoute>
+              <FormSubmissionMaster />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route path="/office/inquiries" element={<Navigate to="/office/form-submissions" replace />} />
+        <Route path="/office/newsletter" element={<Navigate to="/office/form-submissions" replace />} />
         <Route path="/office" element={<Navigate to="/office/dashboard" replace />} />
         <Route path="/office/*" element={<Navigate to="/office/dashboard" replace />} />
 

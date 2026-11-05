@@ -5,6 +5,8 @@ const ProductModel = require('../models/productModel');
 const ProductImageModel = require('../models/productImageModel');
 const AuditLogModel = require('../models/auditLogModel');
 const OrderModel = require('../models/orderModel');
+const ContactInquiryModel = require('../models/contactInquiryModel');
+const NewsletterModel = require('../models/newsletterModel');
 const { syncUsersBiDirectional } = require('../services/techposMemberService');
 const { generateToken } = require('../utils/jwt');
 
@@ -244,7 +246,18 @@ const fetchTechPosOrderList = async ({
 
 const getDashboardStats = async (req, res, next) => {
   try {
-    const [allUsers, activeUsers, userTypes, totalProducts, activeProducts, totalImages, imagesWithUrl, recentLogs] = await Promise.all([
+    const [
+      allUsers,
+      activeUsers,
+      userTypes,
+      totalProducts,
+      activeProducts,
+      totalImages,
+      imagesWithUrl,
+      recentLogs,
+      inquiryStats,
+      newsletterStats
+    ] = await Promise.all([
       UserModel.findAllOffice({ showInactive: true }),
       UserModel.findAllOffice({ showInactive: false }),
       UserTypeModel.findAll(),
@@ -253,6 +266,8 @@ const getDashboardStats = async (req, res, next) => {
       ProductImageModel.count(),
       ProductImageModel.countWithImages(),
       AuditLogModel.findAll({ limit: 10 }),
+      ContactInquiryModel.getStats(),
+      NewsletterModel.getStats(),
     ]);
 
     res.status(200).json({
@@ -275,6 +290,8 @@ const getDashboardStats = async (req, res, next) => {
           missingImages: totalImages - imagesWithUrl,
         },
         recentActivities: recentLogs,
+        inquiries: inquiryStats,
+        newsletters: newsletterStats,
       },
     });
   } catch (err) {

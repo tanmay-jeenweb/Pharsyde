@@ -19,7 +19,9 @@ import {
   Activity,
   Plus,
   Zap,
-  Sliders
+  Sliders,
+  Mail,
+  MessageSquare
 } from 'lucide-react';
 
 export default function OfficeDashboard() {
@@ -261,7 +263,7 @@ export default function OfficeDashboard() {
       )}
 
       {/* Key Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         
         {/* Card 1: Users */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-emerald-300 transition-all flex flex-col justify-between">
@@ -396,6 +398,38 @@ export default function OfficeDashboard() {
           </Link>
         </div>
 
+        {/* Card 6: Form Submissions */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-emerald-300 transition-all flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Form Submissions</span>
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
+                <MessageSquare className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="text-3xl font-extrabold text-slate-900">
+              {loading ? '—' : ((stats?.inquiries?.total ?? 0) + (stats?.newsletters?.total ?? 0))}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-500 mt-2">
+              <span className="text-blue-700 font-bold">{stats?.inquiries?.total ?? 0} inquiries</span>
+              {stats?.inquiries?.new > 0 && (
+                <span className="px-1.5 py-0.2 bg-rose-100 text-rose-700 text-[10px] font-extrabold rounded-md">
+                  {stats?.inquiries?.new} new
+                </span>
+              )}
+              <span>•</span>
+              <span className="text-slate-500 font-semibold">{stats?.newsletters?.total ?? 0} subscribers</span>
+            </div>
+          </div>
+          <Link
+            to="/office/form-submissions"
+            className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-700 hover:text-blue-800"
+          >
+            <span>View Submissions</span>
+            <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </div>
+
       </div>
 
       {/* Quick Launchpad & Masters Shortcut Grid */}
@@ -478,6 +512,21 @@ export default function OfficeDashboard() {
               <div>
                 <h3 className="font-bold text-slate-900 text-sm group-hover:text-emerald-800">Setting Master</h3>
                 <p className="text-xs text-slate-500">New arrivals limit & store configs</p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            to="/office/form-submissions"
+            className="p-4 rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/30 transition-all group cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center group-hover:scale-105 transition-transform">
+                <MessageSquare className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-sm group-hover:text-blue-800">Form Submissions</h3>
+                <p className="text-xs text-slate-500">Inquiries & newsletter subscribers</p>
               </div>
             </div>
           </Link>
@@ -676,14 +725,14 @@ export default function OfficeDashboard() {
                     Loading recent logs...
                   </td>
                 </tr>
-              ) : !stats?.recentActivities || stats.recentActivities.length === 0 ? (
+              ) : !Array.isArray(stats?.recentActivities) || stats.recentActivities.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-slate-400 text-xs">
                     No recent activity logs recorded yet.
                   </td>
                 </tr>
               ) : (
-                stats.recentActivities.slice(0, 8).map((log) => (
+                (stats.recentActivities || []).slice(0, 8).map((log) => (
                   <tr key={log.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
                       {new Date(log.created_at).toLocaleString()}
