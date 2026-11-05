@@ -14,6 +14,20 @@ const SETTINGS_TABLE_SCHEMA = `
 // Default settings to seed if table is empty
 const DEFAULT_SETTINGS = [
   {
+    key: 'show_best_sellers',
+    value: 'true',
+    label: 'Show Best Sellers Section on Home Page',
+    description: 'Toggle switch to show or hide the Best Sellers section on the customer storefront home page.',
+    category: 'storefront'
+  },
+  {
+    key: 'show_new_arrivals',
+    value: 'true',
+    label: 'Show New Arrivals Section on Home Page',
+    description: 'Toggle switch to show or hide the New Arrivals section on the customer storefront home page.',
+    category: 'storefront'
+  },
+  {
     key: 'new_arrivals_limit',
     value: '24',
     label: 'New Arrivals Display Limit',

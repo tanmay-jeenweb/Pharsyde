@@ -78,6 +78,18 @@ const updateOfficeSetting = async (req, res, next) => {
       }
     }
 
+    // Specific validation for show_best_sellers & show_new_arrivals
+    if (key === 'show_best_sellers' || key === 'show_new_arrivals') {
+      const strVal = String(value).trim().toLowerCase();
+      if (strVal !== 'true' && strVal !== 'false') {
+        return res.status(400).json({
+          success: false,
+          message: `${key} setting must be either "true" or "false".`,
+        });
+      }
+      finalValue = strVal;
+    }
+
     // Specific validation for gov_id_mandatory
     if (key === 'gov_id_mandatory') {
       const strVal = String(value).trim().toLowerCase();
@@ -192,6 +204,8 @@ const getPublicSettings = async (req, res, next) => {
     const all = await SettingModel.findAll();
     // Whitelist only public safe settings
     const publicKeys = [
+      'show_best_sellers',
+      'show_new_arrivals',
       'new_arrivals_limit', 
       'best_seller_product_ids', 
       'gov_id_mandatory',
@@ -212,6 +226,12 @@ const getPublicSettings = async (req, res, next) => {
     }
 
     // Ensure fallback defaults exist
+    if (publicSettings.show_best_sellers === undefined) {
+      publicSettings.show_best_sellers = 'true';
+    }
+    if (publicSettings.show_new_arrivals === undefined) {
+      publicSettings.show_new_arrivals = 'true';
+    }
     if (!publicSettings.new_arrivals_limit) {
       publicSettings.new_arrivals_limit = '24';
     }
