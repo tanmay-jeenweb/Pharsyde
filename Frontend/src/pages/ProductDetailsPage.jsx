@@ -256,15 +256,15 @@ export default function ProductDetailsPage() {
         {/* Breadcrumb Navigation */}
         <div className="mb-8 flex items-center justify-between text-xs text-slate-500">
           <button
-            onClick={() => navigate('/catalog')}
-            className="inline-flex items-center gap-2 text-slate-800 hover:text-[#529402] font-semibold transition-colors"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 text-slate-800 hover:text-[#529402] font-semibold transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Product Catalogue</span>
+            <span>Back to Products</span>
           </button>
 
           <div className="hidden sm:flex items-center gap-1.5 font-medium">
-            <Link to="/catalog" className="hover:text-slate-900">Catalogue</Link>
+            <Link to="/cannabis" className="hover:text-slate-900">Cannabis</Link>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-slate-700">{productCategory}</span>
             {productSubCategory && (

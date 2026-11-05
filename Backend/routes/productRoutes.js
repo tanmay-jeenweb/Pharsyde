@@ -10,6 +10,7 @@ const {
   deleteProduct,
   getCategories,
   getBrands,
+  getStrains,
   syncTechPOS,
   syncImages,
   syncAllTechPOS,
@@ -22,6 +23,7 @@ const router = express.Router();
 // Metadata & Sync routes (Must precede /:id)
 router.get('/meta/categories', getCategories);
 router.get('/meta/brands', getBrands);
+router.get('/meta/strains', getStrains);
 router.post('/sync-techpos', syncTechPOS);
 router.get('/sync-techpos', syncTechPOS);
 router.post('/sync-images', syncImages);

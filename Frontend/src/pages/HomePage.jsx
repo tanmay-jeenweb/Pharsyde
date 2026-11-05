@@ -258,10 +258,10 @@ export default function HomePage() {
 
               <div className="flex flex-wrap items-center gap-4">
                 <button
-                  onClick={() => navigateTo('catalog')}
+                  onClick={() => navigateTo('cannabis')}
                   className="px-7 py-3.5 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-heading font-extrabold text-xs uppercase tracking-widest shadow-lg shadow-[#8EF705]/30 transition-all flex items-center gap-2 group hover:scale-[1.02] cursor-pointer"
                 >
-                  <span>Explore Catalogue</span>
+                  <span>Explore Cannabis</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
 

@@ -292,14 +292,16 @@ export function AppProvider({ children }) {
       navigate(`/product/${productId}`);
     } else if (page === 'home') {
       navigate('/');
+    } else if (page === 'cannabis') {
+      navigate('/cannabis');
+    } else if (page === 'nicotine') {
+      navigate('/nicotine');
     } else if (
       page === 'catalog' ||
       page === 'products' ||
-      page === 'shop' ||
-      page === 'cannabis' ||
-      page === 'nicotine'
+      page === 'shop'
     ) {
-      navigate('/catalog');
+      navigate('/cannabis');
     } else if (page.startsWith('/')) {
       navigate(page);
     } else {

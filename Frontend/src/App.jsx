@@ -61,13 +61,13 @@ function MainStoreApp() {
           <Route path="/new-arrival" element={<Navigate to="/new-arrivals" replace />} />
           <Route path="/best-sellers" element={<BestSellersPage />} />
           <Route path="/best-seller" element={<Navigate to="/best-sellers" replace />} />
-          <Route path="/catalog" element={<CatalogPage />} />
+          <Route path="/catalog" element={<CatalogPage key="catalog" pageType="all" />} />
 
           {/* Catalog route aliases */}
           <Route path="/products" element={<Navigate to="/catalog" replace />} />
           <Route path="/shop" element={<Navigate to="/catalog" replace />} />
-          <Route path="/cannabis" element={<Navigate to="/catalog" replace />} />
-          <Route path="/nicotine" element={<Navigate to="/catalog" replace />} />
+          <Route path="/cannabis" element={<CatalogPage key="cannabis" pageType="cannabis" />} />
+          <Route path="/nicotine" element={<CatalogPage key="nicotine" pageType="nicotine" />} />
 
           {/* Product detail views */}
           <Route path="/product/:id" element={<ProductDetailsPage />} />
