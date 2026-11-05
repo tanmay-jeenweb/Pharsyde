@@ -6,6 +6,7 @@ const PaymentAttemptModel = require('../models/paymentAttemptModel');
 const OrderModel = require('../models/orderModel');
 const SettingModel = require('../models/settingModel');
 const UserModel = require('../models/userModel');
+const OtpModel = require('../models/otpModel');
 const { getNextOrderNumber } = require('../services/orderSequenceService');
 const { preloadMonerisCheckout, getMonerisReceipt, getMonerisConfig, MonerisGatewayError } = require('../services/monerisService');
 const { getLiveTechPosStock } = require('../services/techposInventoryService');
@@ -77,14 +78,30 @@ const initiatePaymentAttempt = async (req, res, next) => {
       });
     }
 
-    // If guest, verify email does not belong to an existing registered user
+    // If guest, verify email does not belong to an existing registered user and is verified
     if (isGuest && customerEmail) {
-      const existingUser = await UserModel.findByEmail(customerEmail.toLowerCase());
+      const cleanEmail = customerEmail.trim().toLowerCase();
+      const existingUser = await UserModel.findByEmail(cleanEmail);
       if (existingUser) {
         return res.status(400).json({
           success: false,
           code: 'ACCOUNT_EXISTS',
           message: 'An account with this email already exists. Please log in to complete your order.',
+        });
+      }
+
+      const verificationToken = req.body.verificationToken || req.body.verification_token || customer.verificationToken || customer.verification_token;
+      const isTokenValid = await OtpModel.validateVerificationToken({
+        email: cleanEmail,
+        purpose: 'guest_checkout',
+        verificationToken,
+      });
+
+      if (!isTokenValid) {
+        return res.status(400).json({
+          success: false,
+          code: 'EMAIL_VERIFICATION_REQUIRED',
+          message: 'Guest email verification is required. Please verify your email with the 6-digit code.',
         });
       }
     }

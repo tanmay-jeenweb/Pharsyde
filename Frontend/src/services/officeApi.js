@@ -1,4 +1,4 @@
-const API_BASE = '/api/office';
+import { OFFICE_API_BASE as API_BASE } from './apiConfig';
 
 /**
  * Helper to build auth headers with Bearer token

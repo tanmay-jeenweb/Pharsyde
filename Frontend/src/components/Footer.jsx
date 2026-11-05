@@ -51,10 +51,10 @@ export default function Footer() {
             <div className="mx-auto px-4 sm:px-6 lg:px-8 py-2 w-full">
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-500">
                     <div className="flex items-center gap-2">
-                        <span className="font-medium">Powered by</span>
+                        <span className="font-medium">Design by Jeenweb Technologists</span>
                         <img 
                             src={jwLogo} 
-                            alt="Jeenweb" 
+                            alt="Jeenweb Technologists" 
                             className="h-9 w-auto rounded-sm cursor-pointer hover:opacity-90 transition-opacity" 
                             onClick={() => window.open("https://www.jeenweb.com", "_blank")} 
                         />

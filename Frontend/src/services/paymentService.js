@@ -1,4 +1,4 @@
-const API_BASE = '/api/payments/moneris';
+import { PAYMENT_API_BASE as API_BASE } from './apiConfig';
 const SESSION_KEY = 'pharsyde_moneris_session';
 
 /**

@@ -176,8 +176,8 @@ export function AppProvider({ children }) {
     throw new Error(res.message || 'Login failed');
   };
 
-  const customerRegister = async ({ name, email, password, phone, dateOfBirth }) => {
-    const res = await customerRegisterApi({ name, email, password, phone, dateOfBirth });
+  const customerRegister = async ({ name, email, password, phone, dateOfBirth, verificationToken }) => {
+    const res = await customerRegisterApi({ name, email, password, phone, dateOfBirth, verificationToken });
     if (res.success && res.token) {
       setCustomerToken(res.token);
       setCustomerUser(res.user);
