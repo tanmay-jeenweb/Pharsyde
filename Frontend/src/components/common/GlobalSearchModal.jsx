@@ -190,11 +190,11 @@ export default function GlobalSearchModal() {
           <button
             onClick={() => {
               setIsSearchOpen(false);
-              navigateTo('catalog');
+              navigateTo('cannabis');
             }}
             className="text-[#529402] hover:underline font-semibold"
           >
-            View Full Catalogue →
+            View Cannabis Collection →
           </button>
         </div>
       </div>

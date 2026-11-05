@@ -1110,8 +1110,6 @@ export default function CheckoutPage() {
                   </>
                 )}
               </button>
-
-              
             </div>
           </div>
         </form>

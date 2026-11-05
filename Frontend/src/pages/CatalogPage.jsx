@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useTransition } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { getProductsApi, getCategoriesApi } from '../services/productService';
+import { CANNABIS_CATEGORIES, NICOTINE_CATEGORIES, isCannabisCategory, isNicotineCategory } from '../data/categories';
 import ProductCard from '../components/common/ProductCard';
 import {
   Search,
@@ -19,15 +20,26 @@ import {
   X
 } from 'lucide-react';
 
-export default function CatalogPage() {
+export default function CatalogPage({ pageType: propPageType }) {
   const { showToast } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
+  const isCannabisPage = propPageType === 'cannabis' || location.pathname === '/cannabis';
+  const isNicotinePage = propPageType === 'nicotine' || location.pathname === '/nicotine';
 
   // Helper to parse categories from URL parameter (comma-separated or multiple)
   const parseCategoriesFromUrl = () => {
     const raw = searchParams.get('category');
     if (!raw) return [];
-    return raw.split(',').map((c) => c.trim()).filter((c) => c && c !== 'All');
+    const list = raw.split(',').map((c) => c.trim()).filter((c) => c && c !== 'All');
+    if (isCannabisPage) {
+      return list.filter(isCannabisCategory);
+    }
+    if (isNicotinePage) {
+      return list.filter(isNicotineCategory);
+    }
+    return list;
   };
 
   const urlSearch = searchParams.get('search');
@@ -35,7 +47,12 @@ export default function CatalogPage() {
   // State
   const [products, setProducts] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(() => {
+    if (isCannabisPage) return CANNABIS_CATEGORIES;
+    if (isNicotinePage) return NICOTINE_CATEGORIES;
+    return [];
+  });
+  const [showAllCategories, setShowAllCategories] = useState(true);
   const [selectedCategories, setSelectedCategories] = useState(parseCategoriesFromUrl);
   const [categoryFilterQuery, setCategoryFilterQuery] = useState('');
   const [searchQuery, setSearchQuery] = useState(urlSearch || '');
@@ -63,6 +80,14 @@ export default function CatalogPage() {
   useEffect(() => {
     let isMounted = true;
     async function loadCategories() {
+      if (isCannabisPage) {
+        if (isMounted) setCategories(CANNABIS_CATEGORIES);
+        return;
+      }
+      if (isNicotinePage) {
+        if (isMounted) setCategories(NICOTINE_CATEGORIES);
+        return;
+      }
       try {
         const fetchedCategories = await getCategoriesApi({ hasImage: true });
         if (isMounted && fetchedCategories && fetchedCategories.length > 0) {
@@ -74,7 +99,7 @@ export default function CatalogPage() {
     }
     loadCategories();
     return () => { isMounted = false; };
-  }, []);
+  }, [isCannabisPage, isNicotinePage]);
 
   // Fetch products whenever filters or pagination change
   useEffect(() => {
@@ -85,8 +110,15 @@ export default function CatalogPage() {
       setError(null);
 
       try {
+        let queryCategories = selectedCategories;
+        if (isCannabisPage) {
+          queryCategories = selectedCategories.length > 0 ? selectedCategories : CANNABIS_CATEGORIES;
+        } else if (isNicotinePage) {
+          queryCategories = selectedCategories.length > 0 ? selectedCategories : NICOTINE_CATEGORIES;
+        }
+
         const data = await getProductsApi({
-          category: selectedCategories,
+          category: queryCategories,
           search: debouncedSearch,
           page,
           limit,
@@ -111,7 +143,7 @@ export default function CatalogPage() {
 
     loadProducts();
     return () => { isMounted = false; };
-  }, [selectedCategories, debouncedSearch, page, limit, sortBy, sortOrder]);
+  }, [selectedCategories, debouncedSearch, page, limit, sortBy, sortOrder, isCannabisPage, isNicotinePage]);
 
   // Sync category from URL param if changed externally or on back/forward
   useEffect(() => {
@@ -220,6 +252,9 @@ export default function CatalogPage() {
   const displayedCategories = categories.filter((cat) =>
     cat.toLowerCase().includes(categoryFilterQuery.toLowerCase().trim())
   );
+  const visibleCategories = showAllCategories
+    ? displayedCategories
+    : displayedCategories.slice(0, 10);
 
   // Pagination calculation
   const totalPages = Math.ceil(totalCount / limit) || 1;
@@ -254,13 +289,23 @@ export default function CatalogPage() {
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#8EF705]/15 border border-[#8EF705]/40 text-[#488203] text-[11px] font-bold tracking-wider uppercase mb-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#599e03] animate-pulse" />
-              <span>Live Catalogue</span>
+              <span>
+                {isCannabisPage
+                  ? 'Cannabis Collection • 19+ Only'
+                  : isNicotinePage
+                  ? 'Nicotine Collection • 19+ Only'
+                  : 'Live Catalogue'}
+              </span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-black font-heading tracking-tight text-slate-900 uppercase">
-              Explore Our Collection
+              {isCannabisPage ? 'Cannabis Products' : isNicotinePage ? 'Nicotine Products' : 'Explore Our Collection'}
             </h1>
             <p className="text-slate-500 text-xs sm:text-sm mt-1 max-w-xl">
-              Verified inventory with real-time stock levels and certified high-resolution product photography.
+              {isCannabisPage
+                ? 'Regulated Manitoba cannabis products with verified THC/CBD potency, certified photography, and compliant batch tracing.'
+                : isNicotinePage
+                ? 'Regulated adult nicotine vapes, closed pods, and premium e-juices with compliant stock tracking.'
+                : 'Verified inventory with real-time stock levels and certified high-resolution product photography.'}
             </p>
           </div>
 
@@ -269,7 +314,7 @@ export default function CatalogPage() {
             <div className="inline-flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span>
-                <strong className="text-slate-900 font-bold">{totalCount.toLocaleString()}</strong> Products with Photos
+                <strong className="text-slate-900 font-bold">{totalCount.toLocaleString()}</strong> {isCannabisPage ? 'Cannabis Products' : isNicotinePage ? 'Nicotine Products' : 'Products'} Available
               </span>
             </div>
           </div>
@@ -389,8 +434,8 @@ export default function CatalogPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                      Categories
+                    <label className="block text-[12px] font-extrabold uppercase tracking-wider text-[#488203]">
+                      CATEGORY
                     </label>
                     {selectedCategories.length > 0 && (
                       <span className="px-1.5 py-0.2 rounded-full bg-[#8EF705] text-black text-[10px] font-black">
@@ -421,7 +466,7 @@ export default function CatalogPage() {
                   </div>
                 )}
 
-                <div className="max-h-[380px] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                <div className="max-h-[460px] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                   {/* All Categories Option */}
                   <button
                     type="button"
@@ -432,14 +477,14 @@ export default function CatalogPage() {
                         : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <span>All Categories</span>
+                    <span>{isCannabisPage ? 'All Cannabis Categories' : isNicotinePage ? 'All Nicotine Categories' : 'All Categories'}</span>
                     {selectedCategories.length === 0 && (
                       <span className="w-2 h-2 rounded-full bg-black shrink-0" />
                     )}
                   </button>
 
                   {/* Individual Category Checkbox Rows */}
-                  {displayedCategories.map((cat) => {
+                  {visibleCategories.map((cat) => {
                     const isSelected = selectedCategories.includes(cat);
                     return (
                       <button
@@ -468,6 +513,17 @@ export default function CatalogPage() {
                       </button>
                     );
                   })}
+
+                  {/* Show More / Show Less Toggle (Matches user's screenshot) */}
+                  {categories.length > 10 && !categoryFilterQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllCategories((prev) => !prev)}
+                      className="w-full text-left pt-2 pb-1 px-3 text-xs font-black uppercase tracking-wider text-[#488203] hover:text-[#376402] transition-colors cursor-pointer"
+                    >
+                      {showAllCategories ? 'SHOW LESS' : `SHOW MORE (${categories.length - 10})`}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -764,13 +820,13 @@ export default function CatalogPage() {
                     : 'border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                <span>All Categories</span>
+                <span>{isCannabisPage ? 'All Cannabis Categories' : isNicotinePage ? 'All Nicotine Categories' : 'All Categories'}</span>
                 {selectedCategories.length === 0 && <span className="w-2 h-2 rounded-full bg-black" />}
               </button>
 
               {/* Individual Categories Checkboxes */}
               <div className="space-y-1.5 max-h-[50vh] overflow-y-auto pr-1">
-                {categories.map((cat) => {
+                {visibleCategories.map((cat) => {
                   const isSelected = selectedCategories.includes(cat);
                   return (
                     <button
@@ -798,6 +854,17 @@ export default function CatalogPage() {
                     </button>
                   );
                 })}
+
+                {/* Show More / Show Less Toggle (Mobile) */}
+                {categories.length > 10 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllCategories((prev) => !prev)}
+                    className="w-full text-left pt-2 pb-1 px-3 text-xs font-black uppercase tracking-wider text-[#488203] hover:text-[#376402] transition-colors cursor-pointer"
+                  >
+                    {showAllCategories ? 'SHOW LESS' : `SHOW MORE (${categories.length - 10})`}
+                  </button>
+                )}
               </div>
             </div>
 
