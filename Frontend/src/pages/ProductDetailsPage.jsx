@@ -533,12 +533,7 @@ export default function ProductDetailsPage() {
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 text-xs">
-            {/* SKU */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">SKU Number</span>
-              <span className="font-mono font-bold text-slate-800 text-sm">{productSku || 'N/A'}</span>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 text-xs">
 
             {/* Barcode */}
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
