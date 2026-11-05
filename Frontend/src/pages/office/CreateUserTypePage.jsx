@@ -37,6 +37,12 @@ const MASTERS_CONFIG = [
     desc: 'Audit trail and system logs inspection',
     allowedPerms: ['can_read']
   },
+  {
+    key: 'form_submissions_master',
+    label: 'Form Submissions',
+    desc: 'Customer contact inquiries & newsletter subscriptions',
+    allowedPerms: ['can_read', 'can_update', 'can_delete']
+  },
 ];
 
 const PERMS = ['can_read', 'can_write', 'can_update', 'can_delete'];

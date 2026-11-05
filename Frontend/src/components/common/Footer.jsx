@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { STORE_INFO } from '../../data/products';
 import { MapPin, Phone, Mail, Clock, ShieldAlert, Award, ArrowUpRight } from 'lucide-react';
-import logoImg from '../../assets/image.webp';
+import logoImg from '../../assets/logo.png';
 import jwLogo from '../../assets/jwLogo.jpeg';
 import AppDownloadBadge from './AppDownloadBadge';
 
@@ -13,9 +13,9 @@ export default function Footer() {
   return (
     <footer className="relative bg-white border-t border-slate-200 text-slate-600 overflow-hidden pt-16 pb-12 shadow-xs">
       {/* Ambient subtle background glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-gradient-to-b from-[#8EF705]/20 to-transparent blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-gradient-to-b from-[#0166dc]/15 to-transparent blur-3xl pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-14 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-16">
           {/* Col 1: Brand & Philosophy */}
           <div className="space-y-4">
@@ -24,7 +24,7 @@ export default function Footer() {
                 <img
                   src={logoImg}
                   alt="PHARSYDE"
-                  className="h-9 w-auto object-contain cursor-pointer hover:opacity-90 transition-all drop-shadow-[0_2px_8px_rgba(142,247,5,0.4)]"
+                  className="h-9 w-auto object-contain cursor-pointer hover:opacity-90 transition-all drop-shadow-[0_2px_8px_rgba(1,102,220,0.35)]"
                 />
               </Link>
             </div>
@@ -54,7 +54,7 @@ export default function Footer() {
               <li>
                 <Link
                   to="/cannabis"
-                  className="hover:text-[#599e03] transition-colors flex items-center gap-1 group text-slate-600"
+                  className="hover:text-[#0166dc] transition-colors flex items-center gap-1 group text-slate-600"
                 >
                   <span>Cannabis Collection</span>
                   <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -63,7 +63,7 @@ export default function Footer() {
               <li>
                 <Link
                   to="/nicotine"
-                  className="hover:text-[#599e03] transition-colors flex items-center gap-1 group text-slate-600"
+                  className="hover:text-[#0166dc] transition-colors flex items-center gap-1 group text-slate-600"
                 >
                   <span>Nicotine Collection</span>
                   <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -144,7 +144,7 @@ export default function Footer() {
             </h4>
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 text-[#599e03] shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-[#0166dc] shrink-0 mt-0.5" />
                 <span>{STORE_INFO.address}</span>
               </div>
               <div className="flex items-center gap-3">
@@ -154,7 +154,7 @@ export default function Footer() {
                 </a>
               </div>
               <div className="flex items-center gap-3">
-                <Mail className="w-4 h-4 text-[#599e03] shrink-0" />
+                <Mail className="w-4 h-4 text-[#0166dc] shrink-0" />
                 <a href={`mailto:${STORE_INFO.email}`} className="hover:text-slate-900 transition-colors">
                   {STORE_INFO.email}
                 </a>

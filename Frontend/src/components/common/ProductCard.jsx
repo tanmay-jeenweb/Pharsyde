@@ -94,10 +94,10 @@ export default function ProductCard({ product }) {
           ? `perspective(1000px) rotateX(${mousePos.y}deg) rotateY(${mousePos.x}deg) translateY(-5px)`
           : 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)'
       }}
-      className="group relative cursor-pointer rounded-2xl bg-white border border-slate-200/90 hover:border-[#8EF705] transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-xs hover:shadow-xl hover:shadow-[#8EF705]/15"
+      className="group relative cursor-pointer rounded-2xl bg-white border border-slate-200/90 hover:border-[#0166dc] transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-xs hover:shadow-xl hover:shadow-[#0166dc]/15"
     >
       {/* Top subtle neon highlight line */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#8EF705] to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#0166dc] to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10" />
 
       {/* Product Image Area */}
       <div className="relative w-full aspect-square overflow-hidden bg-slate-50 border-b border-slate-100 flex items-center justify-center p-3">
@@ -145,7 +145,7 @@ export default function ProductCard({ product }) {
               e.stopPropagation();
               handleCardClick();
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/95 text-slate-900 text-xs font-bold tracking-wider uppercase border border-slate-200 hover:bg-[#8EF705] hover:text-black hover:border-[#8EF705] transition-all transform translate-y-2 group-hover:translate-y-0 shadow-lg"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/95 text-slate-900 text-xs font-bold tracking-wider uppercase border border-slate-200 hover:bg-[#0166dc] hover:text-white hover:border-[#0166dc] transition-all transform translate-y-2 group-hover:translate-y-0 shadow-lg"
           >
             <Eye className="w-3.5 h-3.5" />
             <span>View Full Details</span>
@@ -158,7 +158,7 @@ export default function ProductCard({ product }) {
         <div>
           {/* Brand & Weight */}
           <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5 font-medium">
-            <span className="uppercase tracking-wider text-[11px] text-[#529402] font-black truncate max-w-[150px]">
+            <span className="uppercase tracking-wider text-[11px] text-[#0166dc] font-black truncate max-w-[150px]">
               {productBrand}
             </span>
             {productWeight && (
@@ -169,7 +169,7 @@ export default function ProductCard({ product }) {
           {/* Product Title */}
           <h3
             title={productName}
-            className="font-heading text-sm sm:text-base font-bold text-slate-900 group-hover:text-[#529402] transition-colors line-clamp-2 min-h-[2.5rem] mb-2 leading-snug"
+            className="font-heading text-sm sm:text-base font-bold text-slate-900 group-hover:text-[#0166dc] transition-colors line-clamp-2 min-h-[2.5rem] mb-2 leading-snug"
           >
             {productName}
           </h3>
@@ -210,14 +210,14 @@ export default function ProductCard({ product }) {
                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
                 : addedAnim
                 ? 'bg-slate-900 text-white'
-                : 'bg-[#8EF705] text-black hover:bg-[#80de04] hover:shadow-md hover:shadow-[#8EF705]/30'
+                : 'bg-[#0166dc] text-white hover:bg-[#0153b3] hover:shadow-md hover:shadow-[#0166dc]/30'
             }`}
           >
             {isOutOfStock ? (
               <span>Out of Stock</span>
             ) : addedAnim ? (
               <>
-                <Check className="w-3.5 h-3.5 text-[#8EF705]" />
+                <Check className="w-3.5 h-3.5 text-[#0166dc]" />
                 <span>Added</span>
               </>
             ) : (

@@ -40,15 +40,15 @@ export default function AgeGateModal() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
       <div className="relative w-full max-w-lg p-8 rounded-3xl bg-white border border-slate-200 shadow-2xl text-center overflow-hidden">
-        {/* Ambient Top Glow in #8EF705 */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-32 bg-gradient-to-b from-[#8EF705]/25 to-transparent blur-2xl pointer-events-none" />
+        {/* Ambient Top Glow in #0166dc */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-32 bg-gradient-to-b from-[#0166dc]/25 to-transparent blur-2xl pointer-events-none" />
 
         {/* Icon & Brand */}
-        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-[#8EF705]/25 border border-[#8EF705]/50 flex items-center justify-center text-slate-900 shadow-sm">
+        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-[#0166dc]/25 border border-[#0166dc]/50 flex items-center justify-center text-slate-900 shadow-sm">
           <ShieldCheck className="w-8 h-8 text-slate-900" />
         </div>
 
-        <span className="text-[11px] font-bold tracking-[0.25em] text-[#529402] uppercase block mb-2">
+        <span className="text-[11px] font-bold tracking-[0.25em] text-[#0166dc] uppercase block mb-2">
           AGE VERIFICATION REQUIRED
         </span>
 
@@ -70,7 +70,7 @@ export default function AgeGateModal() {
             <select
               value={province}
               onChange={(e) => setProvince(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
             >
               <option value="MB">Manitoba (19+)</option>
               <option value="ON">Ontario (19+)</option>
@@ -90,7 +90,7 @@ export default function AgeGateModal() {
               placeholder="e.g. 1995"
               value={birthYear}
               onChange={(e) => setBirthYear(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0166dc] focus:bg-white"
             />
           </div>
         </div>
@@ -112,7 +112,7 @@ export default function AgeGateModal() {
           </button>
           <button
             onClick={handleVerify}
-            className="flex-1 py-3 px-4 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-extrabold text-xs uppercase tracking-widest transition-all shadow-md shadow-[#8EF705]/25 flex items-center justify-center gap-2"
+            className="flex-1 py-3 px-4 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white font-extrabold text-xs uppercase tracking-widest transition-all shadow-md shadow-[#0166dc]/25 flex items-center justify-center gap-2"
           >
             <Lock className="w-4 h-4" />
             <span>Enter Pharsyde</span>

@@ -15,6 +15,7 @@ const {
   syncImages,
   syncAllTechPOS,
 } = require('../controllers/productController');
+const { getPublicHomeSections } = require('../controllers/homeSectionController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
@@ -34,6 +35,7 @@ router.get('/sync-all', syncAllTechPOS);
 router.get('/', getProducts);
 router.get('/new-arrivals', getNewArrivals);
 router.get('/best-sellers', getBestSellers);
+router.get('/home-sections', getPublicHomeSections);
 router.get('/:id', getProductById);
 
 // Admin-protected routes

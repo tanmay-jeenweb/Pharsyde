@@ -434,3 +434,134 @@ export async function updateAppVersionSettingsApi(payload) {
   return handleResponse(res);
 }
 
+// ─────────────────────────────────────────────────────────────
+// Home Page Section Master
+// ─────────────────────────────────────────────────────────────
+
+export async function getOfficeHomeSectionsApi() {
+  const res = await fetch(`${API_BASE}/home-sections`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function createOfficeHomeSectionApi(payload) {
+  const res = await fetch(`${API_BASE}/home-sections`, {
+    method: 'POST',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+}
+
+export async function updateOfficeHomeSectionApi(id, payload) {
+  const res = await fetch(`${API_BASE}/home-sections/${id}`, {
+    method: 'PUT',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+}
+
+export async function toggleOfficeHomeSectionActiveApi(id) {
+  const res = await fetch(`${API_BASE}/home-sections/${id}/toggle-active`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function deleteOfficeHomeSectionApi(id) {
+  const res = await fetch(`${API_BASE}/home-sections/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function reorderOfficeHomeSectionsApi(orderList) {
+  const res = await fetch(`${API_BASE}/home-sections/reorder`, {
+    method: 'PUT',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify({ orderList }),
+  });
+  return handleResponse(res);
+}
+
+
+
+
+// =========================================================================
+// Form Submissions (Contact Inquiries & Newsletter Subscriptions)
+// =========================================================================
+
+export async function getOfficeContactInquiriesApi(params = {}) {
+  const query = new URLSearchParams();
+  if (params.search) query.append('search', params.search);
+  if (params.status && params.status !== 'all') query.append('status', params.status);
+  if (params.page) query.append('page', params.page);
+  if (params.limit) query.append('limit', params.limit);
+  if (params.sortBy) query.append('sortBy', params.sortBy);
+  if (params.sortOrder) query.append('sortOrder', params.sortOrder);
+
+  const qs = query.toString();
+  const url = `${API_BASE}/contact-inquiries${qs ? '?' + qs : ''}`;
+  const res = await fetch(url, { headers: getHeaders() });
+  return handleResponse(res);
+}
+
+export async function getOfficeContactInquiryByIdApi(id) {
+  const res = await fetch(`${API_BASE}/contact-inquiries/${id}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function updateOfficeContactInquiryStatusApi(id, { status, adminNotes }) {
+  const res = await fetch(`${API_BASE}/contact-inquiries/${id}/status`, {
+    method: 'PATCH',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify({ status, adminNotes }),
+  });
+  return handleResponse(res);
+}
+
+export async function deleteOfficeContactInquiryApi(id) {
+  const res = await fetch(`${API_BASE}/contact-inquiries/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function getOfficeNewsletterSubscribersApi(params = {}) {
+  const query = new URLSearchParams();
+  if (params.search) query.append('search', params.search);
+  if (params.status && params.status !== 'all') query.append('status', params.status);
+  if (params.page) query.append('page', params.page);
+  if (params.limit) query.append('limit', params.limit);
+  if (params.sortBy) query.append('sortBy', params.sortBy);
+  if (params.sortOrder) query.append('sortOrder', params.sortOrder);
+
+  const qs = query.toString();
+  const url = `${API_BASE}/newsletter-subscriptions${qs ? '?' + qs : ''}`;
+  const res = await fetch(url, { headers: getHeaders() });
+  return handleResponse(res);
+}
+
+export async function toggleOfficeNewsletterStatusApi(id, status) {
+  const res = await fetch(`${API_BASE}/newsletter-subscriptions/${id}/status`, {
+    method: 'PATCH',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify({ status }),
+  });
+  return handleResponse(res);
+}
+
+export async function deleteOfficeNewsletterSubscriberApi(id) {
+  const res = await fetch(`${API_BASE}/newsletter-subscriptions/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}

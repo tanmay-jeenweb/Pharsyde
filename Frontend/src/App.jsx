@@ -39,10 +39,12 @@ import ProductImageMaster from './pages/office/ProductImageMaster';
 import ActivityReport from './pages/office/ActivityReport';
 import OrderMaster from './pages/office/OrderMaster';
 import SettingMaster from './pages/office/SettingMaster';
+import HomeSectionMaster from './pages/office/HomeSectionMaster';
+import FormSubmissionMaster from './pages/office/FormSubmissionMaster';
 
 function MainStoreApp() {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans selection:bg-[#8EF705] selection:text-black">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex flex-col font-sans selection:bg-[#0166dc] selection:text-white">
       {/* Scroll to top automatically on route changes */}
       <ScrollToTop />
 
@@ -255,6 +257,32 @@ export default function App() {
             </OfficeProtectedRoute>
           }
         />
+        <Route
+          path="/office/home-section-master"
+          element={
+            <OfficeProtectedRoute>
+              <HomeSectionMaster />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route
+          path="/office/section-master"
+          element={
+            <OfficeProtectedRoute>
+              <HomeSectionMaster />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route
+          path="/office/form-submissions"
+          element={
+            <OfficeProtectedRoute>
+              <FormSubmissionMaster />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route path="/office/inquiries" element={<Navigate to="/office/form-submissions" replace />} />
+        <Route path="/office/newsletter" element={<Navigate to="/office/form-submissions" replace />} />
         <Route path="/office" element={<Navigate to="/office/dashboard" replace />} />
         <Route path="/office/*" element={<Navigate to="/office/dashboard" replace />} />
 

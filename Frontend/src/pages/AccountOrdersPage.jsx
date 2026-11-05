@@ -66,13 +66,13 @@ export default function AccountOrdersPage() {
 
   return (
     <div className="min-h-screen pt-28 pb-24 bg-[#F8FAFC]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 space-y-8">
         {/* Header Banner */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-200">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#8EF705] animate-pulse" />
-              <span className="text-xs font-mono font-bold uppercase tracking-widest text-[#488203]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#0166dc] animate-pulse" />
+              <span className="text-xs font-mono font-bold uppercase tracking-widest text-[#0166dc]">
                 Customer Account & Orders
               </span>
             </div>
@@ -87,7 +87,7 @@ export default function AccountOrdersPage() {
                 <button
                   onClick={() => fetchOrders()}
                   disabled={loading}
-                  className="px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-[#8EF705] text-xs font-semibold text-slate-700 flex items-center gap-2 shadow-xs transition-all cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:border-[#0166dc] text-xs font-semibold text-slate-700 flex items-center gap-2 shadow-xs transition-all cursor-pointer"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
                   <span>Refresh</span>
@@ -103,7 +103,7 @@ export default function AccountOrdersPage() {
             ) : (
               <button
                 onClick={() => openAuthModal('login')}
-                className="px-6 py-2.5 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#8EF705]/20 flex items-center gap-2 cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white text-xs font-heading font-black uppercase tracking-wider transition-all shadow-md shadow-[#0166dc]/20 flex items-center gap-2 cursor-pointer"
               >
                 <User className="w-3.5 h-3.5" />
                 <span>Sign In / Register</span>
@@ -115,27 +115,27 @@ export default function AccountOrdersPage() {
         {/* Protected User Route: Strictly require customer sign-in (Matches Zip Implementation) */}
         {!isCustomerLoggedIn ? (
           <div className="max-w-xl mx-auto my-12 p-8 sm:p-12 rounded-3xl bg-white border border-slate-200 shadow-xl text-center space-y-6">
-            <div className="w-20 h-20 rounded-3xl bg-[#8EF705]/15 border border-[#8EF705]/40 mx-auto flex items-center justify-center text-[#488203] shadow-inner">
-              <Lock className="w-10 h-10 text-[#488203]" />
+            <div className="w-20 h-20 rounded-3xl bg-[#0166dc]/15 border border-[#0166dc]/40 mx-auto flex items-center justify-center text-[#0166dc] shadow-inner">
+              <Lock className="w-10 h-10 text-[#0166dc]" />
             </div>
 
             <div className="space-y-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#488203]" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#0166dc]" />
                 Customer Account Required
               </span>
               <h2 className="font-heading text-2xl sm:text-3xl font-black text-slate-900 tracking-tight uppercase">
                 Sign In to View Orders
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-500  leading-relaxed">
                 Please sign in with your Pharsyde customer account to access your orders, track live fulfillment, and view itemized receipts.
               </p>
             </div>
 
-            <div className="space-y-3 pt-2 max-w-sm mx-auto">
+            <div className="space-y-3 pt-2 ">
               <button
                 onClick={() => openAuthModal('login')}
-                className="w-full py-3.5 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-heading font-black text-xs uppercase tracking-wider shadow-md shadow-[#8EF705]/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white font-heading font-black text-xs uppercase tracking-wider shadow-md shadow-[#0166dc]/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <User className="w-4 h-4" />
                 <span>Sign In to Your Account</span>
@@ -152,7 +152,7 @@ export default function AccountOrdersPage() {
             <div className="pt-4 border-t border-slate-100 flex items-center justify-center">
               <button
                 onClick={() => navigateTo('catalog')}
-                className="text-xs font-bold text-[#488203] hover:text-[#386502] flex items-center gap-1.5 cursor-pointer"
+                className="text-xs font-bold text-[#0166dc] hover:text-[#386502] flex items-center gap-1.5 cursor-pointer"
               >
                 <span>Browse Products Catalogue</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -198,7 +198,7 @@ export default function AccountOrdersPage() {
                 </div>
                 <div className="pl-4 border-l border-amber-200/60">
                   <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Discount Value</span>
-                  <span className="font-mono text-xl font-black text-[#488203]">
+                  <span className="font-mono text-xl font-black text-[#0166dc]">
                     ${((Number(customerUser?.reward_points) || 0) * 0.001).toFixed(2)} CAD
                   </span>
                   <span className="text-[9px] text-slate-400 block font-mono">1,000 pts = $1 CAD</span>
@@ -222,8 +222,8 @@ export default function AccountOrdersPage() {
               </div>
               <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Compliance Status</span>
-                <span className="inline-flex items-center gap-1 text-xs font-bold text-[#488203]">
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#488203]" /> 19+ Verified
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-[#0166dc]">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#0166dc]" /> 19+ Verified
                 </span>
               </div>
             </div>
@@ -265,7 +265,7 @@ export default function AccountOrdersPage() {
 
               <button
                 onClick={() => navigateTo('catalog')}
-                className="text-xs text-[#488203] hover:text-[#386502] font-bold flex items-center gap-1 cursor-pointer"
+                className="text-xs text-[#0166dc] hover:text-[#386502] font-bold flex items-center gap-1 cursor-pointer"
               >
                 <span>Explore Catalog & Order More</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -275,7 +275,7 @@ export default function AccountOrdersPage() {
             {/* Orders List Display */}
             {loading ? (
               <div className="p-16 rounded-3xl bg-white border border-slate-200 text-center space-y-3">
-                <RefreshCw className="w-8 h-8 text-[#488203] animate-spin mx-auto" />
+                <RefreshCw className="w-8 h-8 text-[#0166dc] animate-spin mx-auto" />
                 <p className="text-xs text-slate-500 font-semibold">Loading orders from registry...</p>
               </div>
             ) : filteredOrders.length === 0 ? (
@@ -285,13 +285,13 @@ export default function AccountOrdersPage() {
                 </div>
                 <div>
                   <h3 className="font-heading text-lg font-bold text-slate-900 uppercase">No Recent Orders Found</h3>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                  <p className="text-xs text-slate-500  mt-1">
                     You haven't placed any orders yet. Discover our curated collection of craft cannabis.
                   </p>
                 </div>
                 <button
                   onClick={() => navigateTo('catalog')}
-                  className="px-6 py-2.5 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer"
+                  className="px-6 py-2.5 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white text-xs font-bold uppercase tracking-wider shadow-sm cursor-pointer"
                 >
                   Browse Catalogue
                 </button>
@@ -306,7 +306,7 @@ export default function AccountOrdersPage() {
                   return (
                     <div
                       key={order.id || order.order_number}
-                      className="rounded-3xl bg-white border border-slate-200 shadow-xs hover:border-[#8EF705]/60 transition-all overflow-hidden"
+                      className="rounded-3xl bg-white border border-slate-200 shadow-xs hover:border-[#0166dc]/60 transition-all overflow-hidden"
                     >
                       {/* Order Overview Header */}
                       <div
@@ -317,7 +317,7 @@ export default function AccountOrdersPage() {
                           <div
                             className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
                               isPickup
-                                ? 'bg-[#8EF705]/15 border-[#8EF705]/40 text-[#488203]'
+                                ? 'bg-[#0166dc]/15 border-[#0166dc]/40 text-[#0166dc]'
                                 : 'bg-orange-50 border-orange-200 text-orange-600'
                             }`}
                           >
@@ -365,7 +365,7 @@ export default function AccountOrdersPage() {
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
                               order.order_status?.toLowerCase() === 'confirmed' || order.order_status?.toLowerCase() === 'delivered'
-                                ? 'bg-[#8EF705]/20 text-[#386502] border-[#8EF705]/50'
+                                ? 'bg-[#0166dc]/20 text-[#386502] border-[#0166dc]/50'
                                 : 'bg-slate-100 text-slate-700 border-slate-200'
                             }`}
                           >
@@ -392,7 +392,7 @@ export default function AccountOrdersPage() {
                         <div className="border-t border-slate-100 bg-slate-50/60 p-6 space-y-6">
                           {/* Compliance notice */}
                           <div className="flex items-center gap-2 p-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-600">
-                            <ShieldCheck className="w-4 h-4 text-[#488203] shrink-0" />
+                            <ShieldCheck className="w-4 h-4 text-[#0166dc] shrink-0" />
                             <span>
                               Manitoba Cannabis Compliance verified • Photo ID must be presented upon collection.
                             </span>
@@ -455,7 +455,7 @@ export default function AccountOrdersPage() {
                             </div>
                             <div className="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200">
                               <span>Total Paid</span>
-                              <span className="font-mono text-[#488203] font-black">
+                              <span className="font-mono text-[#0166dc] font-black">
                                 ${Number(order.total).toFixed(2)} CAD
                               </span>
                             </div>

@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, ArrowRight, Sparkles, AlertCircle } from 'lu
 
 export default function ProductCarousel({
   badge,
-  badgeColor = 'text-[#529402] bg-[#8EF705]/15 border-[#8EF705]/40',
+  badgeColor = 'text-[#0166dc] bg-[#0166dc]/15 border-[#0166dc]/40',
   title,
   subtitle,
   products = [],
@@ -55,7 +55,7 @@ export default function ProductCarousel({
             {title}
           </h2>
           {subtitle && (
-            <p className="text-xs sm:text-sm text-slate-600 mt-1.5 max-w-xl">
+            <p className="text-xs sm:text-sm text-slate-600 mt-1.5">
               {subtitle}
             </p>
           )}
@@ -71,7 +71,7 @@ export default function ProductCarousel({
               aria-label="Scroll left"
               className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${
                 canScrollLeft
-                  ? 'bg-white border-slate-300 text-slate-800 hover:bg-[#8EF705] hover:border-[#8EF705] hover:text-black shadow-xs cursor-pointer active:scale-95'
+                  ? 'bg-white border-slate-300 text-slate-800 hover:bg-[#0166dc] hover:border-[#0166dc] hover:text-black shadow-xs cursor-pointer active:scale-95'
                   : 'bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed opacity-40'
               }`}
             >
@@ -83,7 +83,7 @@ export default function ProductCarousel({
               aria-label="Scroll right"
               className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${
                 canScrollRight
-                  ? 'bg-white border-slate-300 text-slate-800 hover:bg-[#8EF705] hover:border-[#8EF705] hover:text-black shadow-xs cursor-pointer active:scale-95'
+                  ? 'bg-white border-slate-300 text-slate-800 hover:bg-[#0166dc] hover:border-[#0166dc] hover:text-black shadow-xs cursor-pointer active:scale-95'
                   : 'bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed opacity-40'
               }`}
             >
@@ -94,7 +94,7 @@ export default function ProductCarousel({
           {onViewAll && (
             <button
               onClick={onViewAll}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-[#8EF705] text-slate-900 hover:text-black border border-slate-200 hover:border-[#8EF705] text-xs font-heading font-extrabold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-[#0166dc] text-slate-900 hover:text-black border border-slate-200 hover:border-[#0166dc] text-xs font-heading font-extrabold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
             >
               <span>{viewAllText}</span>
               <ArrowRight className="w-3.5 h-3.5" />

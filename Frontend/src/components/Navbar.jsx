@@ -1,6 +1,7 @@
+
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import logoImage from "../assets/image.webp";
+import logoImage from "../assets/logo.png";
 
 export default function Navbar({ title = "ERP Admin" }) {
     const navigate = useNavigate();
@@ -119,6 +120,24 @@ export default function Navbar({ title = "ERP Admin" }) {
             color: "bg-indigo-50 text-indigo-700 border border-indigo-100/50",
             activeColor: "bg-indigo-100 text-indigo-800",
             desc: "Storefront product limits, defaults & ERP configuration"
+        },
+        {
+            name: "Home Section Master",
+            path: "/office/home-section-master",
+            masterKey: "home_section_master",
+            icon: "fa-solid fa-layer-group",
+            color: "bg-amber-50 text-amber-700 border border-amber-100/50",
+            activeColor: "bg-amber-100 text-amber-800",
+            desc: "Dynamically create, reorder & curate product showcase sections on Home page"
+        },
+        {
+            name: "Form Submissions",
+            path: "/office/form-submissions",
+            masterKey: "form_submissions_master",
+            icon: "fa-solid fa-envelope-open-text",
+            color: "bg-blue-50 text-blue-700 border border-blue-100/50",
+            activeColor: "bg-blue-100 text-blue-800",
+            desc: "Storefront contact inquiries & newsletter subscriptions"
         }
     ];
 
@@ -319,7 +338,7 @@ export default function Navbar({ title = "ERP Admin" }) {
                         <button
                             onClick={toggleMasters}
                             className={`w-36 sm:w-44 md:w-48 flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm border-r border-white/10 hover:bg-white/10 focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer whitespace-nowrap ${
-                                isOpen || ["/office/user-master", "/office/user-type-master", "/office/product-master", "/office/product-image-master"].includes(location.pathname)
+                                isOpen || ["/office/user-master", "/office/user-type-master", "/office/product-master", "/office/product-image-master", "/office/setting-master", "/office/home-section-master", "/office/form-submissions"].includes(location.pathname)
                                     ? "bg-white/20 shadow-inner"
                                     : "bg-transparent"
                             }`}

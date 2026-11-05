@@ -217,7 +217,7 @@ export default function OrderMaster() {
             Storefront Sales Orders
           </span>
           <div className="text-2xl font-black text-slate-900">{storeOrders.length}</div>
-          <span className="text-xs text-[#488203] font-semibold mt-1 block">Live Website Orders</span>
+          <span className="text-xs text-[#0166dc] font-semibold mt-1 block">Live Website Orders</span>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
@@ -308,7 +308,7 @@ export default function OrderMaster() {
               placeholder={activeTab === 'store' ? 'Search by Order #, Name...' : activeTab === 'techpos_po' ? 'Search PO #, Vendor...' : 'Search POS Ticket #, Payment...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#8EF705]"
+              className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0166dc]"
             />
           </div>
         </div>
@@ -334,7 +334,7 @@ export default function OrderMaster() {
                 {loading ? (
                   <tr>
                     <td colSpan={9} className="p-12 text-center text-slate-400">
-                      <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#488203]" />
+                      <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0166dc]" />
                       Loading store orders...
                     </td>
                   </tr>
@@ -542,7 +542,7 @@ export default function OrderMaster() {
                     }}
                     className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-colors cursor-pointer ${
                       liveDatePreset === dp.id
-                        ? 'bg-[#488203] text-white shadow-xs'
+                        ? 'bg-[#0166dc] text-white shadow-xs'
                         : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
                     }`}
                   >
@@ -600,7 +600,7 @@ export default function OrderMaster() {
                   {loading || liveLoading ? (
                     <tr>
                       <td colSpan={9} className="p-12 text-center text-slate-400">
-                        <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#488203]" />
+                        <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0166dc]" />
                         Loading live POS register orders...
                       </td>
                     </tr>
@@ -779,7 +779,7 @@ export default function OrderMaster() {
                     </span>
                     {liveItemsLoading ? (
                       <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-slate-200">
-                        <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-[#488203]" />
+                        <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-[#0166dc]" />
                         Fetching line items from TechPOS register records...
                       </div>
                     ) : liveOrderItems.length > 0 ? (
@@ -809,7 +809,7 @@ export default function OrderMaster() {
 
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex justify-between items-center text-xs">
                     <span className="font-bold text-slate-700">Total Tendered:</span>
-                    <strong className="text-base font-mono font-black text-[#488203]">
+                    <strong className="text-base font-mono font-black text-[#0166dc]">
                       ${Number(selectedOrder.totalPaidAmount || 0).toFixed(2)} CAD
                     </strong>
                   </div>
@@ -932,7 +932,7 @@ export default function OrderMaster() {
                     </div>
                     <div className="flex justify-between font-bold text-slate-900 pt-1 border-t border-slate-200">
                       <span>Total</span>
-                      <span className="font-mono text-[#488203]">${Number(selectedOrder.total).toFixed(2)} CAD</span>
+                      <span className="font-mono text-[#0166dc]">${Number(selectedOrder.total).toFixed(2)} CAD</span>
                     </div>
                   </div>
                 </>

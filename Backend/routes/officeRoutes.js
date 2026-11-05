@@ -35,6 +35,23 @@ const {
   getOfficeSettingByKey,
   updateOfficeSetting,
 } = require('../controllers/settingController');
+const {
+  getAdminSections,
+  createSection,
+  updateSection,
+  toggleSectionActive,
+  deleteSection,
+  reorderSections,
+} = require('../controllers/homeSectionController');
+const {
+  getOfficeContactInquiries,
+  getOfficeContactInquiryById,
+  updateOfficeContactInquiryStatus,
+  deleteOfficeContactInquiry,
+  getOfficeNewsletterSubscribers,
+  updateOfficeNewsletterStatus,
+  deleteOfficeNewsletterSubscriber,
+} = require('../controllers/formController');
 const { verifyToken } = require('../utils/jwt');
 const pool = require('../config/db');
 
@@ -112,5 +129,24 @@ router.get('/pos-order-items/:orderId', getTechPosOrderItems);
 router.get('/settings', getOfficeSettings);
 router.get('/settings/:key', getOfficeSettingByKey);
 router.put('/settings/:key', updateOfficeSetting);
+
+// 10. Home Page Section Master
+router.get('/home-sections', getAdminSections);
+router.post('/home-sections', createSection);
+router.put('/home-sections/reorder', reorderSections);
+router.put('/home-sections/:id', updateSection);
+router.patch('/home-sections/:id/toggle-active', toggleSectionActive);
+router.delete('/home-sections/:id', deleteSection);
+
+// 11. Form Submissions Master: Contact Inquiries
+router.get('/contact-inquiries', getOfficeContactInquiries);
+router.get('/contact-inquiries/:id', getOfficeContactInquiryById);
+router.patch('/contact-inquiries/:id/status', updateOfficeContactInquiryStatus);
+router.delete('/contact-inquiries/:id', deleteOfficeContactInquiry);
+
+// 12. Form Submissions Master: Newsletter Subscriptions
+router.get('/newsletter-subscriptions', getOfficeNewsletterSubscribers);
+router.patch('/newsletter-subscriptions/:id/status', updateOfficeNewsletterStatus);
+router.delete('/newsletter-subscriptions/:id', deleteOfficeNewsletterSubscriber);
 
 module.exports = router;

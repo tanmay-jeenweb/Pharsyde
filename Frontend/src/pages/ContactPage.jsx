@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { STORE_INFO } from '../data/products';
 import { useApp } from '../context/AppContext';
+import { submitContactInquiryApi } from '../services/formService';
 import {
   MapPin,
   Phone,
@@ -48,7 +49,7 @@ export default function ContactPage() {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) {
       showToast('Please correct highlighted fields before submitting', 'error');
@@ -56,12 +57,14 @@ export default function ContactPage() {
     }
 
     setStatus('loading');
+    setFeedbackMessage('');
 
-    // Simulate backend submission
-    setTimeout(() => {
+    try {
+      const res = await submitContactInquiryApi(form);
       setStatus('success');
       setFeedbackMessage(
-        `Thank you ${form.name}. Your message has been received by our Winnipeg dispensary team. We will reply to ${form.email} shortly.`
+        res?.message ||
+          `Thank you ${form.name}. Your message has been received by our Winnipeg dispensary team. We will reply to ${form.email} shortly.`
       );
       showToast('Message sent to Pharsyde customer care', 'success');
       setForm({
@@ -71,18 +74,23 @@ export default function ContactPage() {
         subject: 'General Inquiry',
         message: ''
       });
-    }, 1200);
+    } catch (err) {
+      setStatus('error');
+      const errText = err.message || 'Failed to send message. Please try again or call our dispensary.';
+      setFeedbackMessage(errText);
+      showToast(errText, 'error');
+    }
   };
 
   return (
     <div className="min-h-screen pt-28 pb-24 bg-[#F8FAFC] text-slate-900 relative overflow-hidden">
       {/* Background ambient lighting */}
-      <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-[#8EF705]/10 blur-[150px] pointer-events-none rounded-full" />
+      <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-[#0166dc]/10 blur-[150px] pointer-events-none rounded-full" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 relative z-10">
         {/* Page Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#488203] block mb-2">
+        <div className="text-center mb-16">
+          <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#0166dc] block mb-2">
             CONNECT WITH PHARSYDE
           </span>
           <h1 className="font-heading text-4xl sm:text-6xl font-black text-slate-900 tracking-tight uppercase mb-4">
@@ -97,12 +105,12 @@ export default function ContactPage() {
         {/* Contact Info Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {/* Card 1: Address */}
-          <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm hover:border-[#8EF705] transition-all flex flex-col justify-between">
+          <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm hover:border-[#0166dc] transition-all flex flex-col justify-between">
             <div>
-              <div className="w-10 h-10 rounded-xl bg-[#8EF705]/15 border border-[#8EF705]/40 flex items-center justify-center text-[#488203] mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#0166dc]/15 border border-[#0166dc]/40 flex items-center justify-center text-[#0166dc] mb-4">
                 <MapPin className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#488203] block mb-1">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#0166dc] block mb-1">
                 Storefront Location
               </span>
               <h3 className="font-heading text-base font-bold text-slate-900 mb-2">
@@ -117,7 +125,7 @@ export default function ContactPage() {
               href="https://maps.google.com/?q=117+Regent+Ave+W+Winnipeg+MB+R2C 1R1"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-flex items-center gap-1.5 text-xs text-[#488203] hover:underline font-bold"
+              className="mt-4 inline-flex items-center gap-1.5 text-xs text-[#0166dc] hover:underline font-bold"
             >
               <span>Get Driving Directions</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -150,12 +158,12 @@ export default function ContactPage() {
           </div>
 
           {/* Card 3: Email */}
-          <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm hover:border-[#8EF705] transition-all flex flex-col justify-between">
+          <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm hover:border-[#0166dc] transition-all flex flex-col justify-between">
             <div>
-              <div className="w-10 h-10 rounded-xl bg-[#8EF705]/15 border border-[#8EF705]/40 flex items-center justify-center text-[#488203] mb-4">
+              <div className="w-10 h-10 rounded-xl bg-[#0166dc]/15 border border-[#0166dc]/40 flex items-center justify-center text-[#0166dc] mb-4">
                 <Mail className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#488203] block mb-1">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#0166dc] block mb-1">
                 Electronic Mail
               </span>
               <h3 className="font-heading text-base font-bold text-slate-900 mb-2 break-all">
@@ -167,7 +175,7 @@ export default function ContactPage() {
             </div>
             <a
               href={`mailto:${STORE_INFO.email}`}
-              className="mt-4 inline-flex items-center gap-1.5 text-xs text-[#488203] hover:underline font-bold"
+              className="mt-4 inline-flex items-center gap-1.5 text-xs text-[#0166dc] hover:underline font-bold"
             >
               <span>Send Email</span>
               <Mail className="w-3.5 h-3.5" />
@@ -192,8 +200,8 @@ export default function ContactPage() {
                 <p>Sunday: 9am – 9pm</p>
               </div>
             </div>
-            <span className="mt-4 text-[11px] text-[#488203] font-bold flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#8EF705]" />
+            <span className="mt-4 text-[11px] text-[#0166dc] font-bold flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#0166dc]" />
               Open for Walk-In & Pickup
             </span>
           </div>
@@ -204,15 +212,25 @@ export default function ContactPage() {
           {/* Contact Form (7 Cols) */}
           <div className="lg:col-span-7 p-8 sm:p-10 rounded-3xl bg-white border border-slate-200 shadow-md">
             <div className="flex items-center gap-3 pb-4 mb-6 border-b border-slate-100">
-              <MessageSquare className="w-5 h-5 text-[#488203]" />
+              <MessageSquare className="w-5 h-5 text-[#0166dc]" />
               <h2 className="font-heading text-xl font-bold text-slate-900 uppercase">
                 Send Us a Message
               </h2>
             </div>
 
             {feedbackMessage && (
-              <div className="mb-6 p-4 rounded-2xl bg-[#8EF705]/15 border border-[#8EF705]/40 text-[#3d6e03] text-xs flex items-start gap-3">
-                <CheckCircle2 className="w-5 h-5 text-[#488203] shrink-0 mt-0.5" />
+              <div
+                className={`mb-6 p-4 rounded-2xl border text-xs flex items-start gap-3 ${
+                  status === 'error'
+                    ? 'bg-rose-50 border-rose-200 text-rose-800'
+                    : 'bg-[#0166dc]/15 border-[#0166dc]/40 text-[#3d6e03]'
+                }`}
+              >
+                {status === 'error' ? (
+                  <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                ) : (
+                  <CheckCircle2 className="w-5 h-5 text-[#0166dc] shrink-0 mt-0.5" />
+                )}
                 <p className="leading-relaxed">{feedbackMessage}</p>
               </div>
             )}
@@ -229,7 +247,7 @@ export default function ContactPage() {
                     value={form.name}
                     onChange={handleChange}
                     placeholder="Jane Smith"
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                   />
                   {errors.name && <span className="text-[10px] text-red-600">{errors.name}</span>}
                 </div>
@@ -244,7 +262,7 @@ export default function ContactPage() {
                     value={form.email}
                     onChange={handleChange}
                     placeholder="jane@example.com"
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                   />
                   {errors.email && <span className="text-[10px] text-red-600">{errors.email}</span>}
                 </div>
@@ -261,7 +279,7 @@ export default function ContactPage() {
                     value={form.phone}
                     onChange={handleChange}
                     placeholder="(204) 555-0199"
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                   />
                 </div>
 
@@ -273,7 +291,7 @@ export default function ContactPage() {
                     name="subject"
                     value={form.subject}
                     onChange={handleChange}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                   >
                     <option value="General Inquiry">General Inquiry</option>
                     <option value="Product Stock & Strains">Product Stock & Strains</option>
@@ -294,7 +312,7 @@ export default function ContactPage() {
                   value={form.message}
                   onChange={handleChange}
                   placeholder="How can our Winnipeg dispensary team assist you today?"
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#8EF705] focus:bg-white"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#0166dc] focus:bg-white"
                 />
                 {errors.message && <span className="text-[10px] text-red-600">{errors.message}</span>}
               </div>
@@ -302,7 +320,7 @@ export default function ContactPage() {
               <button
                 type="submit"
                 disabled={status === 'loading'}
-                className="w-full py-3.5 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-heading font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-md shadow-[#8EF705]/25"
+                className="w-full py-3.5 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white font-heading font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-md shadow-[#0166dc]/25"
               >
                 {status === 'loading' ? (
                   <span>Sending Message...</span>
@@ -331,7 +349,7 @@ export default function ContactPage() {
                   className="w-full h-full object-cover opacity-60"
                 />
                 <div className="absolute inset-0 bg-white/70 backdrop-blur-xs flex flex-col items-center justify-center text-center p-4">
-                  <div className="w-12 h-12 rounded-full bg-[#8EF705] flex items-center justify-center text-black mb-3 shadow-lg shadow-[#8EF705]/30">
+                  <div className="w-12 h-12 rounded-full bg-[#0166dc] flex items-center justify-center text-black mb-3 shadow-lg shadow-[#0166dc]/30">
                     <MapPin className="w-6 h-6" />
                   </div>
                   <h4 className="font-heading text-base font-bold text-slate-900">
@@ -344,7 +362,7 @@ export default function ContactPage() {
                     href="https://maps.google.com/?q=117+Regent+Ave+W+Winnipeg+MB+R2C 1R1"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-4 px-4 py-2 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black text-xs font-black uppercase tracking-wider transition-colors inline-flex items-center gap-1.5 shadow-md shadow-[#8EF705]/25"
+                    className="mt-4 px-4 py-2 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white text-xs font-black uppercase tracking-wider transition-colors inline-flex items-center gap-1.5 shadow-md shadow-[#0166dc]/25"
                   >
                     <span>Open in Google Maps</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -355,11 +373,11 @@ export default function ContactPage() {
               {/* Parking and Transit */}
               <div className="space-y-3 text-xs text-slate-600 pt-2">
                 <div className="flex items-start gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-[#488203] shrink-0 mt-0.5" />
+                  <ShieldCheck className="w-4 h-4 text-[#0166dc] shrink-0 mt-0.5" />
                   <span>Free dedicated customer parking available directly on Regent Ave W.</span>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-[#488203] shrink-0 mt-0.5" />
+                  <ShieldCheck className="w-4 h-4 text-[#0166dc] shrink-0 mt-0.5" />
                   <span>Curbside pickup designated bays ready within 30 minutes of online placement.</span>
                 </div>
               </div>

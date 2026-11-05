@@ -6,8 +6,8 @@
     --surface-elevated: #FFFFFF;
     --surface-card: #FFFFFF;
     --border-subtle: #E2E8F0;
-    --accent-blue: #8EF705;
-    --accent-green: #8EF705;
+    --accent-blue: #0166dc;
+    --accent-green: #0166dc;
     --accent-coral: #EA580C;
     --text-muted: #64748B;
     --text-primary: #0F172A;
@@ -54,14 +54,14 @@
 
 .glass-card:hover {
   background: #FFFFFF;
-  border-color: rgba(142, 247, 5, 0.65);
-  box-shadow: 0 16px 36px -12px rgba(142, 247, 5, 0.25);
+  border-color: rgba(1, 102, 220, 0.65);
+  box-shadow: 0 16px 36px -12px rgba(1, 102, 220, 0.25);
 }
 
 /* Glow effects */
 .glow-blue,
 .glow-green {
-  box-shadow: 0 0 25px rgba(142, 247, 5, 0.35);
+  box-shadow: 0 0 25px rgba(1, 102, 220, 0.35);
 }
 
 .glow-coral {
@@ -71,7 +71,7 @@
 .text-glow-green,
 .text-glow-cyan,
 .text-glow-blue {
-  text-shadow: 0 0 16px rgba(142, 247, 5, 0.55);
+  text-shadow: 0 0 16px rgba(1, 102, 220, 0.55);
 }
 
 .text-glow-coral {
@@ -79,13 +79,13 @@
 }
 
 .text-glow-pure {
-  text-shadow: 0 0 20px rgba(142, 247, 5, 0.35);
+  text-shadow: 0 0 20px rgba(1, 102, 220, 0.35);
 }
 
 /* Ambient Radial Gradients */
 .bg-radial-blue,
 .bg-radial-green {
-  background: radial-gradient(circle at 50% 50%, rgba(142, 247, 5, 0.12) 0%, transparent 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(1, 102, 220, 0.12) 0%, transparent 70%);
 }
 
 .bg-radial-coral {
@@ -108,7 +108,7 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #8EF705;
+  background: #0166dc;
 }
 
 /* Animations */
