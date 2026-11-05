@@ -171,18 +171,22 @@ const updateOfficeSetting = async (req, res, next) => {
       category: category !== undefined ? category : beforeSetting?.category,
     });
 
-    // Record audit log
-    await AuditLogModel.log({
-      userId: req.user?.id || null,
-      username: req.user?.name || req.user?.email || 'admin',
-      ipAddress: req.ip || req.connection?.remoteAddress,
-      masterName: 'setting_master',
-      recordId: key,
-      changeType: beforeSetting ? 'UPDATE' : 'CREATE',
-      beforeState: beforeSetting,
-      afterState: updatedSetting,
-      description: `Updated setting "${key}" to "${value}"`,
-    });
+    // Record audit log safely without letting audit errors block the setting update
+    try {
+      await AuditLogModel.log({
+        userId: req.user?.id || null,
+        username: req.user?.name || req.user?.email || 'admin',
+        ipAddress: req.ip || req.connection?.remoteAddress,
+        masterName: 'setting_master',
+        recordId: key,
+        changeType: beforeSetting ? 'UPDATE' : 'CREATE',
+        beforeState: beforeSetting,
+        afterState: updatedSetting,
+        description: `Updated setting "${key}" to "${value}"`,
+      });
+    } catch (auditErr) {
+      console.warn('[AuditLog Warning] Could not record setting audit log:', auditErr.message);
+    }
 
     res.status(200).json({
       success: true,
@@ -201,6 +205,11 @@ const updateOfficeSetting = async (req, res, next) => {
  */
 const getPublicSettings = async (req, res, next) => {
   try {
+    // Ensure browsers & mobile clients never cache settings statically
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     const all = await SettingModel.findAll();
     // Whitelist only public safe settings
     const publicKeys = [

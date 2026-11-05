@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { calculateCartTaxes } from '../../utils/taxCalculator';
-import { MAX_CANNABIS_GRAMS } from '../../utils/cannabisLimit';
 import { X, Trash2, Plus, Minus, ArrowRight, ShoppingBag, ShieldCheck, Truck, Sparkles, AlertTriangle, Scale } from 'lucide-react';
 
 export default function CartDrawer() {
@@ -14,6 +13,7 @@ export default function CartDrawer() {
     cartSubtotal,
     navigateTo,
     cartCannabisGrams = 0,
+    cannabisMaxGrams,
     isCannabisLimitExceeded = false,
     freeDeliveryThreshold = 75.0,
   } = useApp();
@@ -28,7 +28,7 @@ export default function CartDrawer() {
   const progressPercent = Math.min(100, (cartSubtotal / FREE_SHIPPING_THRESHOLD) * 100);
   const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - cartSubtotal);
 
-  const CANNABIS_LIMIT = MAX_CANNABIS_GRAMS || 30.0;
+  const CANNABIS_LIMIT = Number(cannabisMaxGrams) > 0 ? Number(cannabisMaxGrams) : 30.0;
   const cannabisProgressPercent = Math.min(100, (cartCannabisGrams / CANNABIS_LIMIT) * 100);
   const remainingCannabis = Math.max(0, CANNABIS_LIMIT - cartCannabisGrams);
   const excessCannabis = isCannabisLimitExceeded ? Math.max(0, cartCannabisGrams - CANNABIS_LIMIT) : 0;
@@ -119,24 +119,24 @@ export default function CartDrawer() {
               </div>
             </div>
 
-            {/* Cannabis 30.0g Legal Limit Progress Indicator */}
+            {/* Cannabis Dynamic Legal Limit Progress Indicator */}
             <div className="pt-2.5 border-t border-slate-200/80">
               <div className="flex items-center justify-between mb-1.5 font-medium">
                 <span className="flex items-center gap-1.5 text-slate-700">
                   <Scale className={`w-4 h-4 shrink-0 ${
                     isCannabisLimitExceeded
                       ? 'text-red-600'
-                      : cartCannabisGrams >= 25.0
+                      : cannabisProgressPercent >= 80
                       ? 'text-orange-500'
                       : 'text-[#0166dc]'
                   }`} />
                   {isCannabisLimitExceeded ? (
                     <span className="text-red-600 font-bold">
-                      Exceeds 30.0g Legal Limit (+{excessCannabis.toFixed(1)}g)
+                      Exceeds {CANNABIS_LIMIT.toFixed(1)}g Legal Limit (+{excessCannabis.toFixed(1)}g)
                     </span>
                   ) : cartCannabisGrams >= CANNABIS_LIMIT ? (
                     <span className="text-[#0166dc] font-black">
-                      Reached 30.0g Legal Purchase Limit
+                      Reached {CANNABIS_LIMIT.toFixed(1)}g Legal Purchase Limit
                     </span>
                   ) : (
                     <span>
@@ -147,7 +147,7 @@ export default function CartDrawer() {
                 <span className={`text-[11px] font-mono font-semibold shrink-0 ${
                   isCannabisLimitExceeded
                     ? 'text-red-600 font-bold'
-                    : cartCannabisGrams >= 25.0
+                    : cannabisProgressPercent >= 80
                     ? 'text-orange-600 font-bold'
                     : 'text-slate-500'
                 }`}>

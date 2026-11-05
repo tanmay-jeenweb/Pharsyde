@@ -341,6 +341,14 @@ export default function SettingMaster() {
       const res = await updateOfficeSettingApi('cannabis_max_grams', String(num));
       if (res.success) {
         setOriginalCannabisMaxGrams(num);
+        try {
+          localStorage.setItem('pharsyde_cannabis_limit', String(num));
+          window.dispatchEvent(
+            new CustomEvent('pharsyde_settings_changed', {
+              detail: { key: 'cannabis_max_grams', value: num },
+            })
+          );
+        } catch {}
         notify(`Cannabis purchase limit successfully updated to ${num}g.`);
       } else {
         notify(res.message || 'Failed to update cannabis purchase limit.', 'error');
@@ -366,6 +374,14 @@ export default function SettingMaster() {
       const res = await updateOfficeSettingApi('free_delivery_threshold', String(num));
       if (res.success) {
         setOriginalFreeDeliveryThreshold(num);
+        try {
+          localStorage.setItem('pharsyde_free_delivery_threshold', String(num));
+          window.dispatchEvent(
+            new CustomEvent('pharsyde_settings_changed', {
+              detail: { key: 'free_delivery_threshold', value: num },
+            })
+          );
+        } catch {}
         notify(`Free delivery minimum threshold successfully updated to $${num.toFixed(2)} CAD.`);
       } else {
         notify(res.message || 'Failed to update free delivery threshold.', 'error');
@@ -1517,7 +1533,7 @@ export default function SettingMaster() {
           </div>
 
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-emerald-50 text-emerald-800 border-emerald-200">
-            Active: {cannabisMaxGrams}g Limit
+            Active: {originalCannabisMaxGrams}g Limit
           </span>
         </div>
 
@@ -1529,7 +1545,7 @@ export default function SettingMaster() {
                 <span className="text-xs font-normal text-slate-400 font-mono">(cannabis_max_grams)</span>
               </span>
               <span className="text-xs text-slate-500">
-                Current Setting: <strong className="text-slate-900 font-bold">{cannabisMaxGrams} grams</strong>
+                Active in Database: <strong className="text-slate-900 font-bold">{originalCannabisMaxGrams} grams</strong>
               </span>
             </div>
 

@@ -20,7 +20,14 @@ const saveFallbackOrders = (orders) => {
   try {
     const dir = path.dirname(FALLBACK_FILE);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(FALLBACK_FILE, JSON.stringify(orders, null, 2), 'utf8');
+    const newContent = JSON.stringify(orders, null, 2);
+    if (fs.existsSync(FALLBACK_FILE)) {
+      const currentContent = fs.readFileSync(FALLBACK_FILE, 'utf8');
+      if (currentContent === newContent) {
+        return;
+      }
+    }
+    fs.writeFileSync(FALLBACK_FILE, newContent, 'utf8');
   } catch (err) {
     console.error('[OrderModel Fallback Write Error]', err.message);
   }
