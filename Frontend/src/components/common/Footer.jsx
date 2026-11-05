@@ -52,19 +52,20 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/catalog"
+                  to="/cannabis"
                   className="hover:text-[#599e03] transition-colors flex items-center gap-1 group text-slate-600"
                 >
-                  <span>Product Catalogue</span>
+                  <span>Cannabis Collection</span>
                   <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li>
                 <Link
-                  to="/about"
-                  className="hover:text-slate-900 transition-colors flex items-center gap-1 group text-slate-600"
+                  to="/nicotine"
+                  className="hover:text-[#599e03] transition-colors flex items-center gap-1 group text-slate-600"
                 >
-                  <span>About Pharsyde</span>
+                  <span>Nicotine Collection</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li>

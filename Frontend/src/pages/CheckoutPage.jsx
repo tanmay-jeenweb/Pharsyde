@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { createOrderApi, checkEmailApi } from '../services/orderService';
+import { checkEmailApi } from '../services/orderService';
 
 import { uploadDocumentApi } from '../services/uploadService';
 import { preloadPaymentApi, setMonerisPaymentSession } from '../services/paymentService';
 import { calculateCartTaxes } from '../utils/taxCalculator';
-import { STORE_INFO } from '../data/products';
 import { getPublicSettingsApi } from '../services/productService';
 import {
   ShieldCheck,
@@ -15,8 +14,6 @@ import {
   Truck,
   Store,
   CreditCard,
-  Building,
-  ArrowRight,
   ArrowLeft,
   AlertTriangle,
   Receipt,
@@ -34,7 +31,6 @@ export default function CheckoutPage() {
   const {
     cart,
     cartSubtotal,
-    clearCart,
     navigateTo,
     showToast,
     customerUser,
@@ -43,7 +39,12 @@ export default function CheckoutPage() {
     openAuthModal,
     cartCannabisGrams = 0,
     isCannabisLimitExceeded = false,
+    MAX_CANNABIS_GRAMS = 30.0,
+    freeDeliveryThreshold = 75.0,
   } = useApp();
+
+  const cannabisMaxLimit = MAX_CANNABIS_GRAMS || 30.0;
+  const FREE_SHIPPING_THRESHOLD = freeDeliveryThreshold || 75.0;
 
   // Form State
   // Store Policy State
@@ -58,7 +59,7 @@ export default function CheckoutPage() {
     address: '',
     city: 'Winnipeg',
     postalCode: '',
-    paymentMethod: 'card', // card | interac
+    paymentMethod: 'credit', // 'credit' | 'debit'
     cardName: '',
     cardNumber: '',
     cardExpiry: '',
@@ -132,7 +133,7 @@ export default function CheckoutPage() {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [orderConfirmed, setOrderConfirmed] = useState(null);
+  const [orderConfirmed] = useState(null);
 
   // Loyalty Rewards State & Calculations
   const [redeemRewards, setRedeemRewards] = useState(false);
@@ -147,14 +148,12 @@ export default function CheckoutPage() {
   const rewardDiscount = redeemRewards ? Math.round(maxRedeemablePoints * pointRate * 100) / 100 : 0.00;
 
   // Calculations
-  const FREE_SHIPPING_THRESHOLD = 75.0;
   const isPickup = formData.fulfillmentType === 'pickup';
   const shippingFee = isPickup || cartSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 9.99;
   const taxSummary = calculateCartTaxes(cart, {
     discount: rewardDiscount,
     shipping: shippingFee,
   });
-  const discountedSubtotal = taxSummary.discountedSubtotal;
   const orderTotal = taxSummary.finalTotal;
 
   const [existingAccountEmail, setExistingAccountEmail] = useState(null);
@@ -295,21 +294,10 @@ export default function CheckoutPage() {
     };
 
     try {
-      // 1. Credit Card via Moneris Hosted Checkout
-      if (formData.paymentMethod === 'card') {
-        const preloadResult = await preloadPaymentApi(payload, customerToken);
-        setMonerisPaymentSession(preloadResult);
-        navigate(`/checkout/payment?attempt=${encodeURIComponent(preloadResult.paymentAttemptId)}`);
-        return;
-      }
-
-      // 2. Interac / Offline Order Creation
-      const res = await createOrderApi(payload, customerToken);
-      const savedOrder = res.order;
-
-      clearCart();
-      showToast(`Order #${savedOrder.order_number} received!`, 'success');
-      navigate(`/order-success?orderId=${encodeURIComponent(savedOrder.order_number)}`);
+      // Process Credit Card via Moneris Hosted Checkout
+      const preloadResult = await preloadPaymentApi(payload, customerToken);
+      setMonerisPaymentSession(preloadResult);
+      navigate(`/checkout/payment?attempt=${encodeURIComponent(preloadResult.paymentAttemptId)}`);
     } catch (err) {
       console.error('Order processing failed:', err);
       if (err.data?.code === 'ACCOUNT_EXISTS' || (err.message && err.message.toLowerCase().includes('already exists'))) {
@@ -720,7 +708,7 @@ export default function CheckoutPage() {
                       <button
                         type="button"
                         onClick={handleRemoveDoc}
-                        className="p-1 text-slate-400 hover:text-red-600 transition-colors rounded-lg hover:bg-white"
+                        className="p-1 text-slate-400 hover:text-red-600 transition-colors rounded-lg hover:bg-white cursor-pointer"
                         title="Remove document"
                       >
                         <X className="w-4 h-4" />
@@ -791,7 +779,7 @@ export default function CheckoutPage() {
                       Same-day delivery (19+ ID check)
                     </span>
                     <span className="text-xs font-bold text-orange-600 mt-2 block font-mono">
-                      {cartSubtotal >= FREE_SHIPPING_THRESHOLD ? 'FREE (Over $75)' : '$9.99 CAD'}
+                      {cartSubtotal >= FREE_SHIPPING_THRESHOLD ? `FREE (Over $${FREE_SHIPPING_THRESHOLD.toFixed(0)})` : '$9.99 CAD'}
                     </span>
                   </div>
                 </label>
@@ -843,59 +831,86 @@ export default function CheckoutPage() {
 
             {/* Step 4: Payment Selection */}
             <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-              <h3 className="font-heading text-base font-bold text-slate-900 uppercase pb-3 border-b border-slate-100">
-                4. Payment Method
-              </h3>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 className="font-heading text-base font-bold text-slate-900 uppercase">
+                  4. Payment Method
+                </h3>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                  Instant Card Checkout
+                </span>
+              </div>
 
               <div className="space-y-3">
-                <label className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+                {/* Credit Card Option */}
+                <label
+                  className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
+                    formData.paymentMethod === 'credit'
+                      ? 'bg-emerald-50/60 border-[#8EF705] ring-2 ring-[#8EF705]/40 shadow-xs'
+                      : 'bg-slate-50/70 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
                   <div className="flex items-center gap-3">
-                    <CreditCard className="w-5 h-5 text-orange-600" />
+                    <div className="w-9 h-9 rounded-xl bg-orange-100/70 border border-orange-200 flex items-center justify-center text-orange-600 shrink-0">
+                      <CreditCard className="w-5 h-5 text-orange-600" />
+                    </div>
                     <div>
-                      <span className="text-xs font-bold text-slate-900 block">Credit Card (Instant Online Payment)</span>
-                      <span className="text-[11px] text-slate-500">Secure encrypted 256-bit checkout</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-extrabold text-slate-900">Credit Card</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                          Instant Online
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 block mt-0.5">
+                        Visa, MasterCard, American Express, Discover
+                      </span>
                     </div>
                   </div>
                   <input
                     type="radio"
                     name="paymentMethod"
-                    value="card"
-                    checked={formData.paymentMethod === 'card'}
+                    value="credit"
+                    checked={formData.paymentMethod === 'credit'}
                     onChange={handleInputChange}
-                    className="accent-[#8EF705]"
+                    className="accent-[#8EF705] w-4 h-4 cursor-pointer"
                   />
                 </label>
 
-                <label className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+                {/* Debit Card Option */}
+                <label
+                  className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
+                    formData.paymentMethod === 'debit'
+                      ? 'bg-emerald-50/60 border-[#8EF705] ring-2 ring-[#8EF705]/40 shadow-xs'
+                      : 'bg-slate-50/70 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
                   <div className="flex items-center gap-3">
-                    <Building className="w-5 h-5 text-[#488203]" />
+                    <div className="w-9 h-9 rounded-xl bg-blue-100/70 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0">
+                      <CreditCard className="w-5 h-5 text-blue-600" />
+                    </div>
                     <div>
-                      <span className="text-xs font-bold text-slate-900 block">Interac e-Transfer</span>
-                      <span className="text-[11px] text-slate-500">Instant transfer instructions sent via email to pay@pharsyde.ca</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-extrabold text-slate-900">Debit Card</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                          Instant Online
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 block mt-0.5">
+                        Visa Debit & Debit MasterCard (Direct Canadian Bank Cards)
+                      </span>
                     </div>
                   </div>
                   <input
                     type="radio"
                     name="paymentMethod"
-                    value="interac"
-                    checked={formData.paymentMethod === 'interac'}
+                    value="debit"
+                    checked={formData.paymentMethod === 'debit'}
                     onChange={handleInputChange}
-                    className="accent-[#8EF705]"
+                    className="accent-[#8EF705] w-4 h-4 cursor-pointer"
                   />
                 </label>
               </div>
 
-              {formData.paymentMethod === 'card' && (
-                <div className="pt-4 border-t border-slate-100 p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100 space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-900">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    Moneris Hosted Gateway Checkout
-                  </div>
-                  <p className="text-[11px] text-emerald-800 leading-relaxed">
-                    You will complete payment in the next step via Moneris&apos;s secure hosted payment portal. Your card details are processed directly by the banking network and are never stored on Pharsyde servers (PCI-DSS SAQ-A Certified).
-                  </p>
-                </div>
-              )}
+              
             </div>
           </div>
 
@@ -1054,7 +1069,7 @@ export default function CheckoutPage() {
                       <span>Cannabis Weight</span>
                     </span>
                     <span className={`font-mono font-bold ${isCannabisLimitExceeded ? 'text-red-600' : 'text-slate-900'}`}>
-                      {cartCannabisGrams.toFixed(1)}g / 30.0g
+                      {cartCannabisGrams.toFixed(1)}g / {cannabisMaxLimit.toFixed(1)}g
                     </span>
                   </div>
                 )}
@@ -1068,7 +1083,7 @@ export default function CheckoutPage() {
               {isCannabisLimitExceeded && (
                 <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2.5">
                   <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
-                  <span>Order exceeds 30.0g legal limit for cannabis products ({cartCannabisGrams.toFixed(1)}g). Please reduce items to proceed.</span>
+                  <span>Order exceeds {cannabisMaxLimit.toFixed(1)}g legal limit for cannabis products ({cartCannabisGrams.toFixed(1)}g). Please reduce items to proceed.</span>
                 </div>
               )}
 
@@ -1085,23 +1100,16 @@ export default function CheckoutPage() {
                 {isSubmitting ? (
                   <span>Processing Manitoba Order...</span>
                 ) : isCannabisLimitExceeded ? (
-                  <span>Cannabis Limit Exceeded ({cartCannabisGrams.toFixed(1)}g / 30.0g)</span>
+                  <span>Cannabis Limit Exceeded ({cartCannabisGrams.toFixed(1)}g / {cannabisMaxLimit.toFixed(1)}g)</span>
                 ) : (
                   <>
                     <Lock className="w-4 h-4" />
                     <span>
-                      {formData.paymentMethod === 'card'
-                        ? `Proceed to Payment • ${orderTotal.toFixed(2)} CAD`
-                        : `Confirm Order • ${orderTotal.toFixed(2)} CAD`}
+                      Proceed to Payment • {orderTotal.toFixed(2)} CAD
                     </span>
                   </>
                 )}
               </button>
-
-              <div className="text-[11px] text-slate-400 text-center space-y-1">
-                <p>🔒 256-Bit SSL Encrypted Checkout</p>
-                <p>Licensed Manitoba Retail Dispensary • Winnipeg, MB</p>
-              </div>
             </div>
           </div>
         </form>

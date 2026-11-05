@@ -51,6 +51,21 @@ const AuditLogModel = {
   },
 
   /**
+   * Helper to log action directly from Express req object
+   */
+  async logAction(req = {}, { action = 'UPDATE', masterName, recordId = null, details = null, beforeData = null, afterData = null } = {}) {
+    return this.log({
+      userId: req?.user?.id || null,
+      username: req?.user?.name || req?.user?.username || req?.user?.email || 'admin',
+      masterName: masterName || 'system',
+      changeType: action,
+      beforeData: beforeData || null,
+      afterData: afterData || (details ? { recordId, ...details } : { recordId }),
+      ipAddress: req?.ip || req?.connection?.remoteAddress || null,
+    });
+  },
+
+  /**
    * Find all audit logs with optional filters
    */
   async findAll({ masterName, changeType, search, limit = 100, offset = 0 } = {}) {

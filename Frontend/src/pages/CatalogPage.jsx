@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useTransition } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { getProductsApi, getCategoriesApi } from '../services/productService';
+import { getProductsApi, getCategoriesApi, getBrandsApi, getStrainsApi } from '../services/productService';
+import { CANNABIS_CATEGORIES, NICOTINE_CATEGORIES, isCannabisCategory, isNicotineCategory } from '../data/categories';
 import ProductCard from '../components/common/ProductCard';
 import {
   Search,
@@ -19,25 +20,75 @@ import {
   X
 } from 'lucide-react';
 
-export default function CatalogPage() {
+export default function CatalogPage({ pageType: propPageType }) {
   const { showToast } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
+  const isCannabisPage = propPageType === 'cannabis' || location.pathname === '/cannabis';
+  const isNicotinePage = propPageType === 'nicotine' || location.pathname === '/nicotine';
 
   // Helper to parse categories from URL parameter (comma-separated or multiple)
   const parseCategoriesFromUrl = () => {
     const raw = searchParams.get('category');
     if (!raw) return [];
-    return raw.split(',').map((c) => c.trim()).filter((c) => c && c !== 'All');
+    const list = raw.split(',').map((c) => c.trim()).filter((c) => c && c !== 'All');
+    if (isCannabisPage) {
+      return list.filter(isCannabisCategory);
+    }
+    if (isNicotinePage) {
+      return list.filter(isNicotineCategory);
+    }
+    return list;
+  };
+
+  const parseBrandsFromUrl = () => {
+    const raw = searchParams.get('brand');
+    if (!raw) return [];
+    return raw.split(',').map((b) => b.trim()).filter((b) => b && b !== 'All');
+  };
+
+  const parseStrainsFromUrl = () => {
+    const raw = searchParams.get('strain');
+    if (!raw) return [];
+    return raw.split(',').map((s) => s.trim()).filter((s) => s && s !== 'All');
   };
 
   const urlSearch = searchParams.get('search');
+  const urlMinPrice = searchParams.get('minPrice') || '';
+  const urlMaxPrice = searchParams.get('maxPrice') || '';
 
   // State
   const [products, setProducts] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(() => {
+    if (isCannabisPage) return CANNABIS_CATEGORIES;
+    if (isNicotinePage) return NICOTINE_CATEGORIES;
+    return [];
+  });
+  const [showAllCategories, setShowAllCategories] = useState(true);
   const [selectedCategories, setSelectedCategories] = useState(parseCategoriesFromUrl);
   const [categoryFilterQuery, setCategoryFilterQuery] = useState('');
+
+  // Brands State
+  const [brands, setBrands] = useState([]);
+  const [selectedBrands, setSelectedBrands] = useState(parseBrandsFromUrl);
+  const [brandFilterQuery, setBrandFilterQuery] = useState('');
+  const [showAllBrands, setShowAllBrands] = useState(false);
+
+  // Strains State
+  const [strains, setStrains] = useState(() => {
+    if (isCannabisPage) return ['Indica', 'Sativa', 'Hybrid', 'Blend', 'CBD'];
+    return [];
+  });
+  const [selectedStrains, setSelectedStrains] = useState(parseStrainsFromUrl);
+
+  // Price Range State
+  const [minPrice, setMinPrice] = useState(urlMinPrice);
+  const [maxPrice, setMaxPrice] = useState(urlMaxPrice);
+  const [debouncedMinPrice, setDebouncedMinPrice] = useState(urlMinPrice);
+  const [debouncedMaxPrice, setDebouncedMaxPrice] = useState(urlMaxPrice);
+
   const [searchQuery, setSearchQuery] = useState(urlSearch || '');
   const [debouncedSearch, setDebouncedSearch] = useState(urlSearch || '');
   const [page, setPage] = useState(1);
@@ -59,10 +110,28 @@ export default function CatalogPage() {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
+  // Debounce price input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedMinPrice(minPrice);
+      setDebouncedMaxPrice(maxPrice);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [minPrice, maxPrice]);
+
   // Fetch available categories once on mount or when refreshed
   useEffect(() => {
     let isMounted = true;
     async function loadCategories() {
+      if (isCannabisPage) {
+        if (isMounted) setCategories(CANNABIS_CATEGORIES);
+        return;
+      }
+      if (isNicotinePage) {
+        if (isMounted) setCategories(NICOTINE_CATEGORIES);
+        return;
+      }
       try {
         const fetchedCategories = await getCategoriesApi({ hasImage: true });
         if (isMounted && fetchedCategories && fetchedCategories.length > 0) {
@@ -74,7 +143,36 @@ export default function CatalogPage() {
     }
     loadCategories();
     return () => { isMounted = false; };
-  }, []);
+  }, [isCannabisPage, isNicotinePage]);
+
+  // Fetch available brands and strains
+  useEffect(() => {
+    let isMounted = true;
+    async function loadMetaFilters() {
+      try {
+        const catScope = isCannabisPage ? CANNABIS_CATEGORIES : isNicotinePage ? NICOTINE_CATEGORIES : '';
+        const [fetchedBrands, fetchedStrains] = await Promise.all([
+          getBrandsApi({ category: catScope, hasImage: true }),
+          getStrainsApi({ category: catScope, hasImage: true })
+        ]);
+
+        if (isMounted) {
+          if (fetchedBrands && fetchedBrands.length > 0) {
+            setBrands(fetchedBrands);
+          }
+          if (fetchedStrains && fetchedStrains.length > 0) {
+            setStrains(fetchedStrains);
+          } else if (isCannabisPage) {
+            setStrains(['Indica', 'Sativa', 'Hybrid', 'Blend', 'CBD']);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load brands or strains:', err);
+      }
+    }
+    loadMetaFilters();
+    return () => { isMounted = false; };
+  }, [isCannabisPage, isNicotinePage]);
 
   // Fetch products whenever filters or pagination change
   useEffect(() => {
@@ -85,8 +183,19 @@ export default function CatalogPage() {
       setError(null);
 
       try {
+        let queryCategories = selectedCategories;
+        if (isCannabisPage) {
+          queryCategories = selectedCategories.length > 0 ? selectedCategories : CANNABIS_CATEGORIES;
+        } else if (isNicotinePage) {
+          queryCategories = selectedCategories.length > 0 ? selectedCategories : NICOTINE_CATEGORIES;
+        }
+
         const data = await getProductsApi({
-          category: selectedCategories,
+          category: queryCategories,
+          brand: selectedBrands,
+          strain: selectedStrains,
+          minPrice: debouncedMinPrice,
+          maxPrice: debouncedMaxPrice,
           search: debouncedSearch,
           page,
           limit,
@@ -111,19 +220,38 @@ export default function CatalogPage() {
 
     loadProducts();
     return () => { isMounted = false; };
-  }, [selectedCategories, debouncedSearch, page, limit, sortBy, sortOrder]);
+  }, [selectedCategories, selectedBrands, selectedStrains, debouncedMinPrice, debouncedMaxPrice, debouncedSearch, page, limit, sortBy, sortOrder, isCannabisPage, isNicotinePage]);
 
-  // Sync category from URL param if changed externally or on back/forward
+  // Sync filters from URL param if changed externally or on back/forward
   useEffect(() => {
     const urlCats = parseCategoriesFromUrl();
-    const isDifferent =
+    const isCatDiff =
       urlCats.length !== selectedCategories.length ||
       urlCats.some((c) => !selectedCategories.includes(c));
-
-    if (isDifferent) {
+    if (isCatDiff) {
       setSelectedCategories(urlCats);
-      setPage(1);
     }
+
+    const urlB = parseBrandsFromUrl();
+    const isBrandDiff =
+      urlB.length !== selectedBrands.length ||
+      urlB.some((b) => !selectedBrands.includes(b));
+    if (isBrandDiff) {
+      setSelectedBrands(urlB);
+    }
+
+    const urlS = parseStrainsFromUrl();
+    const isStrainDiff =
+      urlS.length !== selectedStrains.length ||
+      urlS.some((s) => !selectedStrains.includes(s));
+    if (isStrainDiff) {
+      setSelectedStrains(urlS);
+    }
+
+    const uMin = searchParams.get('minPrice') || '';
+    const uMax = searchParams.get('maxPrice') || '';
+    if (uMin !== minPrice) setMinPrice(uMin);
+    if (uMax !== maxPrice) setMaxPrice(uMax);
   }, [searchParams]);
 
   // Multiselect category toggle handler
@@ -166,22 +294,108 @@ export default function CatalogPage() {
     }, { replace: true });
   };
 
-  // Reset all filters including search
-  const resetFilters = () => {
-    setSelectedCategories([]);
-    setSearchQuery('');
-    setDebouncedSearch('');
+  // Multiselect brand toggle handler
+  const toggleBrand = (brandName) => {
     setPage(1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setSearchParams((prev) => {
-      const next = new URLSearchParams(prev);
-      next.delete('category');
-      next.delete('search');
+    setSelectedBrands((prev) => {
+      const next = prev.includes(brandName)
+        ? prev.filter((b) => b !== brandName)
+        : [...prev, brandName];
+      setSearchParams((params) => {
+        const p = new URLSearchParams(params);
+        if (next.length === 0) p.delete('brand');
+        else p.set('brand', next.join(','));
+        return p;
+      }, { replace: true });
       return next;
+    });
+  };
+
+  const clearAllBrands = () => {
+    setSelectedBrands([]);
+    setPage(1);
+    setSearchParams((params) => {
+      const p = new URLSearchParams(params);
+      p.delete('brand');
+      return p;
     }, { replace: true });
   };
 
-  // Scroll to top when category or search changes (prevents viewport clamping to page bottom)
+  // Multiselect strain toggle handler
+  const toggleStrain = (strainName) => {
+    setPage(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setSelectedStrains((prev) => {
+      const next = prev.includes(strainName)
+        ? prev.filter((s) => s !== strainName)
+        : [...prev, strainName];
+      setSearchParams((params) => {
+        const p = new URLSearchParams(params);
+        if (next.length === 0) p.delete('strain');
+        else p.set('strain', next.join(','));
+        return p;
+      }, { replace: true });
+      return next;
+    });
+  };
+
+  const clearAllStrains = () => {
+    setSelectedStrains([]);
+    setPage(1);
+    setSearchParams((params) => {
+      const p = new URLSearchParams(params);
+      p.delete('strain');
+      return p;
+    }, { replace: true });
+  };
+
+  // Price range preset handler
+  const applyPricePreset = (min, max) => {
+    const sMin = min !== null && min !== undefined ? String(min) : '';
+    const sMax = max !== null && max !== undefined ? String(max) : '';
+    setMinPrice(sMin);
+    setMaxPrice(sMax);
+    setPage(1);
+    setSearchParams((params) => {
+      const p = new URLSearchParams(params);
+      if (sMin) p.set('minPrice', sMin); else p.delete('minPrice');
+      if (sMax) p.set('maxPrice', sMax); else p.delete('maxPrice');
+      return p;
+    }, { replace: true });
+  };
+
+  const clearPrice = () => {
+    setMinPrice('');
+    setMaxPrice('');
+    setPage(1);
+    setSearchParams((params) => {
+      const p = new URLSearchParams(params);
+      p.delete('minPrice');
+      p.delete('maxPrice');
+      return p;
+    }, { replace: true });
+  };
+
+  // Reset all filters including search, brand, strain, price
+  const resetFilters = () => {
+    setSelectedCategories([]);
+    setSelectedBrands([]);
+    setSelectedStrains([]);
+    setMinPrice('');
+    setMaxPrice('');
+    setDebouncedMinPrice('');
+    setDebouncedMaxPrice('');
+    setSearchQuery('');
+    setDebouncedSearch('');
+    setCategoryFilterQuery('');
+    setBrandFilterQuery('');
+    setPage(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setSearchParams(new URLSearchParams(), { replace: true });
+  };
+
+  // Scroll to top when filters change
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
@@ -189,9 +403,15 @@ export default function CatalogPage() {
       return;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [selectedCategories, debouncedSearch]);
+  }, [selectedCategories, selectedBrands, selectedStrains, debouncedMinPrice, debouncedMaxPrice, debouncedSearch]);
 
-  const hasActiveFilters = selectedCategories.length > 0 || debouncedSearch.trim() !== '';
+  const hasPriceFilter = (debouncedMinPrice !== '' && debouncedMinPrice !== null) || (debouncedMaxPrice !== '' && debouncedMaxPrice !== null);
+  const hasActiveFilters =
+    selectedCategories.length > 0 ||
+    selectedBrands.length > 0 ||
+    selectedStrains.length > 0 ||
+    hasPriceFilter ||
+    debouncedSearch.trim() !== '';
 
   // Sort change handler
   const handleSortChange = (e) => {
@@ -220,6 +440,45 @@ export default function CatalogPage() {
   const displayedCategories = categories.filter((cat) =>
     cat.toLowerCase().includes(categoryFilterQuery.toLowerCase().trim())
   );
+  const visibleCategories = showAllCategories
+    ? displayedCategories
+    : displayedCategories.slice(0, 10);
+
+  // Filtered brands for sidebar search
+  const displayedBrands = brands.filter((b) =>
+    b.toLowerCase().includes(brandFilterQuery.toLowerCase().trim())
+  );
+  const visibleBrands = showAllBrands ? displayedBrands : displayedBrands.slice(0, 8);
+
+  // Strain styling helper
+  const getStrainStyle = (strainName, isSelected) => {
+    const lower = (strainName || '').toLowerCase();
+    if (lower.includes('indica')) {
+      return isSelected
+        ? 'bg-purple-600 text-white border-purple-600 shadow-xs font-bold'
+        : 'bg-purple-50 text-purple-900 border-purple-200 hover:bg-purple-100/80';
+    }
+    if (lower.includes('sativa')) {
+      return isSelected
+        ? 'bg-amber-500 text-black border-amber-500 shadow-xs font-bold'
+        : 'bg-amber-50 text-amber-950 border-amber-200 hover:bg-amber-100/80';
+    }
+    if (lower.includes('hybrid')) {
+      return isSelected
+        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs font-bold'
+        : 'bg-emerald-50 text-emerald-950 border-emerald-200 hover:bg-emerald-100/80';
+    }
+    return isSelected
+      ? 'bg-slate-900 text-white border-slate-900 shadow-xs font-bold'
+      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100';
+  };
+
+  const pricePresets = [
+    { label: 'Under $25', min: 0, max: 25 },
+    { label: '$25 - $50', min: 25, max: 50 },
+    { label: '$50 - $100', min: 50, max: 100 },
+    { label: '$100+', min: 100, max: null }
+  ];
 
   // Pagination calculation
   const totalPages = Math.ceil(totalCount / limit) || 1;
@@ -252,16 +511,9 @@ export default function CatalogPage() {
         {/* Minimal Clean Page Header */}
         <div className="mb-8 pb-6 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#8EF705]/15 border border-[#8EF705]/40 text-[#488203] text-[11px] font-bold tracking-wider uppercase mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#599e03] animate-pulse" />
-              <span>Live Catalogue</span>
-            </div>
             <h1 className="text-2xl sm:text-4xl font-black font-heading tracking-tight text-slate-900 uppercase">
-              Explore Our Collection
+              {isCannabisPage ? 'Cannabis Products' : isNicotinePage ? 'Nicotine Products' : 'Explore Our Collection'}
             </h1>
-            <p className="text-slate-500 text-xs sm:text-sm mt-1 max-w-xl">
-              Verified inventory with real-time stock levels and certified high-resolution product photography.
-            </p>
           </div>
 
           {/* Right Status Pill */}
@@ -269,7 +521,7 @@ export default function CatalogPage() {
             <div className="inline-flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 shadow-xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
               <span>
-                <strong className="text-slate-900 font-bold">{totalCount.toLocaleString()}</strong> Products with Photos
+                <strong className="text-slate-900 font-bold">{totalCount.toLocaleString()}</strong> {isCannabisPage ? 'Cannabis Products' : isNicotinePage ? 'Nicotine Products' : 'Products'} Available
               </span>
             </div>
           </div>
@@ -302,8 +554,8 @@ export default function CatalogPage() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800"
             >
               <SlidersHorizontal className="w-3.5 h-3.5 text-slate-700" />
-              <span>Categories {selectedCategories.length > 0 && `(${selectedCategories.length})`}</span>
-              {selectedCategories.length > 0 && (
+              <span>Filters {hasActiveFilters && `(${selectedCategories.length + selectedBrands.length + selectedStrains.length + (hasPriceFilter ? 1 : 0)})`}</span>
+              {hasActiveFilters && (
                 <span className="w-2 h-2 rounded-full bg-[#8EF705]" />
               )}
             </button>
@@ -389,8 +641,8 @@ export default function CatalogPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1.5">
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                      Categories
+                    <label className="block text-[12px] font-extrabold uppercase tracking-wider text-[#488203]">
+                      CATEGORY
                     </label>
                     {selectedCategories.length > 0 && (
                       <span className="px-1.5 py-0.2 rounded-full bg-[#8EF705] text-black text-[10px] font-black">
@@ -421,7 +673,7 @@ export default function CatalogPage() {
                   </div>
                 )}
 
-                <div className="max-h-[380px] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                <div className="max-h-[460px] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                   {/* All Categories Option */}
                   <button
                     type="button"
@@ -432,14 +684,14 @@ export default function CatalogPage() {
                         : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                   >
-                    <span>All Categories</span>
+                    <span>{isCannabisPage ? 'All Cannabis Categories' : isNicotinePage ? 'All Nicotine Categories' : 'All Categories'}</span>
                     {selectedCategories.length === 0 && (
                       <span className="w-2 h-2 rounded-full bg-black shrink-0" />
                     )}
                   </button>
 
                   {/* Individual Category Checkbox Rows */}
-                  {displayedCategories.map((cat) => {
+                  {visibleCategories.map((cat) => {
                     const isSelected = selectedCategories.includes(cat);
                     return (
                       <button
@@ -468,8 +720,220 @@ export default function CatalogPage() {
                       </button>
                     );
                   })}
+
+                  {/* Show More / Show Less Toggle (Matches user's screenshot) */}
+                  {categories.length > 10 && !categoryFilterQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllCategories((prev) => !prev)}
+                      className="w-full text-left pt-2 pb-1 px-3 text-xs font-black uppercase tracking-wider text-[#488203] hover:text-[#376402] transition-colors cursor-pointer"
+                    >
+                      {showAllCategories ? 'SHOW LESS' : `SHOW MORE (${categories.length - 10})`}
+                    </button>
+                  )}
                 </div>
               </div>
+
+              {/* Price Range Filter Section */}
+              <div className="pt-4 border-t border-slate-100">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <label className="block text-[12px] font-extrabold uppercase tracking-wider text-[#488203]">
+                      PRICE RANGE
+                    </label>
+                    {hasPriceFilter && (
+                      <span className="w-2 h-2 rounded-full bg-[#8EF705]" />
+                    )}
+                  </div>
+                  {hasPriceFilter && (
+                    <button
+                      onClick={clearPrice}
+                      className="text-[11px] text-slate-400 hover:text-orange-600 hover:underline font-medium cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* Quick Presets */}
+                <div className="grid grid-cols-2 gap-1.5 mb-3">
+                  {pricePresets.map((preset) => {
+                    const isActive =
+                      (preset.min === null || preset.min === 0 ? (minPrice === '' || minPrice === '0') : minPrice === String(preset.min)) &&
+                      (preset.max === null ? maxPrice === '' : maxPrice === String(preset.max));
+                    return (
+                      <button
+                        type="button"
+                        key={preset.label}
+                        onClick={() => {
+                          if (isActive) clearPrice();
+                          else applyPricePreset(preset.min, preset.max);
+                        }}
+                        className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold border transition-all cursor-pointer text-center truncate ${
+                          isActive
+                            ? 'bg-[#8EF705] text-black font-extrabold border-[#8EF705] shadow-xs'
+                            : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Min / Max Inputs */}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400">$</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(e.target.value)}
+                      placeholder="Min"
+                      className="w-full pl-6 pr-2 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#8EF705]"
+                    />
+                  </div>
+                  <span className="text-slate-400 text-xs font-bold">-</span>
+                  <div className="relative flex-1">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400">$</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      placeholder="Max"
+                      className="w-full pl-6 pr-2 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#8EF705]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Brand Name Filter Section */}
+              <div className="pt-4 border-t border-slate-100">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <label className="block text-[12px] font-extrabold uppercase tracking-wider text-[#488203]">
+                      BRAND
+                    </label>
+                    {selectedBrands.length > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full bg-[#8EF705] text-black text-[10px] font-black">
+                        {selectedBrands.length}
+                      </span>
+                    )}
+                  </div>
+                  {selectedBrands.length > 0 && (
+                    <button
+                      onClick={clearAllBrands}
+                      className="text-[11px] text-slate-400 hover:text-orange-600 hover:underline font-medium cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* Optional brand quick search if brand count > 6 */}
+                {brands.length > 6 && (
+                  <div className="mb-2">
+                    <input
+                      type="text"
+                      value={brandFilterQuery}
+                      onChange={(e) => setBrandFilterQuery(e.target.value)}
+                      placeholder="Filter brands..."
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#8EF705]"
+                    />
+                  </div>
+                )}
+
+                <div className="max-h-[220px] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                  {visibleBrands.length === 0 ? (
+                    <div className="text-[11px] text-slate-400 py-1.5 px-2">No brands found</div>
+                  ) : (
+                    visibleBrands.map((bName) => {
+                      const isSelected = selectedBrands.includes(bName);
+                      return (
+                        <button
+                          type="button"
+                          key={bName}
+                          onClick={() => toggleBrand(bName)}
+                          className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-between cursor-pointer group border ${
+                            isSelected
+                              ? 'bg-[#8EF705]/15 border-[#8EF705]/60 text-slate-950 font-bold'
+                              : 'border-transparent text-slate-700 hover:text-slate-950 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div
+                              className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 border transition-all ${
+                                isSelected
+                                  ? 'bg-[#8EF705] border-[#8EF705] text-black shadow-xs'
+                                  : 'border-slate-300 bg-white group-hover:border-slate-400'
+                              }`}
+                            >
+                              {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                            </div>
+                            <span className="truncate">{bName}</span>
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+
+                  {/* Brand Show More / Show Less Toggle */}
+                  {brands.length > 8 && !brandFilterQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllBrands((prev) => !prev)}
+                      className="w-full text-left pt-2 pb-1 px-3 text-xs font-black uppercase tracking-wider text-[#488203] hover:text-[#376402] transition-colors cursor-pointer"
+                    >
+                      {showAllBrands ? 'SHOW LESS' : `SHOW MORE (${brands.length - 8})`}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Strain Filter Section */}
+              {strains.length > 0 && (
+                <div className="pt-4 border-t border-slate-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-1.5">
+                      <label className="block text-[12px] font-extrabold uppercase tracking-wider text-[#488203]">
+                        STRAIN
+                      </label>
+                      {selectedStrains.length > 0 && (
+                        <span className="px-1.5 py-0.2 rounded-full bg-[#8EF705] text-black text-[10px] font-black">
+                          {selectedStrains.length}
+                        </span>
+                      )}
+                    </div>
+                    {selectedStrains.length > 0 && (
+                      <button
+                        onClick={clearAllStrains}
+                        className="text-[11px] text-slate-400 hover:text-orange-600 hover:underline font-medium cursor-pointer"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {strains.map((strainName) => {
+                      const isSelected = selectedStrains.includes(strainName);
+                      return (
+                        <button
+                          type="button"
+                          key={strainName}
+                          onClick={() => toggleStrain(strainName)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${getStrainStyle(strainName, isSelected)}`}
+                        >
+                          {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                          <span>{strainName}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Verified Image Indicator Badge */}
               <div className="pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500">
@@ -514,16 +978,55 @@ export default function CatalogPage() {
                   </span>
                 ))}
 
-                {/* Clear all categories link if multiple selected */}
-                {selectedCategories.length > 1 && (
-                  <button
-                    onClick={clearAllCategories}
-                    className="text-[11px] text-orange-600 hover:underline font-bold px-1 cursor-pointer"
+                {/* Multiselect Brand Chips */}
+                {selectedBrands.map((bName) => (
+                  <span
+                    key={bName}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-bold text-[11px]"
                   >
-                    Clear categories
-                  </button>
+                    <span>{bName}</span>
+                    <button
+                      onClick={() => toggleBrand(bName)}
+                      className="hover:text-[#8EF705] cursor-pointer"
+                      title={`Remove ${bName}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+
+                {/* Multiselect Strain Chips */}
+                {selectedStrains.map((sName) => (
+                  <span
+                    key={sName}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-950 font-bold text-[11px]"
+                  >
+                    <span>{sName}</span>
+                    <button
+                      onClick={() => toggleStrain(sName)}
+                      className="hover:text-black cursor-pointer"
+                      title={`Remove ${sName}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+
+                {/* Price Range Chip */}
+                {hasPriceFilter && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-950 font-bold text-[11px]">
+                    <span>${minPrice || '0'} - ${maxPrice || '∞'}</span>
+                    <button
+                      onClick={clearPrice}
+                      className="hover:text-black cursor-pointer"
+                      title="Clear price filter"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
                 )}
 
+                {/* Search Term Chip */}
                 {debouncedSearch && (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-semibold text-[11px]">
                     "{debouncedSearch}"
@@ -531,6 +1034,16 @@ export default function CatalogPage() {
                       <X className="w-3 h-3" />
                     </button>
                   </span>
+                )}
+
+                {/* Reset all filters link */}
+                {hasActiveFilters && (
+                  <button
+                    onClick={resetFilters}
+                    className="text-[11px] text-orange-600 hover:underline font-bold px-1 cursor-pointer"
+                  >
+                    Reset all
+                  </button>
                 )}
               </div>
 
@@ -764,13 +1277,13 @@ export default function CatalogPage() {
                     : 'border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                <span>All Categories</span>
+                <span>{isCannabisPage ? 'All Cannabis Categories' : isNicotinePage ? 'All Nicotine Categories' : 'All Categories'}</span>
                 {selectedCategories.length === 0 && <span className="w-2 h-2 rounded-full bg-black" />}
               </button>
 
               {/* Individual Categories Checkboxes */}
               <div className="space-y-1.5 max-h-[50vh] overflow-y-auto pr-1">
-                {categories.map((cat) => {
+                {visibleCategories.map((cat) => {
                   const isSelected = selectedCategories.includes(cat);
                   return (
                     <button
@@ -798,7 +1311,180 @@ export default function CatalogPage() {
                     </button>
                   );
                 })}
+
+                {/* Show More / Show Less Toggle (Mobile) */}
+                {categories.length > 10 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllCategories((prev) => !prev)}
+                    className="w-full text-left pt-2 pb-1 px-3 text-xs font-black uppercase tracking-wider text-[#488203] hover:text-[#376402] transition-colors cursor-pointer"
+                  >
+                    {showAllCategories ? 'SHOW LESS' : `SHOW MORE (${categories.length - 10})`}
+                  </button>
+                )}
               </div>
+
+              {/* Mobile Price Range Section */}
+              <div className="pt-4 border-t border-slate-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                    Price Range (CAD)
+                  </span>
+                  {hasPriceFilter && (
+                    <button
+                      onClick={clearPrice}
+                      className="text-[11px] text-orange-600 hover:underline font-bold cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-1.5 mb-2.5">
+                  {pricePresets.map((preset) => {
+                    const isActive =
+                      (preset.min === null || preset.min === 0 ? (minPrice === '' || minPrice === '0') : minPrice === String(preset.min)) &&
+                      (preset.max === null ? maxPrice === '' : maxPrice === String(preset.max));
+                    return (
+                      <button
+                        type="button"
+                        key={preset.label}
+                        onClick={() => {
+                          if (isActive) clearPrice();
+                          else applyPricePreset(preset.min, preset.max);
+                        }}
+                        className={`px-2 py-1.5 rounded-xl text-[11px] font-semibold border transition-all cursor-pointer text-center truncate ${
+                          isActive
+                            ? 'bg-[#8EF705] text-black font-extrabold border-[#8EF705]'
+                            : 'bg-slate-50 border-slate-200 text-slate-700'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400">$</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(e.target.value)}
+                      placeholder="Min"
+                      className="w-full pl-6 pr-2 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400"
+                    />
+                  </div>
+                  <span className="text-slate-400 text-xs font-bold">-</span>
+                  <div className="relative flex-1">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400">$</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      placeholder="Max"
+                      className="w-full pl-6 pr-2 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Brand Section */}
+              <div className="pt-4 border-t border-slate-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                    Brand {selectedBrands.length > 0 && `(${selectedBrands.length})`}
+                  </span>
+                  {selectedBrands.length > 0 && (
+                    <button
+                      onClick={clearAllBrands}
+                      className="text-[11px] text-orange-600 hover:underline font-bold cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {brands.length > 6 && (
+                  <div className="mb-2">
+                    <input
+                      type="text"
+                      value={brandFilterQuery}
+                      onChange={(e) => setBrandFilterQuery(e.target.value)}
+                      placeholder="Filter brands..."
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-800"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-1.5 max-h-[180px] overflow-y-auto pr-1">
+                  {visibleBrands.map((bName) => {
+                    const isSelected = selectedBrands.includes(bName);
+                    return (
+                      <button
+                        type="button"
+                        key={bName}
+                        onClick={() => toggleBrand(bName)}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between cursor-pointer border ${
+                          isSelected
+                            ? 'bg-[#8EF705]/15 border-[#8EF705]/60 text-slate-950 font-bold'
+                            : 'border-slate-100 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 border ${
+                              isSelected ? 'bg-[#8EF705] border-[#8EF705] text-black' : 'border-slate-300 bg-white'
+                            }`}
+                          >
+                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                          </div>
+                          <span className="truncate">{bName}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Mobile Strain Section */}
+              {strains.length > 0 && (
+                <div className="pt-4 border-t border-slate-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                      Strain {selectedStrains.length > 0 && `(${selectedStrains.length})`}
+                    </span>
+                    {selectedStrains.length > 0 && (
+                      <button
+                        onClick={clearAllStrains}
+                        className="text-[11px] text-orange-600 hover:underline font-bold cursor-pointer"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {strains.map((strainName) => {
+                      const isSelected = selectedStrains.includes(strainName);
+                      return (
+                        <button
+                          type="button"
+                          key={strainName}
+                          onClick={() => toggleStrain(strainName)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${getStrainStyle(strainName, isSelected)}`}
+                        >
+                          {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                          <span>{strainName}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Mobile Actions Bottom Bar */}

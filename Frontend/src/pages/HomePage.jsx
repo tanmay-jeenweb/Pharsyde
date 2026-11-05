@@ -5,20 +5,15 @@ import AppDownloadBadge from '../components/common/AppDownloadBadge';
 import {
   getBestSellersProductsApi,
   getNewArrivalsProductsApi,
-  getProductsApi
+  getProductsApi,
+  getPublicSettingsApi,
+  getPublicHomeSectionsApi
 } from '../services/productService';
 import heroBg from '../assets/hero-bg.png';
 import {
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  ShieldCheck,
+  ChevronDown,
   CheckCircle2,
-  Compass,
-  Award,
-  Zap,
-  HeartHandshake,
   Check,
   Mail
 } from 'lucide-react';
@@ -26,22 +21,51 @@ import {
 export default function HomePage() {
   const { navigateTo, showToast } = useApp();
 
+  // Storefront Section Visibility Settings from DB
+  const [showBestSellersSection, setShowBestSellersSection] = useState(true);
+  const [showNewArrivalsSection, setShowNewArrivalsSection] = useState(true);
+
   // Products State from Backend API
   const [bestSellers, setBestSellers] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
   const [loadingBestSellers, setLoadingBestSellers] = useState(true);
   const [loadingNewArrivals, setLoadingNewArrivals] = useState(true);
 
-  // Best Sellers Carousel Scroll State
-  const bestSellersRef = useRef(null);
-  const [canScrollBestLeft, setCanScrollBestLeft] = useState(false);
-  const [canScrollBestRight, setCanScrollBestRight] = useState(false);
+  // Dynamic Custom Sections (Configured via Home Page Section Master)
+  const [homeSections, setHomeSections] = useState([]);
+  const [loadingHomeSections, setLoadingHomeSections] = useState(true);
+  const [expandedSections, setExpandedSections] = useState({});
 
-  // New Arrivals Carousel Scroll & Progress State
-  const newArrivalsRef = useRef(null);
-  const [canScrollNewLeft, setCanScrollNewLeft] = useState(false);
-  const [canScrollNewRight, setCanScrollNewRight] = useState(false);
-  const [newScrollProgress, setNewScrollProgress] = useState(0);
+  // Toggle State for 4-Card Preview vs Full List
+  const [showAllBestSellers, setShowAllBestSellers] = useState(false);
+  const [showAllNewArrivals, setShowAllNewArrivals] = useState(false);
+  const bestSellersSectionRef = useRef(null);
+  const newArrivalsSectionRef = useRef(null);
+
+  // Sliced or full lists
+  const displayedBestSellers = showAllBestSellers ? bestSellers : bestSellers.slice(0, 4);
+  const displayedNewArrivals = showAllNewArrivals ? newArrivals : newArrivals.slice(0, 4);
+
+  const handleToggleBestSellers = () => {
+    if (showAllBestSellers && bestSellersSectionRef.current) {
+      bestSellersSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    setShowAllBestSellers((prev) => !prev);
+  };
+
+  const handleToggleNewArrivals = () => {
+    if (showAllNewArrivals && newArrivalsSectionRef.current) {
+      newArrivalsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    setShowAllNewArrivals((prev) => !prev);
+  };
+
+  const handleToggleDynamicSection = (secId) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [secId]: !prev[secId],
+    }));
+  };
 
   // Newsletter State
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -53,6 +77,22 @@ export default function HomePage() {
   useEffect(() => {
     let isMounted = true;
 
+    async function loadSettings() {
+      try {
+        const res = await getPublicSettingsApi();
+        if (isMounted && res && res.success && res.settings) {
+          if (res.settings.show_best_sellers !== undefined) {
+            setShowBestSellersSection(res.settings.show_best_sellers === 'true' || res.settings.show_best_sellers === true);
+          }
+          if (res.settings.show_new_arrivals !== undefined) {
+            setShowNewArrivalsSection(res.settings.show_new_arrivals === 'true' || res.settings.show_new_arrivals === true);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load public storefront settings:', err);
+      }
+    }
+
     async function loadBestSellers() {
       try {
         setLoadingBestSellers(true);
@@ -60,8 +100,8 @@ export default function HomePage() {
         let items = (res && res.success && Array.isArray(res.products)) ? res.products : [];
         items = items.filter((p) => p.imageUrl && p.imageUrl.trim() !== '' && p.imageUrl !== '[]');
 
-        // If fewer than 4 configured best sellers, backfill from catalog with images
-        if (items.length < 4) {
+        // If fewer than 12 configured best sellers, backfill from catalog with images
+        if (items.length < 12) {
           try {
             const fallback = await getProductsApi({ limit: 12, sortBy: 'modified', sortOrder: 'DESC', hasImage: true });
             if (fallback && Array.isArray(fallback.products)) {
@@ -95,11 +135,15 @@ export default function HomePage() {
         let items = (res && res.success && Array.isArray(res.products)) ? res.products : [];
         items = items.filter((p) => p.imageUrl && p.imageUrl.trim() !== '' && p.imageUrl !== '[]');
 
-        if (items.length === 0) {
-          const fallback = await getProductsApi({ limit: 12, sortBy: 'modified', sortOrder: 'DESC', hasImage: true });
-          if (fallback && Array.isArray(fallback.products)) {
-            items = fallback.products;
-          }
+        if (items.length < 12) {
+          try {
+            const fallback = await getProductsApi({ limit: 12, sortBy: 'modified', sortOrder: 'DESC', hasImage: true });
+            if (fallback && Array.isArray(fallback.products)) {
+              const existingIds = new Set(items.map((i) => i.pk || i.id));
+              const extras = fallback.products.filter((p) => !existingIds.has(p.pk || p.id));
+              items = [...items, ...extras].slice(0, 12);
+            }
+          } catch {}
         }
 
         if (isMounted) {
@@ -118,61 +162,29 @@ export default function HomePage() {
       }
     }
 
+    async function loadHomeSections() {
+      try {
+        setLoadingHomeSections(true);
+        const res = await getPublicHomeSectionsApi();
+        if (isMounted && res && res.success && Array.isArray(res.sections)) {
+          setHomeSections(res.sections);
+        }
+      } catch (err) {
+        console.warn('Could not load dynamic home sections:', err);
+      } finally {
+        if (isMounted) setLoadingHomeSections(false);
+      }
+    }
+
+    loadSettings();
     loadBestSellers();
     loadNewArrivals();
+    loadHomeSections();
 
     return () => {
       isMounted = false;
     };
   }, []);
-
-  // Check scroll state for Best Sellers
-  const handleBestSellersScroll = () => {
-    if (!bestSellersRef.current) return;
-    const { scrollLeft, scrollWidth, clientWidth } = bestSellersRef.current;
-    const maxScroll = scrollWidth - clientWidth;
-    setCanScrollBestLeft(scrollLeft > 10);
-    setCanScrollBestRight(scrollLeft < maxScroll - 10);
-  };
-
-  const scrollBest = (direction) => {
-    if (!bestSellersRef.current) return;
-    const { clientWidth } = bestSellersRef.current;
-    const amount = direction === 'left' ? -clientWidth * 0.75 : clientWidth * 0.75;
-    bestSellersRef.current.scrollBy({ left: amount, behavior: 'smooth' });
-    setTimeout(handleBestSellersScroll, 350);
-  };
-
-  // Check scroll state for New Arrivals
-  const handleNewArrivalsScroll = () => {
-    if (!newArrivalsRef.current) return;
-    const { scrollLeft, scrollWidth, clientWidth } = newArrivalsRef.current;
-    const maxScroll = scrollWidth - clientWidth;
-    setCanScrollNewLeft(scrollLeft > 10);
-    setCanScrollNewRight(scrollLeft < maxScroll - 10);
-
-    const progress = maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0;
-    setNewScrollProgress(progress);
-  };
-
-  const scrollNew = (direction) => {
-    if (!newArrivalsRef.current) return;
-    const { clientWidth } = newArrivalsRef.current;
-    const amount = direction === 'left' ? -clientWidth * 0.75 : clientWidth * 0.75;
-    newArrivalsRef.current.scrollBy({ left: amount, behavior: 'smooth' });
-    setTimeout(handleNewArrivalsScroll, 350);
-  };
-
-  useEffect(() => {
-    handleBestSellersScroll();
-    handleNewArrivalsScroll();
-    window.addEventListener('resize', handleBestSellersScroll);
-    window.addEventListener('resize', handleNewArrivalsScroll);
-    return () => {
-      window.removeEventListener('resize', handleBestSellersScroll);
-      window.removeEventListener('resize', handleNewArrivalsScroll);
-    };
-  }, [bestSellers, newArrivals, loadingBestSellers, loadingNewArrivals]);
 
   const handleNewsletterSubmit = (e) => {
     e.preventDefault();
@@ -246,10 +258,10 @@ export default function HomePage() {
 
               <div className="flex flex-wrap items-center gap-4">
                 <button
-                  onClick={() => navigateTo('catalog')}
+                  onClick={() => navigateTo('cannabis')}
                   className="px-7 py-3.5 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-heading font-extrabold text-xs uppercase tracking-widest shadow-lg shadow-[#8EF705]/30 transition-all flex items-center gap-2 group hover:scale-[1.02] cursor-pointer"
                 >
-                  <span>Explore Catalogue</span>
+                  <span>Explore Cannabis</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
 
@@ -290,85 +302,16 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================================
-          SECTION 2: BRAND INTRODUCTION ("BEYOND THE ORDINARY")
+          SECTION 3: BEST SELLERS (PANORAMIC CRISP WHITE SHOWCASE)
          ========================================================================= */}
-      <section id="brand-intro" className="py-24 relative overflow-hidden bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-[#529402]">
-                <Sparkles className="w-4 h-4 text-[#8EF705]" />
-                <span>The Pharsyde Philosophy</span>
-              </div>
+      {showBestSellersSection && (
+        <section ref={bestSellersSectionRef} className="py-20 relative bg-white border-t border-slate-200 overflow-hidden">
+          <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#8EF705]/5 blur-[120px] pointer-events-none rounded-full" />
 
-              <h2 className="font-heading text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 leading-tight uppercase">
-                BEYOND THE <br />
-                <span className="text-[#225203]">ORDINARY</span>
-              </h2>
-
-              <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-xl font-light">
-                Pharsyde is built around a passion for quality, thoughtful curation and modern lifestyle experiences. Discover premium selections and products designed for those who value the details.
-              </p>
-
-              <p className="text-sm text-slate-500 leading-relaxed max-w-xl">
-                We believe that consumption is an art form. From full-spectrum live rosins to precision-engineered dry flower accessories, we eliminate the guesswork and present only the finest artisanal creations Canada has to offer.
-              </p>
-
-              <div className="pt-4 flex items-center gap-6">
-                <button
-                  onClick={() => navigateTo('about')}
-                  className="inline-flex items-center gap-2 text-xs font-heading font-bold uppercase tracking-widest text-slate-900 hover:text-[#529402] transition-colors group cursor-pointer"
-                >
-                  <span>Learn Our Heritage & Standards</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
-                </button>
-              </div>
-            </div>
-
-            <div className="lg:col-span-5 relative">
-              <div className="relative mx-auto max-w-md">
-                <div className="absolute inset-0 bg-gradient-to-tr from-[#8EF705]/20 to-orange-500/15 rounded-3xl blur-2xl transform -rotate-3" />
-
-                <div className="relative rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-xl p-6 group">
-                  <div className="aspect-[4/5] rounded-2xl overflow-hidden relative mb-5 bg-slate-100">
-                    <img
-                      src={heroBg}
-                      alt="Cannabis Craftsmanship"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent opacity-80" />
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <span className="text-[10px] font-mono font-black uppercase tracking-widest text-[#8EF705] block mb-1">
-                        WINNIPEG, MANITOBA • 19+
-                      </span>
-                      <h4 className="font-heading text-lg font-bold text-white">
-                        Licensed Manitoba Craft Retailer
-                      </h4>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          SECTION 3: BEST SELLERS (ELEVATED SUBTLE LIGHT SHOWCASE CONTAINER)
-         ========================================================================= */}
-      <section className="py-16 sm:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-[2.5rem] bg-gradient-to-b from-slate-50 via-slate-100/60 to-slate-50/80 border border-slate-200/90 p-8 sm:p-12 relative overflow-hidden shadow-xs">
-            {/* Soft ambient light highlight */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-[#8EF705]/10 blur-[110px] pointer-events-none rounded-full" />
-            <div className="absolute bottom-0 left-10 w-64 h-64 bg-orange-500/5 blur-[90px] pointer-events-none rounded-full" />
-
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             {/* Header Row */}
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-10 gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-10 gap-4">
               <div>
-                <span className="text-xs font-mono font-bold uppercase tracking-[0.25em] text-[#529402] block mb-2">
-                  COMMUNITY FAVORITES
-                </span>
                 <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight uppercase leading-none">
                   BEST SELLERS
                 </h2>
@@ -377,380 +320,235 @@ export default function HomePage() {
                 </p>
               </div>
 
-              {/* Right Controls: Arrow Navigation + View All */}
-              <div className="relative z-10 flex items-center gap-3 self-start sm:self-auto">
-                <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+              {/* Header Action Button (View All / Show Less) */}
+              {bestSellers.length > 4 && (
+                <div className="flex items-center gap-3 self-start sm:self-auto">
                   <button
-                    onClick={() => scrollBest('left')}
-                    disabled={!canScrollBestLeft}
-                    aria-label="Previous best sellers"
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-                      canScrollBestLeft
-                        ? 'text-slate-800 hover:bg-[#8EF705] hover:text-black cursor-pointer active:scale-95'
-                        : 'text-slate-300 cursor-not-allowed opacity-40'
-                    }`}
+                    type="button"
+                    onClick={handleToggleBestSellers}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-heading font-extrabold text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer group"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <span>{showAllBestSellers ? 'Show Less' : `View All (${bestSellers.length})`}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${showAllBestSellers ? 'rotate-180' : ''}`} />
                   </button>
-                  <button
-                    onClick={() => scrollBest('right')}
-                    disabled={!canScrollBestRight}
-                    aria-label="Next best sellers"
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-                      canScrollBestRight
-                        ? 'text-slate-800 hover:bg-[#8EF705] hover:text-black cursor-pointer active:scale-95'
-                        : 'text-slate-300 cursor-not-allowed opacity-40'
-                    }`}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => navigateTo('best-sellers')}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-slate-900 hover:bg-[#8EF705] text-white hover:text-black font-heading font-extrabold text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer"
-                >
-                  <span>View All</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Carousel Stream */}
-            <div className="relative z-10">
-              {loadingBestSellers ? (
-                <div className="flex gap-6 overflow-hidden py-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="w-[275px] sm:w-[295px] shrink-0 rounded-2xl bg-white border border-slate-200 p-4 space-y-4 animate-pulse shadow-xs"
-                    >
-                      <div className="aspect-square bg-slate-100 rounded-xl" />
-                      <div className="h-4 bg-slate-100 rounded w-3/4" />
-                      <div className="h-3 bg-slate-100 rounded w-1/2" />
-                      <div className="h-9 bg-slate-100 rounded-xl w-full mt-4" />
-                    </div>
-                  ))}
-                </div>
-              ) : bestSellers.length > 0 ? (
-                <div
-                  ref={bestSellersRef}
-                  onScroll={handleBestSellersScroll}
-                  className="flex gap-6 overflow-x-auto scroll-smooth py-2 snap-x snap-mandatory"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                >
-                  {bestSellers.map((product) => (
-                    <div
-                      key={product.pk || product.id}
-                      className="w-[275px] sm:w-[295px] shrink-0 snap-start"
-                    >
-                      <ProductCard product={product} />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-14 text-center rounded-2xl border border-dashed border-slate-300 bg-white/70">
-                  <p className="text-sm font-medium text-slate-500">
-                    No best sellers currently available.
-                  </p>
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* =========================================================================
-          SECTION 4: NEW ARRIVALS (PANORAMIC CRISP WHITE STREAM WITH PROGRESS BAR)
-         ========================================================================= */}
-      <section className="py-20 relative bg-white border-t border-slate-200 overflow-hidden">
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#8EF705]/5 blur-[120px] pointer-events-none rounded-full" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* Header Row */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-10 gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8EF705] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#529402]"></span>
-                </span>
-                <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-[#529402]">
-                  FRESH HARVEST DROPS
-                </span>
-              </div>
-              <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight uppercase leading-none">
-                NEW ARRIVALS
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-600 mt-2 max-w-xl font-light">
-                Discover the latest single-strain flowers, live resin carts, and boutique arrivals.
-              </p>
-            </div>
-
-            {/* Right Controls */}
-            <div className="flex items-center gap-3 self-start sm:self-auto">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => scrollNew('left')}
-                  disabled={!canScrollNewLeft}
-                  aria-label="Scroll left new arrivals"
-                  className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${
-                    canScrollNewLeft
-                      ? 'bg-slate-100 hover:bg-[#8EF705] border-slate-200 hover:border-[#8EF705] text-slate-800 hover:text-black shadow-xs cursor-pointer active:scale-95'
-                      : 'bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed opacity-40'
-                  }`}
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => scrollNew('right')}
-                  disabled={!canScrollNewRight}
-                  aria-label="Scroll right new arrivals"
-                  className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${
-                    canScrollNewRight
-                      ? 'bg-slate-100 hover:bg-[#8EF705] border-slate-200 hover:border-[#8EF705] text-slate-800 hover:text-black shadow-xs cursor-pointer active:scale-95'
-                      : 'bg-slate-50 border-slate-200 text-slate-300 cursor-not-allowed opacity-40'
-                  }`}
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-
-              <button
-                onClick={() => navigateTo('new-arrivals')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-heading font-extrabold text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer"
-              >
-                <span>View Full Catalog</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Cards Track with Dynamic Progress Bar */}
-          {loadingNewArrivals ? (
-            <div className="flex gap-6 overflow-hidden py-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="w-[275px] sm:w-[295px] shrink-0 rounded-2xl bg-slate-50 border border-slate-200 p-4 space-y-4 animate-pulse shadow-xs"
-                >
-                  <div className="aspect-square bg-slate-200/70 rounded-xl" />
-                  <div className="h-4 bg-slate-200/70 rounded w-3/4" />
-                  <div className="h-3 bg-slate-200/70 rounded w-1/2" />
-                  <div className="h-9 bg-slate-200/70 rounded-xl w-full mt-4" />
-                </div>
-              ))}
-            </div>
-          ) : newArrivals.length > 0 ? (
-            <div className="space-y-6">
-              <div
-                ref={newArrivalsRef}
-                onScroll={handleNewArrivalsScroll}
-                className="flex gap-6 overflow-x-auto scroll-smooth py-2 snap-x snap-mandatory"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              >
-                {newArrivals.map((product) => (
+            {/* Products Grid */}
+            {loadingBestSellers ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 py-2">
+                {[1, 2, 3, 4].map((i) => (
                   <div
-                    key={product.pk || product.id}
-                    className="w-[275px] sm:w-[295px] shrink-0 snap-start"
+                    key={i}
+                    className="rounded-2xl bg-slate-50 border border-slate-200 p-4 space-y-4 animate-pulse shadow-xs"
                   >
-                    <ProductCard product={product} />
+                    <div className="aspect-square bg-slate-200/70 rounded-xl" />
+                    <div className="h-4 bg-slate-200/70 rounded w-3/4" />
+                    <div className="h-3 bg-slate-200/70 rounded w-1/2" />
+                    <div className="h-9 bg-slate-200/70 rounded-xl w-full mt-4" />
                   </div>
                 ))}
               </div>
+            ) : bestSellers.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 py-2">
+                  {displayedBestSellers.map((product) => (
+                    <ProductCard
+                      key={product.pk || product.id}
+                      product={product}
+                    />
+                  ))}
+                </div>
 
-              {/* Interactive Smooth Progress Bar */}
-              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/60">
-                <div
-                  className="h-full bg-gradient-to-r from-[#529402] to-[#8EF705] rounded-full transition-all duration-150"
-                  style={{ width: `${Math.max(10, newScrollProgress)}%` }}
-                />
+                {bestSellers.length > 4 && (
+                  <div className="mt-10 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={handleToggleBestSellers}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-heading font-extrabold text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer group"
+                    >
+                      <span>{showAllBestSellers ? 'Show Less' : `View All (${bestSellers.length} Products)`}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${showAllBestSellers ? 'rotate-180' : ''}`} />
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="py-14 text-center rounded-2xl border border-dashed border-slate-200 bg-slate-50">
+                <p className="text-sm font-medium text-slate-500">
+                  No best sellers currently available.
+                </p>
               </div>
-            </div>
-          ) : (
-            <div className="py-14 text-center rounded-2xl border border-dashed border-slate-200 bg-slate-50">
-              <p className="text-sm font-medium text-slate-500">
-                No new arrivals found at this moment.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* =========================================================================
-          SECTION 5: BRAND VALUES ("THE PHARSYDE PROMISE")
+          SECTION 4: NEW ARRIVALS (PANORAMIC CRISP WHITE SHOWCASE)
          ========================================================================= */}
-      <section className="py-28 relative bg-[#F8FAFC] overflow-hidden border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-20">
-            
-            <h2 className="font-heading text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight uppercase mb-5 leading-tight">
-              THE PHARSYDE <span className="font-heading italic font-light text-[#225203]">Promise</span>
-            </h2>
-            <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed font-light">
-              Our core commitments to uncompromising quality, meticulous curation, and modern living.
-            </p>
+      {showNewArrivalsSection && (
+        <section ref={newArrivalsSectionRef} className="py-20 relative bg-white border-t border-slate-200 overflow-hidden">
+          <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#8EF705]/5 blur-[120px] pointer-events-none rounded-full" />
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            {/* Header Row */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-10 gap-4">
+              <div>
+                <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight uppercase leading-none">
+                  NEW ARRIVALS
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 mt-2 max-w-xl font-light">
+                  Discover the latest single-strain flowers, live resin carts, and boutique arrivals.
+                </p>
+              </div>
+
+              {/* Header Action Button (View All / Show Less) */}
+              {newArrivals.length > 4 && (
+                <div className="flex items-center gap-3 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={handleToggleNewArrivals}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-heading font-extrabold text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer group"
+                  >
+                    <span>{showAllNewArrivals ? 'Show Less' : `View All (${newArrivals.length})`}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${showAllNewArrivals ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Products Grid */}
+            {loadingNewArrivals ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 py-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="rounded-2xl bg-slate-50 border border-slate-200 p-4 space-y-4 animate-pulse shadow-xs"
+                  >
+                    <div className="aspect-square bg-slate-200/70 rounded-xl" />
+                    <div className="h-4 bg-slate-200/70 rounded w-3/4" />
+                    <div className="h-3 bg-slate-200/70 rounded w-1/2" />
+                    <div className="h-9 bg-slate-200/70 rounded-xl w-full mt-4" />
+                  </div>
+                ))}
+              </div>
+            ) : newArrivals.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 py-2">
+                  {displayedNewArrivals.map((product) => (
+                    <ProductCard
+                      key={product.pk || product.id}
+                      product={product}
+                    />
+                  ))}
+                </div>
+
+                {newArrivals.length > 4 && (
+                  <div className="mt-10 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={handleToggleNewArrivals}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-heading font-extrabold text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer group"
+                    >
+                      <span>{showAllNewArrivals ? 'Show Less' : `View All (${newArrivals.length} Products)`}</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${showAllNewArrivals ? 'rotate-180' : ''}`} />
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="py-14 text-center rounded-2xl border border-dashed border-slate-200 bg-slate-50">
+                <p className="text-sm font-medium text-slate-500">
+                  No new arrivals found at this moment.
+                </p>
+              </div>
+            )}
           </div>
+        </section>
+      )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {/* Pillar 01: Quality First */}
-            <div className="group relative rounded-3xl p-8 bg-white border border-slate-200 hover:border-[#8EF705] transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1">
-              <span className="absolute top-4 right-6 font-heading font-black text-6xl text-slate-200 group-hover:text-slate-300 transition-colors select-none pointer-events-none">
-                01
-              </span>
+      {/* =========================================================================
+          DYNAMIC CUSTOM HOME SECTIONS (Configured via Home Page Section Master)
+         ========================================================================= */}
+      {homeSections.map((sec) => {
+        const isExpanded = Boolean(expandedSections[sec.id]);
+        const displayedProducts = isExpanded ? sec.products : sec.products.slice(0, 4);
 
-              <div>
-                <div className="flex items-center justify-between mb-7">
-                  <div className="w-14 h-14 rounded-2xl bg-[#8EF705]/25 border border-[#8EF705]/60 group-hover:scale-105 flex items-center justify-center text-slate-900 shadow-sm transition-all duration-500">
-                    <Award className="w-7 h-7 text-slate-900" />
+        return (
+          <section
+            key={sec.id}
+            className="py-20 relative bg-white border-t border-slate-200 overflow-hidden"
+          >
+            <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#8EF705]/5 blur-[120px] pointer-events-none rounded-full" />
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+              {/* Header Row */}
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-10 gap-4">
+                <div>
+                  <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight uppercase leading-none">
+                    {sec.heading}
+                  </h2>
+                  {sec.sub_heading && (
+                    <p className="text-xs sm:text-sm text-slate-600 mt-2 max-w-xl font-light">
+                      {sec.sub_heading}
+                    </p>
+                  )}
+                </div>
+
+                {/* Header Action Button (View All / Show Less) */}
+                {sec.products.length > 4 && (
+                  <div className="flex items-center gap-3 self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleDynamicSection(sec.id)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-heading font-extrabold text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer group"
+                    >
+                      <span>{isExpanded ? 'Show Less' : `View All (${sec.products.length})`}</span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                          isExpanded ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
                   </div>
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.18em] uppercase bg-slate-50 border border-slate-200 text-slate-600 group-hover:text-[#529402] group-hover:border-[#8EF705] transition-colors">
-                    PILLAR 01
-                  </span>
-                </div>
-
-                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#529402] mb-1.5 block">
-                  STANDARDS & PURITY
-                </span>
-                <h3 className="font-heading text-xl font-bold text-slate-900 mb-3 transition-colors">
-                  Quality First
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6 font-light">
-                  We never compromise on product integrity. Every batch is certified, cold-stored, and handled with meticulous care.
-                </p>
+                )}
               </div>
 
-              <div className="pt-5 border-t border-slate-100 flex flex-col gap-2">
-                <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#529402] shrink-0" />
-                  <span className="font-medium">Small-Batch Lot Verified</span>
-                </div>
-                <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#529402] shrink-0" />
-                  <span className="font-medium">Cold-Chain Maintained</span>
-                </div>
+              {/* Products Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 py-2">
+                {displayedProducts.map((product) => (
+                  <ProductCard
+                    key={product.pk || product.id}
+                    product={product}
+                  />
+                ))}
               </div>
+
+              {/* Bottom Centered Toggle Button */}
+              {sec.products.length > 4 && (
+                <div className="mt-10 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleDynamicSection(sec.id)}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-heading font-extrabold text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer group"
+                  >
+                    <span>
+                      {isExpanded ? 'Show Less' : `View All (${sec.products.length} Products)`}
+                    </span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                        isExpanded ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                </div>
+              )}
             </div>
-
-            {/* Pillar 02: Thoughtful Selection */}
-            <div className="group relative rounded-3xl p-8 bg-white border border-slate-200 hover:border-orange-500/60 transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1">
-              <span className="absolute top-4 right-6 font-heading font-black text-6xl text-slate-200 group-hover:text-slate-300 transition-colors select-none pointer-events-none">
-                02
-              </span>
-
-              <div>
-                <div className="flex items-center justify-between mb-7">
-                  <div className="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-200 group-hover:border-orange-500 flex items-center justify-center text-orange-600 shadow-sm transition-all duration-500 group-hover:scale-105">
-                    <Compass className="w-7 h-7" />
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.18em] uppercase bg-slate-50 border border-slate-200 text-slate-600 group-hover:text-orange-600 group-hover:border-orange-300 transition-colors">
-                    PILLAR 02
-                  </span>
-                </div>
-
-                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-600 mb-1.5 block">
-                  ARTISANAL VAULT
-                </span>
-                <h3 className="font-heading text-xl font-bold text-slate-900 mb-3 transition-colors">
-                  Thoughtful Selection
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6 font-light">
-                  We curate intentional items, weeding out filler products so our shelves hold only what truly elevates your ritual.
-                </p>
-              </div>
-
-              <div className="pt-5 border-t border-slate-100 flex flex-col gap-2">
-                <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-                  <span className="font-medium">Master Grower Direct</span>
-                </div>
-                <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-                  <span className="font-medium">Zero Low-Grade Filler</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Pillar 03: Customer Experience */}
-            <div className="group relative rounded-3xl p-8 bg-white border border-slate-200 hover:border-[#8EF705] transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1">
-              <span className="absolute top-4 right-6 font-heading font-black text-6xl text-slate-200 group-hover:text-slate-300 transition-colors select-none pointer-events-none">
-                03
-              </span>
-
-              <div>
-                <div className="flex items-center justify-between mb-7">
-                  <div className="w-14 h-14 rounded-2xl bg-[#8EF705]/25 border border-[#8EF705]/60 group-hover:scale-105 flex items-center justify-center text-slate-900 shadow-sm transition-all duration-500">
-                    <HeartHandshake className="w-7 h-7 text-slate-900" />
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.18em] uppercase bg-slate-50 border border-slate-200 text-slate-600 group-hover:text-[#529402] group-hover:border-[#8EF705] transition-colors">
-                    PILLAR 03
-                  </span>
-                </div>
-
-                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#529402] mb-1.5 block">
-                  CONCIERGE & CARE
-                </span>
-                <h3 className="font-heading text-xl font-bold text-slate-900 mb-3 transition-colors">
-                  Customer Experience
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6 font-light">
-                  Knowledgeable budtenders, seamless digital purchasing, rapid local fulfillment, and transparent return guidelines.
-                </p>
-              </div>
-
-              <div className="pt-5 border-t border-slate-100 flex flex-col gap-2">
-                <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#529402] shrink-0" />
-                  <span className="font-medium">117 Regent Ave Storefront</span>
-                </div>
-                <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#529402] shrink-0" />
-                  <span className="font-medium">30-Minute Rapid Pickup</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Pillar 04: Modern Lifestyle */}
-            <div className="group relative rounded-3xl p-8 bg-white border border-slate-200 hover:border-orange-500/60 transition-all duration-500 flex flex-col justify-between overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1">
-              <span className="absolute top-4 right-6 font-heading font-black text-6xl text-slate-200 group-hover:text-slate-300 transition-colors select-none pointer-events-none">
-                04
-              </span>
-
-              <div>
-                <div className="flex items-center justify-between mb-7">
-                  <div className="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-200 group-hover:border-orange-500 flex items-center justify-center text-orange-600 shadow-sm transition-all duration-500 group-hover:scale-105">
-                    <Zap className="w-7 h-7" />
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold tracking-[0.18em] uppercase bg-slate-50 border border-slate-200 text-slate-600 group-hover:text-orange-600 group-hover:border-orange-300 transition-colors">
-                    PILLAR 04
-                  </span>
-                </div>
-
-                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-600 mb-1.5 block">
-                  ELEVATED DESIGN
-                </span>
-                <h3 className="font-heading text-xl font-bold text-slate-900 mb-3 transition-colors">
-                  Modern Lifestyle
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6 font-light">
-                  Designed for contemporary living. Elegant aesthetics that seamlessly integrate with high-end interior spaces.
-                </p>
-              </div>
-
-              <div className="pt-5 border-t border-slate-100 flex flex-col gap-2">
-                <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-                  <span className="font-medium">Sculptural Borosilicate Glass</span>
-                </div>
-                <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-                  <span className="font-medium">CNC Machined Hardware</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+          </section>
+        );
+      })}
 
       {/* =========================================================================
           SECTION 6: NEWSLETTER ("STAY IN THE LOOP")

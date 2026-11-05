@@ -48,6 +48,7 @@ const initiatePaymentAttempt = async (req, res, next) => {
       address = '',
       city = 'Winnipeg',
       postalCode = '',
+      paymentMethod = 'credit',
       notes = '',
       gov_id_url = null,
     } = req.body;
@@ -203,8 +204,10 @@ const initiatePaymentAttempt = async (req, res, next) => {
       };
     });
 
-    // 30-Gram Legal Cannabis Purchase Limit Check (Canadian Cannabis Act)
-    const limitValidation = validateCannabisLimit(itemsForTax);
+    // Legal Cannabis Purchase Limit Check (Configured in Setting Master)
+    const configuredLimitStr = await SettingModel.getValue('cannabis_max_grams', '30.0');
+    const configuredLimit = parseFloat(configuredLimitStr) || 30.0;
+    const limitValidation = validateCannabisLimit(itemsForTax, configuredLimit);
     if (!limitValidation.valid) {
       return res.status(400).json({
         success: false,
@@ -216,7 +219,10 @@ const initiatePaymentAttempt = async (req, res, next) => {
       });
     }
 
-    const FREE_SHIPPING_THRESHOLD_CENTS = 7500; // $75.00 CAD
+    // Free Delivery Threshold Check (Configured in Setting Master)
+    const configuredThresholdStr = await SettingModel.getValue('free_delivery_threshold', '75.0');
+    const freeDeliveryThreshold = parseFloat(configuredThresholdStr) || 75.0;
+    const FREE_SHIPPING_THRESHOLD_CENTS = Math.round(freeDeliveryThreshold * 100);
     const shippingCents = isDelivery && subtotalCents < FREE_SHIPPING_THRESHOLD_CENTS ? 999 : 0;
 
     // Differential Tax Calculation: 5% Cannabis, 7% Nicotine
@@ -262,6 +268,7 @@ const initiatePaymentAttempt = async (req, res, next) => {
         fullName: customerName,
         email: customerEmail,
         phone: customerPhone,
+        paymentMethod: paymentMethod || customer.paymentMethod || 'credit',
         govIdUrl: customer.govIdUrl || customer.gov_id_url || gov_id_url || req.body.govIdUrl || null,
         notes,
       },
@@ -518,7 +525,7 @@ const finalizePayment = async (req, res, next) => {
         tax: attempt.tax_cents / 100,
         shipping: attempt.shipping_cents / 100,
         total: attempt.total_cents / 100,
-        payment_method: 'card',
+        payment_method: customerInfo.paymentMethod === 'debit' ? 'debit' : 'credit',
         payment_status: 'Paid',
         order_status: 'Confirmed',
         notes: customerInfo.notes || '',
@@ -527,7 +534,7 @@ const finalizePayment = async (req, res, next) => {
         moneris_ticket: verificationTicket,
         moneris_reference_no: receipt.referenceNumber || null,
         moneris_auth_code: receipt.authorizationCode || null,
-        card_brand: receipt.cardType || 'Visa',
+        card_brand: receipt.cardType || (customerInfo.paymentMethod === 'debit' ? 'Visa Debit' : 'Visa'),
         card_last4: receipt.lastFourDigits || null,
       },
       items: (attempt.items || []).map((it) => ({

@@ -1,14 +1,12 @@
-const path = require('path');
-const fs = require('fs');
 const SettingModel = require('../models/settingModel');
-const uploadConfig = require('../config/uploadConfig');
 
 // =========================================================================
 // DEFAULT FALLBACK CONSTANTS
+// (Matches Jasmin ERP: APK is placed in public_html/apk/app-release.apk)
 // =========================================================================
 const HARDCODED_APP_VERSION = '1.0.0';
 const HARDCODED_MIN_VERSION = '1.0.0';
-const HARDCODED_APK_URL = 'https://pharsyde.jeenhost.in/uploads/apk/app-release.apk';
+const HARDCODED_APK_URL = 'https://pharsyde.jeenhost.in/apk/app-release.apk';
 const HARDCODED_FORCE_UPDATE = 'true';
 const HARDCODED_RELEASE_NOTES = 'Performance improvements, checkout optimizations, and bug fixes.';
 
@@ -87,33 +85,6 @@ const getAppVersionConfig = async () => {
 };
 
 /**
- * Checks local upload directory for app-release.apk if present on server filesystem
- */
-const findLocalApk = () => {
-  const candidatePaths = [
-    path.join(uploadConfig.uploadDir, 'apk', 'app-release.apk'),
-    path.join(uploadConfig.uploadDir, 'app-release.apk'),
-    path.resolve(__dirname, '..', 'uploads', 'apk', 'app-release.apk'),
-    path.resolve(__dirname, '..', 'uploads', 'app-release.apk'),
-  ];
-
-  for (const filePath of candidatePaths) {
-    try {
-      if (fs.existsSync(filePath)) {
-        const stats = fs.statSync(filePath);
-        if (stats.isFile()) {
-          return { exists: true, filePath, stats };
-        }
-      }
-    } catch {
-      // ignore & check next
-    }
-  }
-
-  return { exists: false, checkedPath: candidatePaths[0] };
-};
-
-/**
  * @route   GET/POST /api/app/check-update or /api/app/version
  * @desc    Check if mobile app requires an update and get active version details
  * @access  Public
@@ -167,7 +138,8 @@ const checkAppVersion = async (req, res) => {
 
 /**
  * @route   GET /api/app/download
- * @desc    Direct APK download / redirect endpoint
+ * @desc    Direct APK download / redirect endpoint (matches Jasmin ERP)
+ *          Redirects straight to public_html/apk/app-release.apk
  * @access  Public
  */
 const downloadApk = async (req, res) => {
@@ -175,7 +147,7 @@ const downloadApk = async (req, res) => {
     const config = await getAppVersionConfig();
     const clientVersion = req.body?.version || req.query?.version || req.headers?.['x-app-version'];
 
-    // If client provided its version and it is already latest, no download required
+    // If client specifically sent its version and it already matches, no need to download
     if (clientVersion && normalizeVersion(clientVersion) === normalizeVersion(config.latestVersion)) {
       return res.status(200).json({
         success: true,
@@ -186,23 +158,7 @@ const downloadApk = async (req, res) => {
       });
     }
 
-    // Check if local APK exists to stream directly
-    const localApk = findLocalApk();
-    if (localApk.exists) {
-      const filename = 'app-release.apk';
-      res.setHeader('Content-Type', 'application/vnd.android.package-archive');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.setHeader('Content-Length', localApk.stats.size);
-
-      return res.download(localApk.filePath, filename, (err) => {
-        if (err && !res.headersSent) {
-          console.error('[AppVersion] Error streaming APK:', err);
-          return res.redirect(config.downloadUrl);
-        }
-      });
-    }
-
-    // Fallback: Redirect straight to configured public APK download URL
+    // Redirect directly to the public_html/apk/app-release.apk URL
     return res.redirect(config.downloadUrl);
   } catch (error) {
     console.error('[AppVersion] Error in downloadApk:', error);
@@ -286,5 +242,4 @@ module.exports = {
   checkAppVersion,
   downloadApk,
   setAppVersion,
-  findLocalApk,
 };

@@ -14,7 +14,7 @@
     "tax": 0,
     "shipping": 0,
     "total": 105.26,
-    "payment_method": "interac",
+    "payment_method": "card",
     "payment_status": "Pending",
     "order_status": "Confirmed",
     "notes": "",

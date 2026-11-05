@@ -10,10 +10,12 @@ const {
   deleteProduct,
   getCategories,
   getBrands,
+  getStrains,
   syncTechPOS,
   syncImages,
   syncAllTechPOS,
 } = require('../controllers/productController');
+const { getPublicHomeSections } = require('../controllers/homeSectionController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
@@ -21,6 +23,7 @@ const router = express.Router();
 // Metadata & Sync routes (Must precede /:id)
 router.get('/meta/categories', getCategories);
 router.get('/meta/brands', getBrands);
+router.get('/meta/strains', getStrains);
 router.post('/sync-techpos', syncTechPOS);
 router.get('/sync-techpos', syncTechPOS);
 router.post('/sync-images', syncImages);
@@ -32,6 +35,7 @@ router.get('/sync-all', syncAllTechPOS);
 router.get('/', getProducts);
 router.get('/new-arrivals', getNewArrivals);
 router.get('/best-sellers', getBestSellers);
+router.get('/home-sections', getPublicHomeSections);
 router.get('/:id', getProductById);
 
 // Admin-protected routes

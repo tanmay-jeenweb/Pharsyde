@@ -15,6 +15,8 @@ const getProducts = async (req, res, next) => {
       subCategory,
       brand,
       strain,
+      minPrice,
+      maxPrice,
       storeId,
       active,
       hasImage,
@@ -31,6 +33,8 @@ const getProducts = async (req, res, next) => {
         subCategory,
         brand,
         strain,
+        minPrice,
+        maxPrice,
         storeId,
         active,
         hasImage,
@@ -40,7 +44,7 @@ const getProducts = async (req, res, next) => {
         sortBy,
         sortOrder
       }),
-      ProductModel.count({ category, brand, active, hasImage, search, storeId })
+      ProductModel.count({ category, brand, strain, minPrice, maxPrice, active, hasImage, search, storeId })
     ]);
 
     res.status(200).json({
@@ -292,10 +296,29 @@ const getCategories = async (req, res, next) => {
  */
 const getBrands = async (req, res, next) => {
   try {
-    const brands = await ProductModel.getBrands();
+    const { category, hasImage } = req.query;
+    const brands = await ProductModel.getBrands({ category, hasImage: hasImage === 'true' });
     res.status(200).json({
       success: true,
       brands,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   GET /api/products/meta/strains
+ * @desc    Get all distinct strains
+ * @access  Public
+ */
+const getStrains = async (req, res, next) => {
+  try {
+    const { category, hasImage } = req.query;
+    const strains = await ProductModel.getStrains({ category, hasImage: hasImage === 'true' });
+    res.status(200).json({
+      success: true,
+      strains,
     });
   } catch (error) {
     next(error);
@@ -394,6 +417,7 @@ module.exports = {
   deleteProduct,
   getCategories,
   getBrands,
+  getStrains,
   syncTechPOS,
   syncImages,
   syncAllTechPOS,

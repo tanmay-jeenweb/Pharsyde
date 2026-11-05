@@ -1,7 +1,7 @@
 import React, { useId } from 'react';
 
 const DEFAULT_VERSION = "01.00.00";
-const DEFAULT_DOWNLOAD_URL = "";
+const DEFAULT_DOWNLOAD_URL = "https://pharsyde.jeenhost.in/apk/app-release.apk";
 
 /**
  * AppDownloadBadge component for Pharsyde Customer Home & Navigation
@@ -28,12 +28,14 @@ export default function AppDownloadBadge({
   const titleClasses = isDark ? "text-white group-hover:text-[#8EF705]" : "text-slate-900 group-hover:text-slate-950";
   const dividerClasses = isDark ? "border-slate-800" : "border-slate-200";
 
+  const activeDownloadUrl = downloadUrl || DEFAULT_DOWNLOAD_URL;
+
   return (
     <a
-      href={downloadUrl}
+      href={activeDownloadUrl}
       target="_blank"
       rel="noopener noreferrer"
-      download
+      download="app-release.apk"
       title={`Download Android App (${formattedVersion})`}
       className={`group inline-flex items-center gap-2.5 px-3.5 py-2 rounded-xl border transition-all duration-200 cursor-pointer select-none ${containerClasses} ${className}`}
     >

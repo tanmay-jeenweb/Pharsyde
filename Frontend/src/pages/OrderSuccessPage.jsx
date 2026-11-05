@@ -54,7 +54,7 @@ export default function OrderSuccessPage() {
                 Payment Method:
               </span>
               <strong className="text-emerald-700 uppercase font-heading">
-                Credit Card (Moneris Secured)
+                Credit / Debit Card (Moneris Secured)
               </strong>
             </div>
 

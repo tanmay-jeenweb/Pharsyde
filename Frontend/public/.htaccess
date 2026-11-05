@@ -15,7 +15,7 @@
   RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
   # ----------------------------------------------------------------------
-  # 2. Reverse Proxy API & Uploads to Node.js Backend (Port 5000)
+  # 2. Reverse Proxy API, Uploads & Downloads to Node.js Backend (Port 5000)
   # ----------------------------------------------------------------------
   <IfModule mod_proxy.c>
     # Proxy /api requests to backend
@@ -24,6 +24,10 @@
 
     # Proxy /uploads requests to backend
     RewriteRule ^uploads/(.*)$ http://127.0.0.1:5000/uploads/$1 [P,L]
+
+    # Proxy /download requests to backend
+    RewriteRule ^download/(.*)$ http://127.0.0.1:5000/download/$1 [P,L]
+    RewriteRule ^download$ http://127.0.0.1:5000/download [P,L]
   </IfModule>
 
   # ----------------------------------------------------------------------
@@ -34,8 +38,8 @@
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # Exclude API and Uploads from SPA rewrites
-  RewriteCond %{REQUEST_URI} ^/(api|uploads) [NC]
+  # Exclude API, Uploads, Downloads, and APK directory from SPA rewrites
+  RewriteCond %{REQUEST_URI} ^/(api|uploads|download|apk) [NC]
   RewriteRule ^ - [L]
 
   # Fallback all other routes to React index.html
@@ -85,6 +89,13 @@
   Order allow,deny
   Deny from all
 </FilesMatch>
+
+# ----------------------------------------------------------------------
+# 7. MIME Types
+# ----------------------------------------------------------------------
+<IfModule mod_mime.c>
+  AddType application/vnd.android.package-archive .apk
+</IfModule>
 
 Options -Indexes
 

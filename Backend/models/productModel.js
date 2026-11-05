@@ -147,6 +147,8 @@ const ProductModel = {
     subCategory,
     brand,
     strain,
+    minPrice,
+    maxPrice,
     storeId,
     active,
     hasImage,
@@ -190,13 +192,45 @@ const ProductModel = {
     }
 
     if (brand) {
-      query += ' AND brand = ?';
-      params.push(brand);
+      const brands = Array.isArray(brand)
+        ? brand
+        : (typeof brand === 'string' && brand.includes(',')
+            ? brand.split(',').map((b) => b.trim()).filter(Boolean)
+            : [brand]);
+
+      if (brands.length === 1) {
+        query += ' AND brand = ?';
+        params.push(brands[0]);
+      } else if (brands.length > 1) {
+        query += ` AND brand IN (${brands.map(() => '?').join(', ')})`;
+        params.push(...brands);
+      }
     }
 
     if (strain) {
-      query += ' AND strain = ?';
-      params.push(strain);
+      const strains = Array.isArray(strain)
+        ? strain
+        : (typeof strain === 'string' && strain.includes(',')
+            ? strain.split(',').map((s) => s.trim()).filter(Boolean)
+            : [strain]);
+
+      if (strains.length === 1) {
+        query += ' AND strain = ?';
+        params.push(strains[0]);
+      } else if (strains.length > 1) {
+        query += ` AND strain IN (${strains.map(() => '?').join(', ')})`;
+        params.push(...strains);
+      }
+    }
+
+    if (minPrice !== undefined && minPrice !== null && minPrice !== '' && !isNaN(Number(minPrice))) {
+      query += ' AND CAST(retail_price AS DECIMAL(10,2)) >= ?';
+      params.push(Number(minPrice));
+    }
+
+    if (maxPrice !== undefined && maxPrice !== null && maxPrice !== '' && !isNaN(Number(maxPrice))) {
+      query += ' AND CAST(retail_price AS DECIMAL(10,2)) <= ?';
+      params.push(Number(maxPrice));
     }
 
     if (storeId !== undefined) {
@@ -242,7 +276,7 @@ const ProductModel = {
   /**
    * Count products matching filters
    */
-  async count({ category, brand, active, hasImage, search, storeId } = {}) {
+  async count({ category, brand, strain, minPrice, maxPrice, active, hasImage, search, storeId } = {}) {
     let query = 'SELECT COUNT(*) as total FROM products WHERE 1=1';
     const params = [];
 
@@ -272,8 +306,45 @@ const ProductModel = {
     }
 
     if (brand) {
-      query += ' AND brand = ?';
-      params.push(brand);
+      const brands = Array.isArray(brand)
+        ? brand
+        : (typeof brand === 'string' && brand.includes(',')
+            ? brand.split(',').map((b) => b.trim()).filter(Boolean)
+            : [brand]);
+
+      if (brands.length === 1) {
+        query += ' AND brand = ?';
+        params.push(brands[0]);
+      } else if (brands.length > 1) {
+        query += ` AND brand IN (${brands.map(() => '?').join(', ')})`;
+        params.push(...brands);
+      }
+    }
+
+    if (strain) {
+      const strains = Array.isArray(strain)
+        ? strain
+        : (typeof strain === 'string' && strain.includes(',')
+            ? strain.split(',').map((s) => s.trim()).filter(Boolean)
+            : [strain]);
+
+      if (strains.length === 1) {
+        query += ' AND strain = ?';
+        params.push(strains[0]);
+      } else if (strains.length > 1) {
+        query += ` AND strain IN (${strains.map(() => '?').join(', ')})`;
+        params.push(...strains);
+      }
+    }
+
+    if (minPrice !== undefined && minPrice !== null && minPrice !== '' && !isNaN(Number(minPrice))) {
+      query += ' AND CAST(retail_price AS DECIMAL(10,2)) >= ?';
+      params.push(Number(minPrice));
+    }
+
+    if (maxPrice !== undefined && maxPrice !== null && maxPrice !== '' && !isNaN(Number(maxPrice))) {
+      query += ' AND CAST(retail_price AS DECIMAL(10,2)) <= ?';
+      params.push(Number(maxPrice));
     }
 
     if (storeId !== undefined) {
@@ -496,9 +567,59 @@ const ProductModel = {
   /**
    * Get distinct brands
    */
-  async getBrands() {
-    const [rows] = await pool.query('SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL ORDER BY brand ASC');
+  async getBrands({ category, hasImage } = {}) {
+    let query = 'SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL AND brand != ""';
+    const params = [];
+    if (hasImage === 'true' || hasImage === true) {
+      query += ' AND imageUrl IS NOT NULL AND imageUrl != "" AND imageUrl != "[]"';
+    }
+    if (category) {
+      const categories = Array.isArray(category)
+        ? category
+        : (typeof category === 'string' && category.includes(',')
+            ? category.split(',').map((c) => c.trim()).filter(Boolean)
+            : [category]);
+
+      if (categories.length === 1) {
+        query += ' AND category = ?';
+        params.push(categories[0]);
+      } else if (categories.length > 1) {
+        query += ` AND category IN (${categories.map(() => '?').join(', ')})`;
+        params.push(...categories);
+      }
+    }
+    query += ' ORDER BY brand ASC';
+    const [rows] = await pool.query(query, params);
     return rows.map((r) => r.brand);
+  },
+
+  /**
+   * Get distinct strains
+   */
+  async getStrains({ category, hasImage } = {}) {
+    let query = 'SELECT DISTINCT strain FROM products WHERE strain IS NOT NULL AND strain != "" AND strain != "None"';
+    const params = [];
+    if (hasImage === 'true' || hasImage === true) {
+      query += ' AND imageUrl IS NOT NULL AND imageUrl != "" AND imageUrl != "[]"';
+    }
+    if (category) {
+      const categories = Array.isArray(category)
+        ? category
+        : (typeof category === 'string' && category.includes(',')
+            ? category.split(',').map((c) => c.trim()).filter(Boolean)
+            : [category]);
+
+      if (categories.length === 1) {
+        query += ' AND category = ?';
+        params.push(categories[0]);
+      } else if (categories.length > 1) {
+        query += ` AND category IN (${categories.map(() => '?').join(', ')})`;
+        params.push(...categories);
+      }
+    }
+    query += ' ORDER BY strain ASC';
+    const [rows] = await pool.query(query, params);
+    return rows.map((r) => r.strain);
   }
 };
 

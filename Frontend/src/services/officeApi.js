@@ -434,3 +434,58 @@ export async function updateAppVersionSettingsApi(payload) {
   return handleResponse(res);
 }
 
+// ─────────────────────────────────────────────────────────────
+// Home Page Section Master
+// ─────────────────────────────────────────────────────────────
+
+export async function getOfficeHomeSectionsApi() {
+  const res = await fetch(`${API_BASE}/home-sections`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function createOfficeHomeSectionApi(payload) {
+  const res = await fetch(`${API_BASE}/home-sections`, {
+    method: 'POST',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+}
+
+export async function updateOfficeHomeSectionApi(id, payload) {
+  const res = await fetch(`${API_BASE}/home-sections/${id}`, {
+    method: 'PUT',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+}
+
+export async function toggleOfficeHomeSectionActiveApi(id) {
+  const res = await fetch(`${API_BASE}/home-sections/${id}/toggle-active`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function deleteOfficeHomeSectionApi(id) {
+  const res = await fetch(`${API_BASE}/home-sections/${id}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function reorderOfficeHomeSectionsApi(orderList) {
+  const res = await fetch(`${API_BASE}/home-sections/reorder`, {
+    method: 'PUT',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify({ orderList }),
+  });
+  return handleResponse(res);
+}
+
+
