@@ -36,12 +36,12 @@ export default function Navbar() {
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
           isScrolled
-            ? 'bg-white/95 backdrop-blur-xl border-b border-slate-200/90 py-3 shadow-[0_4px_24px_rgba(15,23,42,0.06)]'
-            : 'bg-white/85 backdrop-blur-md py-4 border-b border-slate-200/50 shadow-xs'
+            ? 'bg-white/95 backdrop-blur-xl border-b border-slate-200/90 py-3 sm:py-3.5 shadow-[0_4px_24px_rgba(15,23,42,0.06)]'
+            : 'bg-white/85 backdrop-blur-md py-4 sm:py-5 border-b border-slate-200/50 shadow-xs'
         }`}
       >
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-4">
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-14">
+          <div className="flex items-center justify-between gap-6 sm:gap-8">
             {/* Left: Brand Logo */}
             <Link
               to="/"
@@ -51,12 +51,12 @@ export default function Navbar() {
               <img
                 src={logoImg}
                 alt="PHARSYDE"
-                className="h-8 sm:h-9 md:h-10 w-auto object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_2px_12px_rgba(142,247,5,0.45)]"
+                className="h-9 sm:h-10 md:h-11 w-auto object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_2px_12px_rgba(142,247,5,0.45)]"
               />
             </Link>
 
             {/* Centre: Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-0.5 bg-slate-100/90 backdrop-blur-xl px-1.5 py-1 rounded-full border border-slate-200/80 shadow-inner">
+            <nav className="hidden lg:flex items-center space-x-1 sm:space-x-1.5 bg-slate-100/90 backdrop-blur-xl px-2.5 sm:px-3 py-1.5 rounded-full border border-slate-200/80 shadow-inner">
               {navLinks.map((link) => {
                 const isActive = link.path === '/'
                   ? location.pathname === '/'
@@ -65,7 +65,7 @@ export default function Navbar() {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`group relative px-2.5 py-1 text-md   lg:text-[15px] font-semibold tracking-tight uppercase whitespace-nowrap transition-all duration-200 rounded-full shrink-0 ${
+                    className={`group relative px-4 sm:px-5 py-2 text-sm lg:text-[15px] font-semibold tracking-wide uppercase whitespace-nowrap transition-all duration-200 rounded-full shrink-0 ${
                       isActive
                         ? 'text-slate-900 bg-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -75,7 +75,7 @@ export default function Navbar() {
 
                     {/* Active Underline in #8EF705 */}
                     <span
-                      className={`absolute bottom-0.5 inset-x-2.5 h-[2px] rounded-full transition-all duration-300 ${
+                      className={`absolute bottom-1 inset-x-4 h-[2px] rounded-full transition-all duration-300 ${
                         isActive
                           ? 'bg-[#8EF705] shadow-[0_0_8px_#8EF705] opacity-100'
                           : 'bg-[#8EF705]/0 opacity-0 group-hover:opacity-40 group-hover:bg-[#8EF705]'
@@ -87,7 +87,7 @@ export default function Navbar() {
             </nav>
 
             {/* Right: Actions */}
-            <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="flex items-center space-x-2.5 sm:space-x-3.5">
               {/* Search Button */}
               <button
                 onClick={() => setIsSearchOpen(true)}

@@ -936,10 +936,7 @@ export default function CatalogPage({ pageType: propPageType }) {
               )}
 
               {/* Verified Image Indicator Badge */}
-              <div className="pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                <span>Only items with verified photos</span>
-              </div>
+              
             </div>
           </aside>
 

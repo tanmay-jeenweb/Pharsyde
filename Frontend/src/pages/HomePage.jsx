@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import ProductCard from '../components/common/ProductCard';
 import AppDownloadBadge from '../components/common/AppDownloadBadge';
@@ -10,12 +11,16 @@ import {
   getPublicHomeSectionsApi
 } from '../services/productService';
 import heroBg from '../assets/hero-bg.png';
+import cannabisCategoryImg from '../assets/cannabis-category.png';
+import nicotineCategoryImg from '../assets/nicotine-vape-category.png';
 import {
   ArrowRight,
   ChevronDown,
   CheckCircle2,
   Check,
-  Mail
+  Mail,
+  Sparkles,
+  Zap
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -297,6 +302,123 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================================================================
+          SECTION 2: FEATURED CATEGORIES - CANNABIS & NICOTINE VAPE BUTTONS
+         ========================================================================= */}
+      <section className="py-12 sm:py-16 lg:py-20 bg-slate-50 border-b border-slate-200/80 relative overflow-hidden">
+        {/* Ambient atmospheric glows */}
+        <div className="absolute top-1/2 left-10 w-96 h-96 bg-[#8EF705]/8 blur-[140px] pointer-events-none rounded-full" />
+        <div className="absolute top-1/2 right-10 w-96 h-96 bg-cyan-500/8 blur-[140px] pointer-events-none rounded-full" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-10 gap-3">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#8EF705] shadow-[0_0_10px_#8EF705]" />
+                <span className="text-xs font-mono font-bold uppercase tracking-[0.22em] text-[#488203]">
+                  EXPLORE OUR COLLECTIONS
+                </span>
+              </div>
+              <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight uppercase leading-none">
+                CANNABIS & NICOTINE VAPE
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600 mt-2 max-w-xl font-light">
+                Select your preferred collection to discover lab-tested craft cannabis or premium nicotine vape devices and pods.
+              </p>
+            </div>
+          </div>
+
+          {/* Dual Category Buttons Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch">
+            {/* BUTTON 1: CANNABIS */}
+            <Link
+              to="/cannabis"
+              aria-label="Shop Cannabis Collection"
+              className="group relative flex flex-col sm:flex-row items-stretch justify-between p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-[#0A160D] text-white border border-slate-800/90 hover:border-[#8EF705] shadow-xl hover:shadow-[0_20px_50px_rgba(142,247,5,0.22)] transition-all duration-500 overflow-hidden cursor-pointer h-full"
+            >
+              {/* Internal Accent Glow */}
+              <div className="absolute -top-24 -left-24 w-72 h-72 bg-[#8EF705]/15 blur-3xl pointer-events-none rounded-full group-hover:bg-[#8EF705]/25 transition-all duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#8EF705]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
+              {/* Text / Action Content */}
+              <div className="relative z-10 flex flex-col justify-between w-full sm:w-1/2 pr-0 sm:pr-4 h-full">
+                <div>
+                  <h3 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight uppercase text-white group-hover:text-[#8EF705] transition-colors duration-300">
+                    Cannabis
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-slate-300 mt-2 font-light leading-relaxed">
+                    Craft dried flower, pre-rolls, concentrates, extracts, edibles & infused beverages. Curated Manitoba craft harvests with verified lab-tested potency.
+                  </p>
+                  
+                </div>
+
+                {/* Styled Button Target (aligned at the bottom) */}
+                <div className="mt-8">
+                  <div className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-[#8EF705] text-slate-950 font-heading font-extrabold text-xs uppercase tracking-wider group-hover:bg-white group-hover:scale-105 transition-all duration-300 shadow-md shadow-[#8EF705]/30">
+                    <span>Shop Cannabis</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Image Preview / Showcase */}
+              <div className="relative z-10 w-full sm:w-1/2 mt-6 sm:mt-0 flex items-center justify-center">
+                <div className="absolute inset-0 bg-radial from-[#8EF705]/25 to-transparent blur-2xl rounded-full scale-90 group-hover:scale-115 transition-transform duration-700" />
+                <img
+                  src={cannabisCategoryImg}
+                  alt="Cannabis"
+                  className="relative z-10 max-h-56 sm:max-h-64 w-auto object-contain rounded-2xl drop-shadow-[0_15px_35px_rgba(142,247,5,0.4)] group-hover:scale-105 group-hover:-translate-y-1 transition-all duration-500"
+                />
+              </div>
+            </Link>
+
+            {/* BUTTON 2: NICOTINE VAPE */}
+            <Link
+              to="/nicotine"
+              aria-label="Shop Nicotine Vape Collection"
+              className="group relative flex flex-col sm:flex-row items-stretch justify-between p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-[#0A161E] text-white border border-slate-800/90 hover:border-cyan-400 shadow-xl hover:shadow-[0_20px_50px_rgba(6,182,212,0.22)] transition-all duration-500 overflow-hidden cursor-pointer h-full"
+            >
+              {/* Internal Accent Glow */}
+              <div className="absolute -top-24 -left-24 w-72 h-72 bg-cyan-400/15 blur-3xl pointer-events-none rounded-full group-hover:bg-cyan-400/25 transition-all duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
+              {/* Text / Action Content */}
+              <div className="relative z-10 flex flex-col justify-between w-full sm:w-1/2 pr-0 sm:pr-4 h-full">
+                <div>
+                  <h3 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight uppercase text-white group-hover:text-cyan-300 transition-colors duration-300">
+                    Nicotine Vape
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-slate-300 mt-2 font-light leading-relaxed">
+                    Closed pod systems, disposables, authentic e-liquids, replacement coils & hardware.
+                  </p>
+                </div>
+
+                {/* Styled Button Target (aligned at the bottom) */}
+                <div className="mt-8">
+                  <div className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-cyan-400 text-slate-950 font-heading font-extrabold text-xs uppercase tracking-wider group-hover:bg-white group-hover:scale-105 transition-all duration-300 shadow-md shadow-cyan-400/30">
+                    <span>Shop Nicotine Vape</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Image Preview / Showcase */}
+              <div className="relative z-10 w-full sm:w-1/2 mt-6 sm:mt-0 flex items-center justify-center">
+                <div className="absolute inset-0 bg-radial from-cyan-400/25 to-transparent blur-2xl rounded-full scale-90 group-hover:scale-115 transition-transform duration-700" />
+                <img
+                  src={nicotineCategoryImg}
+                  alt="Nicotine Vape"
+                  className="relative z-10 max-h-56 sm:max-h-64 w-auto object-contain rounded-2xl drop-shadow-[0_15px_35px_rgba(6,182,212,0.4)] group-hover:scale-105 group-hover:-translate-y-1 transition-all duration-500"
+                />
+              </div>
+            </Link>
           </div>
         </div>
       </section>
