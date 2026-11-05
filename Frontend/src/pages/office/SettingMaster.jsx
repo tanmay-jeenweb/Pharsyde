@@ -41,6 +41,15 @@ export default function SettingMaster() {
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
 
+  // ─── 0. Home Page Sections Visibility State ──────────────────
+  const [showBestSellers, setShowBestSellers] = useState(true);
+  const [originalShowBestSellers, setOriginalShowBestSellers] = useState(true);
+  const [savingShowBestSellers, setSavingShowBestSellers] = useState(false);
+
+  const [showNewArrivals, setShowNewArrivals] = useState(true);
+  const [originalShowNewArrivals, setOriginalShowNewArrivals] = useState(true);
+  const [savingShowNewArrivals, setSavingShowNewArrivals] = useState(false);
+
   // ─── 1. New Arrivals Limit State ─────────────────────────────
   const [newArrivalsLimit, setNewArrivalsLimit] = useState(24);
   const [originalLimit, setOriginalLimit] = useState(24);
@@ -115,6 +124,21 @@ export default function SettingMaster() {
       const res = await getOfficeSettingsApi();
       if (res.success && Array.isArray(res.settings)) {
         setSettings(res.settings);
+
+        // Parse Storefront Sections Visibility Settings
+        const bestSellerVis = res.settings.find((s) => s.key === 'show_best_sellers');
+        if (bestSellerVis) {
+          const isVis = bestSellerVis.value === 'true' || bestSellerVis.value === true;
+          setShowBestSellers(isVis);
+          setOriginalShowBestSellers(isVis);
+        }
+
+        const newArrivalsVis = res.settings.find((s) => s.key === 'show_new_arrivals');
+        if (newArrivalsVis) {
+          const isVis = newArrivalsVis.value === 'true' || newArrivalsVis.value === true;
+          setShowNewArrivals(isVis);
+          setOriginalShowNewArrivals(isVis);
+        }
 
         // Parse New Arrivals Limit
         const limitSetting = res.settings.find((s) => s.key === 'new_arrivals_limit');
@@ -239,6 +263,48 @@ export default function SettingMaster() {
     searchProducts('', 'all');
   }, []);
 
+
+  const handleToggleBestSellersVisibility = async (newValue) => {
+    const valToSave = newValue !== undefined ? newValue : !showBestSellers;
+    setShowBestSellers(valToSave);
+    try {
+      setSavingShowBestSellers(true);
+      const res = await updateOfficeSettingApi('show_best_sellers', valToSave ? 'true' : 'false');
+      if (res.success) {
+        setOriginalShowBestSellers(valToSave);
+        notify(`Best Sellers section on Home Page is now: ${valToSave ? 'Visible (Shown)' : 'Hidden'}.`);
+      } else {
+        setShowBestSellers(originalShowBestSellers);
+        notify(res.message || 'Failed to update Best Sellers visibility', 'error');
+      }
+    } catch (err) {
+      setShowBestSellers(originalShowBestSellers);
+      notify(err.message || 'Error updating setting', 'error');
+    } finally {
+      setSavingShowBestSellers(false);
+    }
+  };
+
+  const handleToggleNewArrivalsVisibility = async (newValue) => {
+    const valToSave = newValue !== undefined ? newValue : !showNewArrivals;
+    setShowNewArrivals(valToSave);
+    try {
+      setSavingShowNewArrivals(true);
+      const res = await updateOfficeSettingApi('show_new_arrivals', valToSave ? 'true' : 'false');
+      if (res.success) {
+        setOriginalShowNewArrivals(valToSave);
+        notify(`New Arrivals section on Home Page is now: ${valToSave ? 'Visible (Shown)' : 'Hidden'}.`);
+      } else {
+        setShowNewArrivals(originalShowNewArrivals);
+        notify(res.message || 'Failed to update New Arrivals visibility', 'error');
+      }
+    } catch (err) {
+      setShowNewArrivals(originalShowNewArrivals);
+      notify(err.message || 'Error updating setting', 'error');
+    } finally {
+      setSavingShowNewArrivals(false);
+    }
+  };
 
   const handleSaveGovIdSetting = async () => {
     try {
@@ -627,6 +693,113 @@ export default function SettingMaster() {
       </div>
 
       {/* ========================================================
+          SETTING 0: STOREFRONT HOME PAGE SECTIONS VISIBILITY
+          ======================================================== */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="border-b border-slate-100 px-6 py-4.5 bg-slate-50/60 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+              <Layers className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">
+                Home Page Storefront Sections Visibility
+              </h2>
+              <p className="text-xs text-slate-500">
+                Toggle switch to show or hide the Best Sellers and New Arrivals sections on the customer home page
+              </p>
+            </div>
+          </div>
+
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Storefront Visibility
+          </span>
+        </div>
+
+        <div className="p-6 space-y-6 divide-y divide-slate-100">
+          {/* Best Sellers Section Toggle */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 first:pt-0">
+            <div className="space-y-1 max-w-2xl">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-bold text-slate-800">Best Sellers Section</span>
+                <span className="text-xs font-normal text-slate-400 font-mono">(show_best_sellers)</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                  showBestSellers ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
+                }`}>
+                  {showBestSellers ? 'Visible on Home Page' : 'Hidden from Home Page'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Controls whether the Best Sellers section is displayed on the customer storefront home page. Toggle off to completely hide this section from customers.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 self-start sm:self-center">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={showBestSellers}
+                onClick={() => handleToggleBestSellersVisibility()}
+                disabled={loading || savingShowBestSellers}
+                className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 ${
+                  showBestSellers ? 'bg-emerald-600' : 'bg-slate-300'
+                }`}
+                title={showBestSellers ? 'Click to hide Best Sellers section' : 'Click to show Best Sellers section'}
+              >
+                <span className="sr-only">Toggle Best Sellers Section</span>
+                <span
+                  className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    showBestSellers ? 'translate-x-7' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+              {savingShowBestSellers && <RefreshCw className="w-4 h-4 text-emerald-600 animate-spin" />}
+            </div>
+          </div>
+
+          {/* New Arrivals Section Toggle */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6">
+            <div className="space-y-1 max-w-2xl">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-bold text-slate-800">New Arrivals Section</span>
+                <span className="text-xs font-normal text-slate-400 font-mono">(show_new_arrivals)</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                  showNewArrivals ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
+                }`}>
+                  {showNewArrivals ? 'Visible on Home Page' : 'Hidden from Home Page'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Controls whether the New Arrivals section is displayed on the customer storefront home page. Toggle off to completely hide this section from customers.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 self-start sm:self-center">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={showNewArrivals}
+                onClick={() => handleToggleNewArrivalsVisibility()}
+                disabled={loading || savingShowNewArrivals}
+                className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 ${
+                  showNewArrivals ? 'bg-emerald-600' : 'bg-slate-300'
+                }`}
+                title={showNewArrivals ? 'Click to hide New Arrivals section' : 'Click to show New Arrivals section'}
+              >
+                <span className="sr-only">Toggle New Arrivals Section</span>
+                <span
+                  className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    showNewArrivals ? 'translate-x-7' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+              {savingShowNewArrivals && <RefreshCw className="w-4 h-4 text-emerald-600 animate-spin" />}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================
           SETTING 1: NEW ARRIVALS DISPLAY LIMIT
           ======================================================== */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
@@ -645,9 +818,13 @@ export default function SettingMaster() {
             </div>
           </div>
 
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            Active Setting
-          </span>
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+              showNewArrivals ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
+            }`}>
+              Home Page: {showNewArrivals ? 'Visible' : 'Hidden'}
+            </span>
+          </div>
         </div>
 
         <form onSubmit={handleSaveArrivals} className="p-6 space-y-6">
@@ -795,6 +972,11 @@ export default function SettingMaster() {
           </div>
 
           <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+              showBestSellers ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
+            }`}>
+              Home Page: {showBestSellers ? 'Visible' : 'Hidden'}
+            </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
               <span>{selectedProductIds.length} Selected</span>
             </span>
