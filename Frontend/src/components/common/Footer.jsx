@@ -159,28 +159,7 @@ export default function Footer() {
                   {STORE_INFO.email}
                 </a>
               </div>
-              <div className="flex items-start gap-3 pt-1">
-                <Clock className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                <div className="text-xs space-y-0.5 text-slate-500">
-                  <p>Mon – Fri: 7:00 AM – 10:00 PM</p>
-                  <p>Saturday: 8:00 AM – 10:00 PM</p>
-                  <p>Sunday: 9:00 AM – 9:00 PM</p>
-                </div>
-              </div>
             </div>
-          </div>
-        </div>
-
-        {/* Regulatory Warnings & Compliance Bar */}
-        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 mb-10 flex flex-col md:flex-row items-center gap-4 text-xs">
-          <ShieldAlert className="w-8 h-8 text-orange-600 shrink-0" />
-          <div className="space-y-1 text-left">
-            <p className="font-bold text-slate-900 tracking-wide uppercase">
-              CANADIAN LEGAL & AGE NOTICE (MANITOBA 19+)
-            </p>
-            <p className="text-slate-600 leading-relaxed">
-              Cannabis products and nicotine devices sold at Pharsyde are strictly for adult consumption by persons aged 19 or older in accordance with Manitoba regulations. Government-issued photo identification is mandatory for all in-store purchases and age-verified deliveries. Keep out of reach of children and youth. Please consume responsibly.
-            </p>
           </div>
         </div>
 
