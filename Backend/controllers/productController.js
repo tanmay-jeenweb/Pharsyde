@@ -21,11 +21,24 @@ const getProducts = async (req, res, next) => {
       active,
       hasImage,
       search,
+      page,
       limit = 50,
-      offset = 0,
+      offset,
       sortBy = 'modified',
       sortOrder = 'DESC'
     } = req.query;
+
+    const parsedLimit = parseInt(limit, 10) > 0 ? parseInt(limit, 10) : 50;
+    const parsedPage = parseInt(page, 10);
+    let parsedOffset = parseInt(offset, 10);
+
+    if (isNaN(parsedOffset) || parsedOffset < 0) {
+      if (!isNaN(parsedPage) && parsedPage > 0) {
+        parsedOffset = (parsedPage - 1) * parsedLimit;
+      } else {
+        parsedOffset = 0;
+      }
+    }
 
     const [products, total] = await Promise.all([
       ProductModel.findAll({
@@ -39,18 +52,25 @@ const getProducts = async (req, res, next) => {
         active,
         hasImage,
         search,
-        limit,
-        offset,
+        limit: parsedLimit,
+        offset: parsedOffset,
         sortBy,
         sortOrder
       }),
-      ProductModel.count({ category, brand, strain, minPrice, maxPrice, active, hasImage, search, storeId })
+      ProductModel.count({ category, subCategory, brand, strain, minPrice, maxPrice, active, hasImage, search, storeId })
     ]);
+
+    const currentPage = !isNaN(parsedPage) && parsedPage > 0 ? parsedPage : Math.floor(parsedOffset / parsedLimit) + 1;
+    const totalPages = Math.ceil(total / parsedLimit) || 1;
 
     res.status(200).json({
       success: true,
       count: products.length,
       total,
+      page: currentPage,
+      totalPages,
+      limit: parsedLimit,
+      offset: parsedOffset,
       products,
     });
   } catch (error) {

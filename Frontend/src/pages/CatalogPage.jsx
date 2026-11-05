@@ -91,7 +91,9 @@ export default function CatalogPage({ pageType: propPageType }) {
 
   const [searchQuery, setSearchQuery] = useState(urlSearch || '');
   const [debouncedSearch, setDebouncedSearch] = useState(urlSearch || '');
-  const [page, setPage] = useState(1);
+  const urlPageRaw = searchParams.get('page');
+  const initialPage = urlPageRaw ? parseInt(urlPageRaw, 10) : 1;
+  const [page, setPage] = useState(!isNaN(initialPage) && initialPage > 0 ? initialPage : 1);
   const [limit, setLimit] = useState(24);
   const [sortBy, setSortBy] = useState('modified');
   const [sortOrder, setSortOrder] = useState('DESC');
@@ -252,6 +254,12 @@ export default function CatalogPage({ pageType: propPageType }) {
     const uMax = searchParams.get('maxPrice') || '';
     if (uMin !== minPrice) setMinPrice(uMin);
     if (uMax !== maxPrice) setMaxPrice(uMax);
+
+    const uPageRaw = searchParams.get('page');
+    const uPage = uPageRaw ? parseInt(uPageRaw, 10) : 1;
+    if (!isNaN(uPage) && uPage > 0 && uPage !== page) {
+      setPage(uPage);
+    }
   }, [searchParams]);
 
   // Multiselect category toggle handler
@@ -270,6 +278,7 @@ export default function CatalogPage({ pageType: propPageType }) {
 
       setSearchParams((params) => {
         const p = new URLSearchParams(params);
+        p.delete('page');
         if (next.length === 0) {
           p.delete('category');
         } else {
@@ -289,6 +298,7 @@ export default function CatalogPage({ pageType: propPageType }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setSearchParams((params) => {
       const p = new URLSearchParams(params);
+      p.delete('page');
       p.delete('category');
       return p;
     }, { replace: true });
@@ -304,6 +314,7 @@ export default function CatalogPage({ pageType: propPageType }) {
         : [...prev, brandName];
       setSearchParams((params) => {
         const p = new URLSearchParams(params);
+        p.delete('page');
         if (next.length === 0) p.delete('brand');
         else p.set('brand', next.join(','));
         return p;
@@ -317,6 +328,7 @@ export default function CatalogPage({ pageType: propPageType }) {
     setPage(1);
     setSearchParams((params) => {
       const p = new URLSearchParams(params);
+      p.delete('page');
       p.delete('brand');
       return p;
     }, { replace: true });
@@ -332,6 +344,7 @@ export default function CatalogPage({ pageType: propPageType }) {
         : [...prev, strainName];
       setSearchParams((params) => {
         const p = new URLSearchParams(params);
+        p.delete('page');
         if (next.length === 0) p.delete('strain');
         else p.set('strain', next.join(','));
         return p;
@@ -345,6 +358,7 @@ export default function CatalogPage({ pageType: propPageType }) {
     setPage(1);
     setSearchParams((params) => {
       const p = new URLSearchParams(params);
+      p.delete('page');
       p.delete('strain');
       return p;
     }, { replace: true });
@@ -359,6 +373,7 @@ export default function CatalogPage({ pageType: propPageType }) {
     setPage(1);
     setSearchParams((params) => {
       const p = new URLSearchParams(params);
+      p.delete('page');
       if (sMin) p.set('minPrice', sMin); else p.delete('minPrice');
       if (sMax) p.set('maxPrice', sMax); else p.delete('maxPrice');
       return p;
@@ -371,6 +386,7 @@ export default function CatalogPage({ pageType: propPageType }) {
     setPage(1);
     setSearchParams((params) => {
       const p = new URLSearchParams(params);
+      p.delete('page');
       p.delete('minPrice');
       p.delete('maxPrice');
       return p;
@@ -434,6 +450,11 @@ export default function CatalogPage({ pageType: propPageType }) {
     }
     setPage(1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    setSearchParams((params) => {
+      const p = new URLSearchParams(params);
+      p.delete('page');
+      return p;
+    }, { replace: true });
   };
 
   // Filtered categories for sidebar search
@@ -482,6 +503,22 @@ export default function CatalogPage({ pageType: propPageType }) {
 
   // Pagination calculation
   const totalPages = Math.ceil(totalCount / limit) || 1;
+
+  const handlePageChange = (newPage) => {
+    const targetPage = Math.max(1, Math.min(totalPages, newPage));
+    if (targetPage === page) return;
+    setPage(targetPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setSearchParams((params) => {
+      const p = new URLSearchParams(params);
+      if (targetPage > 1) {
+        p.set('page', String(targetPage));
+      } else {
+        p.delete('page');
+      }
+      return p;
+    }, { replace: true });
+  };
   const startItem = totalCount > 0 ? (page - 1) * limit + 1 : 0;
   const endItem = Math.min(page * limit, totalCount);
 
@@ -1160,10 +1197,7 @@ export default function CatalogPage({ pageType: propPageType }) {
                 <div className="flex items-center gap-1.5">
                   {/* Prev Button */}
                   <button
-                    onClick={() => {
-                      setPage((p) => Math.max(1, p - 1));
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
+                    onClick={() => handlePageChange(page - 1)}
                     disabled={page === 1}
                     className="flex items-center gap-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                   >
@@ -1175,10 +1209,7 @@ export default function CatalogPage({ pageType: propPageType }) {
                   {hasStartEllipsis && (
                     <>
                       <button
-                        onClick={() => {
-                          setPage(1);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
+                        onClick={() => handlePageChange(1)}
                         className="w-9 h-9 rounded-xl border border-slate-200 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 cursor-pointer"
                       >
                         1
@@ -1191,10 +1222,7 @@ export default function CatalogPage({ pageType: propPageType }) {
                   {pages.map((pNum) => (
                     <button
                       key={pNum}
-                      onClick={() => {
-                        setPage(pNum);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
+                      onClick={() => handlePageChange(pNum)}
                       className={`w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         page === pNum
                           ? 'bg-[#0166dc] text-white shadow-md shadow-[#0166dc]/20 font-black'
@@ -1210,10 +1238,7 @@ export default function CatalogPage({ pageType: propPageType }) {
                     <>
                       <span className="px-1 text-slate-400">...</span>
                       <button
-                        onClick={() => {
-                          setPage(totalPages);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
+                        onClick={() => handlePageChange(totalPages)}
                         className="w-9 h-9 rounded-xl border border-slate-200 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 cursor-pointer"
                       >
                         {totalPages}
@@ -1223,10 +1248,7 @@ export default function CatalogPage({ pageType: propPageType }) {
 
                   {/* Next Button */}
                   <button
-                    onClick={() => {
-                      setPage((p) => Math.min(totalPages, p + 1));
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
+                    onClick={() => handlePageChange(page + 1)}
                     disabled={page === totalPages}
                     className="flex items-center gap-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                   >
