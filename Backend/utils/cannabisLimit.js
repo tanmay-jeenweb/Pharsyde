@@ -80,23 +80,25 @@ function calculateCartCannabisGrams(items = []) {
 }
 
 /**
- * Validate order items against the 30-gram cannabis limit
+ * Validate order items against the cannabis purchase limit
  * @param {Array} items
+ * @param {number} [maxLimit=MAX_CANNABIS_GRAMS] Configurable limit in grams
  * @returns {{ valid: boolean, totalGrams: number, maxGrams: number, excessGrams: number, message: string|null }}
  */
-function validateCannabisLimit(items = []) {
+function validateCannabisLimit(items = [], maxLimit = MAX_CANNABIS_GRAMS) {
+  const effectiveMax = Number(maxLimit) > 0 ? Number(maxLimit) : MAX_CANNABIS_GRAMS;
   const totalGrams = calculateCartCannabisGrams(items);
-  const valid = totalGrams <= MAX_CANNABIS_GRAMS;
-  const excessGrams = valid ? 0 : Math.round((totalGrams - MAX_CANNABIS_GRAMS) * 100) / 100;
+  const valid = totalGrams <= effectiveMax;
+  const excessGrams = valid ? 0 : Math.round((totalGrams - effectiveMax) * 100) / 100;
 
   return {
     valid,
     totalGrams,
-    maxGrams: MAX_CANNABIS_GRAMS,
+    maxGrams: effectiveMax,
     excessGrams,
     message: valid
       ? null
-      : `Order exceeds the 30.0g legal limit for cannabis products. Current total: ${totalGrams.toFixed(1)}g (Limit: 30.0g). Please reduce items by ${excessGrams.toFixed(1)}g to proceed.`,
+      : `Order exceeds the ${effectiveMax.toFixed(1)}g legal limit for cannabis products. Current total: ${totalGrams.toFixed(1)}g (Limit: ${effectiveMax.toFixed(1)}g). Please reduce items by ${excessGrams.toFixed(1)}g to proceed.`,
   };
 }
 

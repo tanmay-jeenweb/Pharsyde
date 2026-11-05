@@ -35,6 +35,20 @@ const DEFAULT_SETTINGS = [
     category: 'compliance'
   },
   {
+    key: 'cannabis_max_grams',
+    value: '30.0',
+    label: 'Cannabis Purchase Limit (Grams)',
+    description: 'Maximum allowed dried cannabis equivalent in grams (DFE) per customer order/transaction.',
+    category: 'compliance'
+  },
+  {
+    key: 'free_delivery_threshold',
+    value: '75.0',
+    label: 'Free Delivery Minimum Threshold ($ CAD)',
+    description: 'Minimum product subtotal required for a customer order to qualify for free courier delivery.',
+    category: 'storefront'
+  },
+  {
     key: 'mobile_latest_version',
     value: '1.0.0',
     label: 'Latest Mobile App Version',

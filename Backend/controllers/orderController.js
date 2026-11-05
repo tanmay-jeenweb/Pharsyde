@@ -28,16 +28,16 @@ const createOrder = async (req, res, next) => {
       address = '',
       city = 'Winnipeg',
       postalCode = '',
-      paymentMethod = 'card',
+      paymentMethod = 'credit',
       notes = '',
       gov_id_url = null,
     } = req.body;
 
-    // Disallow in-store pay / COD
-    if (paymentMethod === 'pickup_pay' || paymentMethod === 'cod' || paymentMethod === 'cash') {
+    // Disallow in-store pay / COD / Interac e-Transfer
+    if (paymentMethod === 'interac' || paymentMethod === 'pickup_pay' || paymentMethod === 'cod' || paymentMethod === 'cash') {
       return res.status(400).json({
         success: false,
-        message: 'In-store payment and COD have been discontinued. All orders must be prepaid online.',
+        message: 'Interac e-Transfer and cash on delivery are not supported. All orders must be prepaid online via credit or debit card.',
       });
     }
 
@@ -105,8 +105,9 @@ const createOrder = async (req, res, next) => {
       return sum + price * qty;
     }, 0);
 
-    // Free delivery threshold: $75.00 CAD
-    const FREE_SHIPPING_THRESHOLD = 75.0;
+    // Free delivery threshold (Configured in Setting Master)
+    const configuredThresholdStr = await SettingModel.getValue('free_delivery_threshold', '75.0');
+    const FREE_SHIPPING_THRESHOLD = parseFloat(configuredThresholdStr) || 75.0;
     const isPickup = fulfillmentType === 'pickup';
     const shipping = isPickup || subtotal >= FREE_SHIPPING_THRESHOLD ? 0.0 : 9.99;
 
@@ -167,8 +168,10 @@ const createOrder = async (req, res, next) => {
       };
     });
 
-    // 30-Gram Legal Cannabis Purchase Limit Check (Canadian Cannabis Act)
-    const limitValidation = validateCannabisLimit(itemsForTax);
+    // Legal Cannabis Purchase Limit Check (Configured in Setting Master)
+    const configuredLimitStr = await SettingModel.getValue('cannabis_max_grams', '30.0');
+    const configuredLimit = parseFloat(configuredLimitStr) || 30.0;
+    const limitValidation = validateCannabisLimit(itemsForTax, configuredLimit);
     if (!limitValidation.valid) {
       return res.status(400).json({
         success: false,

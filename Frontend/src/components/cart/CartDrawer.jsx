@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { calculateCartTaxes } from '../../utils/taxCalculator';
-import { X, Trash2, Plus, Minus, ArrowRight, ShoppingBag, ShieldCheck, Truck, Sparkles, AlertTriangle } from 'lucide-react';
+import { MAX_CANNABIS_GRAMS } from '../../utils/cannabisLimit';
+import { X, Trash2, Plus, Minus, ArrowRight, ShoppingBag, ShieldCheck, Truck, Sparkles, AlertTriangle, Scale } from 'lucide-react';
 
 export default function CartDrawer() {
-  const { isCartOpen, setIsCartOpen, cart, updateQuantity, removeFromCart, cartSubtotal, navigateTo, cartCannabisGrams = 0, isCannabisLimitExceeded = false } = useApp();
+  const {
+    isCartOpen,
+    setIsCartOpen,
+    cart,
+    updateQuantity,
+    removeFromCart,
+    cartSubtotal,
+    navigateTo,
+    cartCannabisGrams = 0,
+    isCannabisLimitExceeded = false,
+    freeDeliveryThreshold = 75.0,
+  } = useApp();
   const [promoCode, setPromoCode] = useState('');
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoApplied, setPromoApplied] = useState(false);
@@ -12,9 +24,14 @@ export default function CartDrawer() {
 
   if (!isCartOpen) return null;
 
-  const FREE_SHIPPING_THRESHOLD = 75.0;
+  const FREE_SHIPPING_THRESHOLD = freeDeliveryThreshold || 75.0;
   const progressPercent = Math.min(100, (cartSubtotal / FREE_SHIPPING_THRESHOLD) * 100);
   const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - cartSubtotal);
+
+  const CANNABIS_LIMIT = MAX_CANNABIS_GRAMS || 30.0;
+  const cannabisProgressPercent = Math.min(100, (cartCannabisGrams / CANNABIS_LIMIT) * 100);
+  const remainingCannabis = Math.max(0, CANNABIS_LIMIT - cartCannabisGrams);
+  const excessCannabis = isCannabisLimitExceeded ? Math.max(0, cartCannabisGrams - CANNABIS_LIMIT) : 0;
 
   const deliveryFee = cartSubtotal >= FREE_SHIPPING_THRESHOLD || cartSubtotal === 0 ? 0 : 9.99;
 
@@ -56,7 +73,7 @@ export default function CartDrawer() {
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
         <div className="w-screen max-w-md bg-white border-l border-slate-200 shadow-2xl flex flex-col justify-between">
           {/* Header */}
-          <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-white">
+          <div className="p-3 border-b border-slate-200 flex items-center justify-between bg-white">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-xl bg-[#8EF705]/25 border border-[#8EF705]/50 text-slate-900">
                 <ShoppingBag className="w-5 h-5 text-slate-900" />
@@ -79,24 +96,76 @@ export default function CartDrawer() {
             </button>
           </div>
 
-          {/* Free Shipping Progress Indicator */}
-          <div className="px-6 py-3.5 bg-slate-50 border-b border-slate-200 text-xs">
-            <div className="flex items-center justify-between mb-1.5 font-medium">
-              <span className="flex items-center gap-1.5 text-slate-700">
-                <Truck className="w-4 h-4 text-[#529402]" />
-                {cartSubtotal >= FREE_SHIPPING_THRESHOLD ? (
-                  <span className="text-[#529402] font-black">Unlocked Free Winnipeg Delivery!</span>
-                ) : (
-                  <span>Add <strong className="text-slate-900">${remainingForFreeShipping.toFixed(2)}</strong> for Free Delivery</span>
-                )}
-              </span>
-              <span className="text-[11px] text-slate-500 font-mono font-semibold">{Math.round(progressPercent)}%</span>
+          {/* Progress Indicators: Free Shipping & Cannabis Legal Purchase Limit (30g) */}
+          <div className="px-6 py-3.5 bg-slate-50 border-b border-slate-200 text-xs space-y-3">
+            {/* Free Shipping Progress Indicator */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5 font-medium">
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <Truck className="w-4 h-4 text-[#529402]" />
+                  {cartSubtotal >= FREE_SHIPPING_THRESHOLD ? (
+                    <span className="text-[#529402] font-black">Unlocked Free Winnipeg Delivery!</span>
+                  ) : (
+                    <span>Add <strong className="text-slate-900">${remainingForFreeShipping.toFixed(2)}</strong> for Free Delivery</span>
+                  )}
+                </span>
+                <span className="text-[11px] text-slate-500 font-mono font-semibold">{Math.round(progressPercent)}%</span>
+              </div>
+              <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-[#8EF705] to-orange-500 h-full transition-all duration-500 rounded-full"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-[#8EF705] to-orange-500 h-full transition-all duration-500 rounded-full"
-                style={{ width: `${progressPercent}%` }}
-              />
+
+            {/* Cannabis 30.0g Legal Limit Progress Indicator */}
+            <div className="pt-2.5 border-t border-slate-200/80">
+              <div className="flex items-center justify-between mb-1.5 font-medium">
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <Scale className={`w-4 h-4 shrink-0 ${
+                    isCannabisLimitExceeded
+                      ? 'text-red-600'
+                      : cartCannabisGrams >= 25.0
+                      ? 'text-orange-500'
+                      : 'text-[#529402]'
+                  }`} />
+                  {isCannabisLimitExceeded ? (
+                    <span className="text-red-600 font-bold">
+                      Exceeds 30.0g Legal Limit (+{excessCannabis.toFixed(1)}g)
+                    </span>
+                  ) : cartCannabisGrams >= CANNABIS_LIMIT ? (
+                    <span className="text-[#529402] font-black">
+                      Reached 30.0g Legal Purchase Limit
+                    </span>
+                  ) : (
+                    <span>
+                      Cannabis Legal Limit: <strong className="text-slate-900">{remainingCannabis.toFixed(1)}g</strong> remaining
+                    </span>
+                  )}
+                </span>
+                <span className={`text-[11px] font-mono font-semibold shrink-0 ${
+                  isCannabisLimitExceeded
+                    ? 'text-red-600 font-bold'
+                    : cartCannabisGrams >= 25.0
+                    ? 'text-orange-600 font-bold'
+                    : 'text-slate-500'
+                }`}>
+                  {cartCannabisGrams.toFixed(1)} / {CANNABIS_LIMIT.toFixed(1)}g ({Math.round(cannabisProgressPercent)}%)
+                </span>
+              </div>
+              <div className={`w-full ${isCannabisLimitExceeded ? 'bg-red-100' : 'bg-slate-200'} h-1.5 rounded-full overflow-hidden`}>
+                <div
+                  className={`${
+                    isCannabisLimitExceeded
+                      ? 'bg-red-500'
+                      : cannabisProgressPercent >= 80
+                      ? 'bg-gradient-to-r from-[#8EF705] to-orange-500'
+                      : 'bg-gradient-to-r from-[#8EF705] to-[#529402]'
+                  } h-full transition-all duration-500 rounded-full`}
+                  style={{ width: `${cannabisProgressPercent}%` }}
+                />
+              </div>
             </div>
           </div>
 
@@ -243,6 +312,17 @@ export default function CartDrawer() {
                     {deliveryFee === 0 ? 'FREE' : `$${deliveryFee.toFixed(2)} CAD`}
                   </span>
                 </div>
+                {cartCannabisGrams > 0 && (
+                  <div className="flex justify-between items-center text-xs pt-1 border-t border-slate-100">
+                    <span className="flex items-center gap-1.5 text-slate-600">
+                      <Scale className="w-3.5 h-3.5 text-slate-700" />
+                      <span>Cannabis Weight</span>
+                    </span>
+                    <span className={`font-mono font-bold ${isCannabisLimitExceeded ? 'text-red-600' : 'text-slate-900'}`}>
+                      {cartCannabisGrams.toFixed(1)}g / {CANNABIS_LIMIT.toFixed(1)}g
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200">
                   <span>Estimated Total</span>
                   <span className="font-mono text-base text-[#529402] font-black">${finalTotal.toFixed(2)} CAD</span>
@@ -253,7 +333,7 @@ export default function CartDrawer() {
               {isCannabisLimitExceeded && (
                 <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
-                  <span>Cart exceeds 30.0g legal limit by {(cartCannabisGrams - 30.0).toFixed(1)}g. Please reduce items to checkout.</span>
+                  <span>Cart exceeds {CANNABIS_LIMIT.toFixed(1)}g limit by {(cartCannabisGrams - CANNABIS_LIMIT).toFixed(1)}g. Please reduce items to checkout.</span>
                 </div>
               )}
 
@@ -267,14 +347,11 @@ export default function CartDrawer() {
                     : "w-full py-3.5 px-4 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-heading font-extrabold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#8EF705]/25"
                 }
               >
-                <span>{isCannabisLimitExceeded ? `Exceeds 30.0g Limit (${cartCannabisGrams.toFixed(1)}g)` : 'Proceed to Secure Checkout'}</span>
+                <span>{isCannabisLimitExceeded ? `Exceeds ${CANNABIS_LIMIT.toFixed(1)}g Limit (${cartCannabisGrams.toFixed(1)}g)` : 'Proceed to Secure Checkout'}</span>
                 {!isCannabisLimitExceeded && <ArrowRight className="w-4 h-4" />}
               </button>
 
-              <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#529402]" />
-                <span>19+ Age Verification at Fulfillment • Manitoba Compliant</span>
-              </div>
+              
             </div>
           )}
         </div>

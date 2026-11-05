@@ -31,7 +31,9 @@ import {
   Download,
   ArrowUpCircle,
   Copy,
-  FileText
+  FileText,
+  Scale,
+  Truck
 } from 'lucide-react';
 
 export default function SettingMaster() {
@@ -49,6 +51,18 @@ export default function SettingMaster() {
   const [govIdMandatory, setGovIdMandatory] = useState(false);
   const [originalGovIdMandatory, setOriginalGovIdMandatory] = useState(false);
   const [savingGovId, setSavingGovId] = useState(false);
+
+  // ─── 4. Cannabis Legal Purchase Limit State ──────────────────
+  const [cannabisMaxGrams, setCannabisMaxGrams] = useState(30.0);
+  const [originalCannabisMaxGrams, setOriginalCannabisMaxGrams] = useState(30.0);
+  const [cannabisLimitError, setCannabisLimitError] = useState('');
+  const [savingCannabisLimit, setSavingCannabisLimit] = useState(false);
+
+  // ─── 5. Free Delivery Minimum Threshold State ────────────────
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState(75.0);
+  const [originalFreeDeliveryThreshold, setOriginalFreeDeliveryThreshold] = useState(75.0);
+  const [freeDeliveryError, setFreeDeliveryError] = useState('');
+  const [savingFreeDelivery, setSavingFreeDelivery] = useState(false);
 
   // ─── 2. Best Sellers Multi-Select State ───────────────────────
   const [selectedProductIds, setSelectedProductIds] = useState([]);
@@ -117,6 +131,24 @@ export default function SettingMaster() {
           const isMandatory = govSetting.value === 'true' || govSetting.value === true;
           setGovIdMandatory(isMandatory);
           setOriginalGovIdMandatory(isMandatory);
+        }
+
+        // Parse Cannabis Purchase Limit Setting
+        const cannabisSetting = res.settings.find((s) => s.key === 'cannabis_max_grams');
+        if (cannabisSetting && cannabisSetting.value) {
+          const val = parseFloat(cannabisSetting.value);
+          const safeVal = !isNaN(val) && val > 0 ? val : 30.0;
+          setCannabisMaxGrams(safeVal);
+          setOriginalCannabisMaxGrams(safeVal);
+        }
+
+        // Parse Free Delivery Threshold Setting
+        const deliverySetting = res.settings.find((s) => s.key === 'free_delivery_threshold');
+        if (deliverySetting && deliverySetting.value) {
+          const val = parseFloat(deliverySetting.value);
+          const safeVal = !isNaN(val) && val >= 0 ? val : 75.0;
+          setFreeDeliveryThreshold(safeVal);
+          setOriginalFreeDeliveryThreshold(safeVal);
         }
 
         // Parse Best Seller Product IDs
@@ -223,6 +255,60 @@ export default function SettingMaster() {
       notify(err.message || 'Error updating setting', 'error');
     } finally {
       setSavingGovId(false);
+    }
+  };
+
+  const handleSaveCannabisLimit = async () => {
+    setCannabisLimitError('');
+    const num = parseFloat(cannabisMaxGrams);
+    if (isNaN(num) || num <= 0) {
+      setCannabisLimitError('Cannabis limit must be a positive number greater than 0.');
+      return;
+    }
+    if (num > 1000) {
+      setCannabisLimitError('Cannabis limit cannot exceed 1000 grams.');
+      return;
+    }
+
+    try {
+      setSavingCannabisLimit(true);
+      const res = await updateOfficeSettingApi('cannabis_max_grams', String(num));
+      if (res.success) {
+        setOriginalCannabisMaxGrams(num);
+        notify(`Cannabis purchase limit successfully updated to ${num}g.`);
+      } else {
+        notify(res.message || 'Failed to update cannabis purchase limit.', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to update cannabis_max_grams setting:', err);
+      notify(err.message || 'Error updating setting', 'error');
+    } finally {
+      setSavingCannabisLimit(false);
+    }
+  };
+
+  const handleSaveFreeDeliveryThreshold = async () => {
+    setFreeDeliveryError('');
+    const num = parseFloat(freeDeliveryThreshold);
+    if (isNaN(num) || num < 0) {
+      setFreeDeliveryError('Free delivery threshold must be a number equal to or greater than 0.');
+      return;
+    }
+
+    try {
+      setSavingFreeDelivery(true);
+      const res = await updateOfficeSettingApi('free_delivery_threshold', String(num));
+      if (res.success) {
+        setOriginalFreeDeliveryThreshold(num);
+        notify(`Free delivery minimum threshold successfully updated to $${num.toFixed(2)} CAD.`);
+      } else {
+        notify(res.message || 'Failed to update free delivery threshold.', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to update free_delivery_threshold setting:', err);
+      notify(err.message || 'Error updating setting', 'error');
+    } finally {
+      setSavingFreeDelivery(false);
     }
   };
 
@@ -1221,6 +1307,440 @@ export default function SettingMaster() {
                   <>
                     <Save className="w-4 h-4" />
                     <span>Save ID Policy</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================
+          SETTING 4: CANNABIS PURCHASE LIMIT CONFIGURATION (30g)
+          ======================================================== */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="border-b border-slate-100 px-6 py-4.5 bg-slate-50/60 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#8EF705]/20 border border-[#8EF705]/40 text-[#488203] flex items-center justify-center font-bold">
+              <Scale className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">
+                Cannabis Purchase Limit Configuration
+              </h2>
+              <p className="text-xs text-slate-500">
+                Configure the maximum allowable dried cannabis equivalent (DFE) in grams per transaction
+              </p>
+            </div>
+          </div>
+
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-emerald-50 text-emerald-800 border-emerald-200">
+            Active: {cannabisMaxGrams}g Limit
+          </span>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+              <span className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <span>Maximum Dried Cannabis Equivalent (DFE)</span>
+                <span className="text-xs font-normal text-slate-400 font-mono">(cannabis_max_grams)</span>
+              </span>
+              <span className="text-xs text-slate-500">
+                Current Setting: <strong className="text-slate-900 font-bold">{cannabisMaxGrams} grams</strong>
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
+              This setting defines the statutory cannabis purchase limit enforced throughout the storefront and backend APIs.
+              It directly controls the <strong className="text-slate-900">progress bar in the Shopping Bag</strong>, prevents customers from exceeding weight limits when adding items or increasing quantities, and enforces compliance during checkout and Moneris payments.
+            </p>
+
+            {/* Input + Quick Preset Chips */}
+            <div className="space-y-3 max-w-xl pt-2">
+              <label className="text-xs font-semibold text-slate-700 block">
+                Transaction Weight Limit:
+              </label>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    min="1"
+                    max="1000"
+                    step="0.5"
+                    value={cannabisMaxGrams}
+                    onChange={(e) => {
+                      setCannabisLimitError('');
+                      setCannabisMaxGrams(e.target.value === '' ? '' : parseFloat(e.target.value) || 0);
+                    }}
+                    placeholder="e.g. 30"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:bg-white focus:border-[#488203] focus:ring-1 focus:ring-[#488203]"
+                  />
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                    grams (g)
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCannabisLimitError('');
+                      setCannabisMaxGrams(30.0);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                      Number(cannabisMaxGrams) === 30
+                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    30g (Default)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCannabisLimitError('');
+                      setCannabisMaxGrams(45.0);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                      Number(cannabisMaxGrams) === 45
+                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    45g
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCannabisLimitError('');
+                      setCannabisMaxGrams(60.0);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                      Number(cannabisMaxGrams) === 60
+                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    60g
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCannabisLimitError('');
+                      setCannabisMaxGrams(100.0);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                      Number(cannabisMaxGrams) === 100
+                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    100g
+                  </button>
+                </div>
+              </div>
+
+              {cannabisLimitError && (
+                <p className="text-xs text-red-600 font-medium flex items-center gap-1.5 pt-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{cannabisLimitError}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Live Storefront Shopping Bag Preview */}
+            <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 max-w-xl">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                Storefront Shopping Bag Gauge Preview:
+              </span>
+              <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between text-xs font-medium">
+                  <span className="flex items-center gap-1.5 text-slate-700">
+                    <Scale className="w-4 h-4 text-[#529402]" />
+                    <span>
+                      Cannabis Legal Limit: <strong className="text-slate-900">{Math.max(0, Number(cannabisMaxGrams || 30) - 7).toFixed(1)}g</strong> remaining
+                    </span>
+                  </span>
+                  <span className="text-[11px] font-mono font-semibold text-slate-500">
+                    7.0 / {Number(cannabisMaxGrams || 30).toFixed(1)}g ({Math.round(Math.min(100, (7 / Math.max(1, Number(cannabisMaxGrams || 30))) * 100))}%)
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-[#8EF705] to-[#529402] h-full rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(100, (7 / Math.max(1, Number(cannabisMaxGrams || 30))) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Footer */}
+          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-xs text-slate-500">
+              Status:{' '}
+              <strong className={Number(cannabisMaxGrams) !== Number(originalCannabisMaxGrams) ? "text-amber-600 font-bold" : "text-emerald-700 font-bold"}>
+                {Number(cannabisMaxGrams) !== Number(originalCannabisMaxGrams) ? "Unsaved Changes" : "Synchronized with Database"}
+              </strong>
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {Number(cannabisMaxGrams) !== Number(originalCannabisMaxGrams) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCannabisLimitError('');
+                    setCannabisMaxGrams(originalCannabisMaxGrams);
+                  }}
+                  disabled={savingCannabisLimit}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Discard Changes
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleSaveCannabisLimit}
+                disabled={loading || savingCannabisLimit || Number(cannabisMaxGrams) === Number(originalCannabisMaxGrams)}
+                className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                  Number(cannabisMaxGrams) !== Number(originalCannabisMaxGrams)
+                    ? 'bg-slate-900 hover:bg-black text-white shadow-md active:scale-[0.98]'
+                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                {savingCannabisLimit ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Saving Limit...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Cannabis Limit</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================
+          SETTING 5: FREE DELIVERY THRESHOLD CONFIGURATION ($75)
+          ======================================================== */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="border-b border-slate-100 px-6 py-4.5 bg-slate-50/60 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center font-bold">
+              <Truck className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">
+                Free Delivery Threshold Configuration
+              </h2>
+              <p className="text-xs text-slate-500">
+                Configure the minimum cart subtotal required for customer orders to qualify for free courier delivery
+              </p>
+            </div>
+          </div>
+
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-emerald-50 text-emerald-800 border-emerald-200">
+            Active: ${Number(freeDeliveryThreshold || 75).toFixed(2)} CAD
+          </span>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+              <span className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <span>Free Delivery Minimum Subtotal ($ CAD)</span>
+                <span className="text-xs font-normal text-slate-400 font-mono">(free_delivery_threshold)</span>
+              </span>
+              <span className="text-xs text-slate-500">
+                Current Setting: <strong className="text-slate-900 font-bold">${Number(freeDeliveryThreshold || 75).toFixed(2)} CAD</strong>
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">
+              This setting defines the minimum product subtotal required for customers to unlock free local delivery ($0.00).
+              Orders below this threshold will automatically be charged the standard <strong className="text-slate-900">$9.99 CAD</strong> courier delivery fee.
+              It directly controls the <strong className="text-slate-900">Free Delivery progress bar</strong> in the Shopping Bag drawer and enforces shipping fee calculations during checkout and Moneris payments.
+            </p>
+
+            {/* Input + Quick Preset Chips */}
+            <div className="space-y-3 max-w-xl pt-2">
+              <label className="text-xs font-semibold text-slate-700 block">
+                Minimum Cart Subtotal for Free Delivery:
+              </label>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="relative flex-1">
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
+                    $
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    max="10000"
+                    step="5"
+                    value={freeDeliveryThreshold}
+                    onChange={(e) => {
+                      setFreeDeliveryError('');
+                      setFreeDeliveryThreshold(e.target.value === '' ? '' : parseFloat(e.target.value) || 0);
+                    }}
+                    placeholder="e.g. 75"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-8 pr-16 py-2.5 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:bg-white focus:border-[#488203] focus:ring-1 focus:ring-[#488203]"
+                  />
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                    CAD
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFreeDeliveryError('');
+                      setFreeDeliveryThreshold(50.0);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                      Number(freeDeliveryThreshold) === 50
+                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    $50
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFreeDeliveryError('');
+                      setFreeDeliveryThreshold(75.0);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                      Number(freeDeliveryThreshold) === 75
+                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    $75 (Default)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFreeDeliveryError('');
+                      setFreeDeliveryThreshold(100.0);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                      Number(freeDeliveryThreshold) === 100
+                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    $100
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFreeDeliveryError('');
+                      setFreeDeliveryThreshold(150.0);
+                    }}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                      Number(freeDeliveryThreshold) === 150
+                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    $150
+                  </button>
+                </div>
+              </div>
+
+              {freeDeliveryError && (
+                <p className="text-xs text-red-600 font-medium flex items-center gap-1.5 pt-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{freeDeliveryError}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Live Storefront Shopping Bag Preview */}
+            <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 max-w-xl">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                Storefront Shopping Bag Gauge Preview:
+              </span>
+              <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between text-xs font-medium">
+                  <span className="flex items-center gap-1.5 text-slate-700">
+                    <Truck className="w-4 h-4 text-[#529402]" />
+                    {45 >= Number(freeDeliveryThreshold || 75) ? (
+                      <span className="text-[#529402] font-black">Unlocked Free Winnipeg Delivery!</span>
+                    ) : (
+                      <span>
+                        Add <strong className="text-slate-900">${Math.max(0, Number(freeDeliveryThreshold || 75) - 45).toFixed(2)}</strong> for Free Delivery
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-[11px] font-mono font-semibold text-slate-500">
+                    {Math.round(Math.min(100, (45 / Math.max(1, Number(freeDeliveryThreshold || 75))) * 100))}%
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-[#8EF705] to-orange-500 h-full rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(100, (45 / Math.max(1, Number(freeDeliveryThreshold || 75))) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Footer */}
+          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-xs text-slate-500">
+              Status:{' '}
+              <strong className={Number(freeDeliveryThreshold) !== Number(originalFreeDeliveryThreshold) ? "text-amber-600 font-bold" : "text-emerald-700 font-bold"}>
+                {Number(freeDeliveryThreshold) !== Number(originalFreeDeliveryThreshold) ? "Unsaved Changes" : "Synchronized with Database"}
+              </strong>
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {Number(freeDeliveryThreshold) !== Number(originalFreeDeliveryThreshold) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFreeDeliveryError('');
+                    setFreeDeliveryThreshold(originalFreeDeliveryThreshold);
+                  }}
+                  disabled={savingFreeDelivery}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Discard Changes
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleSaveFreeDeliveryThreshold}
+                disabled={loading || savingFreeDelivery || Number(freeDeliveryThreshold) === Number(originalFreeDeliveryThreshold)}
+                className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                  Number(freeDeliveryThreshold) !== Number(originalFreeDeliveryThreshold)
+                    ? 'bg-slate-900 hover:bg-black text-white shadow-md active:scale-[0.98]'
+                    : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                {savingFreeDelivery ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Saving Threshold...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Save Delivery Threshold</span>
                   </>
                 )}
               </button>
