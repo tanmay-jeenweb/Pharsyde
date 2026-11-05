@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { ShoppingBag, Eye, Check, Sparkles, ImageOff } from 'lucide-react';
+import { ShoppingBag, Eye, Check, ImageOff } from 'lucide-react';
 
 export default function ProductCard({ product }) {
   const { addToCart, navigateTo } = useApp();
-  const [isHovered, setIsHovered] = useState(false);
   const [addedAnim, setAddedAnim] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   // Normalization for DB (pk, product_name, imageUrl, retail_price) vs static mock data
   const productId = product.pk || product.id;
@@ -15,8 +13,53 @@ export default function ProductCard({ product }) {
   const productImage = product.imageUrl || product.image;
   const productBrand = product.brand || 'PHARSYDE';
   const productCategory = product.category || 'Cannabis';
-  const productStrain = product.strain || product.strainType;
   const productWeight = product.size || product.weight || (product.equivalent_g ? `${product.equivalent_g}g eq.` : null);
+
+  // Intelligent Strain normalization & detection
+  const rawStrain = product.strain || product.strainType || product.strain_type;
+  const detectStrain = () => {
+    if (rawStrain && typeof rawStrain === 'string' && rawStrain.trim()) return rawStrain.trim();
+    const text = `${product.product_name || product.name || ''} ${product.description || ''}`.toLowerCase();
+    if (text.includes('indica')) return 'Indica';
+    if (text.includes('sativa')) return 'Sativa';
+    if (text.includes('hybrid')) return 'Hybrid';
+    if (text.includes('cbd')) return 'High CBD';
+    return null;
+  };
+  const productStrain = detectStrain();
+
+  // Transparentish frosted-glass strain badge styling
+  const getStrainStyle = (strain) => {
+    const lower = (strain || '').toLowerCase();
+    if (lower.includes('indica')) {
+      return {
+        badge: 'bg-purple-950/70 text-purple-100 border border-purple-400/35 backdrop-blur-md shadow-xs',
+        pill: 'bg-purple-500/10 text-purple-700 border border-purple-300/60 backdrop-blur-xs',
+        dot: 'bg-purple-400'
+      };
+    }
+    if (lower.includes('sativa')) {
+      return {
+        badge: 'bg-amber-950/70 text-amber-100 border border-amber-400/35 backdrop-blur-md shadow-xs',
+        pill: 'bg-amber-500/10 text-amber-800 border border-amber-300/60 backdrop-blur-xs',
+        dot: 'bg-amber-400'
+      };
+    }
+    if (lower.includes('hybrid')) {
+      return {
+        badge: 'bg-teal-950/70 text-teal-100 border border-teal-400/35 backdrop-blur-md shadow-xs',
+        pill: 'bg-teal-500/10 text-teal-800 border border-teal-300/60 backdrop-blur-xs',
+        dot: 'bg-teal-400'
+      };
+    }
+    return {
+      badge: 'bg-slate-900/70 text-blue-100 border border-blue-400/35 backdrop-blur-md shadow-xs',
+      pill: 'bg-blue-500/10 text-[#0166dc] border border-blue-300/60 backdrop-blur-xs',
+      dot: 'bg-blue-400'
+    };
+  };
+
+  const strainStyle = getStrainStyle(productStrain);
 
   const rawPrice = product.retail_price !== undefined
     ? parseFloat(product.retail_price)
@@ -34,18 +77,6 @@ export default function ProductCard({ product }) {
 
   const qtyAvailable = product.qty_available !== undefined ? parseFloat(product.qty_available) : null;
   const isOutOfStock = qtyAvailable !== null && qtyAvailable <= 0;
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 10;
-    const y = ((e.clientY - rect.top) / rect.height - 0.5) * -10;
-    setMousePos({ x, y });
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    setMousePos({ x: 0, y: 0 });
-  };
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
@@ -67,137 +98,135 @@ export default function ProductCard({ product }) {
       1
     );
     setAddedAnim(true);
-    setTimeout(() => setAddedAnim(false), 1500);
+    setTimeout(() => setAddedAnim(false), 1200);
   };
 
   const handleCardClick = () => {
     navigateTo('product-detail', productId);
   };
 
-  // Strain color theme
-  const getStrainBadgeColor = (strain) => {
-    const lower = (strain || '').toLowerCase();
-    if (lower.includes('indica')) return 'bg-purple-50 text-purple-700 border-purple-200';
-    if (lower.includes('sativa')) return 'bg-amber-50 text-amber-700 border-amber-200';
-    if (lower.includes('hybrid')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    return 'bg-slate-50 text-slate-700 border-slate-200';
-  };
-
   return (
     <div
       onClick={handleCardClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        transform: isHovered
-          ? `perspective(1000px) rotateX(${mousePos.y}deg) rotateY(${mousePos.x}deg) translateY(-5px)`
-          : 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)'
-      }}
-      className="group relative cursor-pointer rounded-2xl bg-white border border-slate-200/90 hover:border-[#8EF705] transition-all duration-300 flex flex-col justify-between overflow-hidden shadow-xs hover:shadow-xl hover:shadow-[#8EF705]/15"
+      className="group relative cursor-pointer rounded-3xl bg-white border border-slate-200/80 hover:border-[#0166dc] transition-all duration-150 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-[#0166dc]/15 flex flex-col justify-between overflow-hidden shadow-xs"
     >
-      {/* Top subtle neon highlight line */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#8EF705] to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+      {/* Top ambient brand highlight glow */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#0166dc] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-20 pointer-events-none" />
 
       {/* Product Image Area */}
-      <div className="relative w-full aspect-square overflow-hidden bg-slate-50 border-b border-slate-100 flex items-center justify-center p-3">
+      <div className="relative w-full aspect-square overflow-hidden bg-gradient-to-b from-slate-50/90 to-slate-100/40 border-b border-slate-100 flex items-center justify-center p-5">
         {productImage && !imgError ? (
           <img
             src={productImage}
             alt={productName}
             loading="lazy"
             onError={() => setImgError(true)}
-            className="w-full h-full object-contain object-center group-hover:scale-108 transition-transform duration-500 ease-out"
+            className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-200 ease-out drop-shadow-xs"
           />
         ) : (
-          <div className="flex flex-col items-center justify-center text-slate-400 gap-1.5 p-4 text-center">
-            <ImageOff className="w-8 h-8 stroke-1 text-slate-300" />
+          <div className="flex flex-col items-center justify-center text-slate-400 gap-2 p-4 text-center">
+            <ImageOff className="w-9 h-9 stroke-1 text-slate-300" />
             <span className="text-[11px] font-medium text-slate-400">Image not available</span>
           </div>
         )}
 
-        {/* Subtle scrim for contrast */}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/10 via-transparent to-transparent pointer-events-none" />
+        {/* Ambient Hover Spotlight */}
+        <div className="absolute inset-0 bg-radial from-[#0166dc]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none" />
 
-        {/* Badges Overlay */}
-        <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-1 pointer-events-none">
+        {/* Transparentish Floating Badges Overlay (STRAIN) */}
+        <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-2 pointer-events-none z-10">
           {productStrain ? (
-            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border backdrop-blur-xs ${getStrainBadgeColor(productStrain)}`}>
-              {productStrain}
+            <span
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-black uppercase tracking-wider transition-all duration-150 group-hover:scale-105 ${strainStyle.badge}`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${strainStyle.dot} animate-pulse`} />
+              <span>{productStrain}</span>
             </span>
-          ) : <span />}
+          ) : (
+            <span />
+          )}
 
           {isOutOfStock ? (
-            <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold tracking-wider uppercase">
+            <span className="px-2.5 py-1 rounded-full bg-rose-600/80 backdrop-blur-md text-white text-[10px] font-black tracking-wider uppercase border border-rose-400/40 shadow-xs">
               Sold Out
             </span>
           ) : qtyAvailable !== null && qtyAvailable <= 5 ? (
-            <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold tracking-wider uppercase">
-              Only {qtyAvailable} left
+            <span className="px-2.5 py-1 rounded-full bg-amber-500/80 backdrop-blur-md text-white text-[10px] font-black tracking-wider uppercase border border-amber-300/40 shadow-xs">
+              {qtyAvailable} Left
             </span>
           ) : null}
         </div>
 
-        {/* Quick View Button overlay on hover */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-slate-900/30 backdrop-blur-xs">
+        {/* Quick View Button overlay on hover (super quick 150ms) */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-slate-950/20 backdrop-blur-[2px]">
           <button
             onClick={(e) => {
               e.stopPropagation();
               handleCardClick();
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/95 text-slate-900 text-xs font-bold tracking-wider uppercase border border-slate-200 hover:bg-[#8EF705] hover:text-black hover:border-[#8EF705] transition-all transform translate-y-2 group-hover:translate-y-0 shadow-lg"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/95 text-slate-900 text-xs font-heading font-extrabold tracking-wider uppercase border border-slate-200 hover:bg-[#0166dc] hover:text-white hover:border-[#0166dc] transition-all duration-150 shadow-md cursor-pointer"
           >
             <Eye className="w-3.5 h-3.5" />
-            <span>View Full Details</span>
+            <span>Quick View</span>
           </button>
         </div>
       </div>
 
       {/* Product Details Area */}
-      <div className="p-4 sm:p-5 flex flex-col flex-grow justify-between bg-white">
+      <div className="p-4 sm:p-5 flex flex-col flex-grow justify-between bg-white space-y-3">
         <div>
-          {/* Brand & Weight */}
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5 font-medium">
-            <span className="uppercase tracking-wider text-[11px] text-[#529402] font-black truncate max-w-[150px]">
+          {/* Brand & Weight Header */}
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="uppercase tracking-widest text-[11px] text-[#0166dc] font-black truncate">
               {productBrand}
             </span>
             {productWeight && (
-              <span className="text-[11px] text-slate-400 font-medium shrink-0">{productWeight}</span>
+              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200/70 shrink-0">
+                {productWeight}
+              </span>
             )}
           </div>
 
           {/* Product Title */}
           <h3
             title={productName}
-            className="font-heading text-sm sm:text-base font-bold text-slate-900 group-hover:text-[#529402] transition-colors line-clamp-2 min-h-[2.5rem] mb-2 leading-snug"
+            className="font-heading text-sm sm:text-[15px] font-extrabold text-slate-900 group-hover:text-[#0166dc] transition-colors duration-150 line-clamp-2 min-h-[2.6rem] leading-snug mb-2.5"
           >
             {productName}
           </h3>
 
-          {/* Key Specs (THC, CBD, Category) */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-600 mb-4">
+          {/* Key Specs: Transparentish Strain Tag + Potency (THC/CBD) */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            {productStrain && (
+              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[10px] font-black tracking-wider uppercase border ${strainStyle.pill}`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
+                {productStrain}
+              </span>
+            )}
             {thcVal && (
-              <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[11px]">
-                THC: <span className="text-slate-900 font-semibold">{thcVal}</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/80 text-[10px] font-mono font-semibold">
+                <span className="text-slate-400 font-sans">THC</span>
+                <span className="font-bold text-slate-900">{thcVal}</span>
               </span>
             )}
             {cbdVal && (
-              <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[11px]">
-                CBD: <span className="text-slate-900 font-semibold">{cbdVal}</span>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/80 text-[10px] font-mono font-semibold">
+                <span className="text-slate-400 font-sans">CBD</span>
+                <span className="font-bold text-slate-900">{cbdVal}</span>
               </span>
             )}
           </div>
         </div>
 
-        {/* Price & Add to Cart Bar */}
+        {/* Pricing & Modern Action Bar */}
         <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
           <div>
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">Price</span>
+            <span className="text-[10px] text-slate-400 uppercase font-mono font-bold tracking-wider block leading-none mb-1">Price</span>
             <div className="flex items-baseline gap-1">
-              <span className="text-lg font-bold font-heading text-slate-900">
+              <span className="text-lg sm:text-xl font-black font-heading text-slate-900 tracking-tight">
                 ${formattedPrice}
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">CAD</span>
+              <span className="text-[10px] text-slate-400 font-mono font-medium">CAD</span>
             </div>
           </div>
 
@@ -205,19 +234,19 @@ export default function ProductCard({ product }) {
             onClick={handleAddToCart}
             disabled={isOutOfStock}
             aria-label={`Add ${productName} to bag`}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-all duration-300 shadow-xs ${
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-heading font-black tracking-wider uppercase transition-all duration-150 shadow-xs cursor-pointer ${
               isOutOfStock
                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
                 : addedAnim
                 ? 'bg-slate-900 text-white'
-                : 'bg-[#8EF705] text-black hover:bg-[#80de04] hover:shadow-md hover:shadow-[#8EF705]/30'
+                : 'bg-[#0166dc] text-white hover:bg-[#0153b3] hover:shadow-lg hover:shadow-[#0166dc]/30 active:scale-95'
             }`}
           >
             {isOutOfStock ? (
-              <span>Out of Stock</span>
+              <span>Sold Out</span>
             ) : addedAnim ? (
               <>
-                <Check className="w-3.5 h-3.5 text-[#8EF705]" />
+                <Check className="w-3.5 h-3.5 text-[#0166dc]" />
                 <span>Added</span>
               </>
             ) : (

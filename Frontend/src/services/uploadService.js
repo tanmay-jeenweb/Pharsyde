@@ -2,7 +2,7 @@
  * Upload Service for Government ID & Customer Documents
  */
 
-const API_BASE = '/api';
+import { API_BASE } from './apiConfig';
 
 /**
  * Upload a document (Driver's License, Passport, Photo ID)

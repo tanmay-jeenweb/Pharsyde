@@ -25,6 +25,7 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const { getPublicSettings } = require('./controllers/settingController');
 const uploadRoutes = require('./routes/uploadRoutes');
 const appRoutes = require('./routes/appRoutes');
+const formRoutes = require('./routes/formRoutes');
 
 // Middlewares
 const { notFound, errorHandler } = require('./middlewares/errorMiddleware');
@@ -88,6 +89,9 @@ app.use('/api/payments/moneris', paymentRoutes);
 app.get('/api/settings/public', getPublicSettings);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/app', appRoutes);
+app.use('/api/forms', formRoutes);
+app.post('/api/contact', require('./controllers/formController').submitContactInquiry);
+app.post('/api/newsletter', require('./controllers/formController').subscribeNewsletter);
 
 // Direct shortcut download URLs for easy user clicks / APK distribution
 app.get('/download/app', (req, res) => res.redirect('/api/app/download'));

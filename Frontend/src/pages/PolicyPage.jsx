@@ -733,11 +733,11 @@ export default function PolicyPage({ defaultTab }) {
 
   return (
     <div className="min-h-screen pt-28 pb-24 bg-[#F8FAFC] text-slate-900">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
         
         {/* Page Hero Header */}
-        <div className="text-center max-w-3xl mx-auto mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[#488203] text-xs font-bold uppercase tracking-wider mb-4">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-[#0166dc] text-xs font-bold uppercase tracking-wider mb-4">
             <Scale className="w-3.5 h-3.5" />
             <span>CONSUMER PROTECTION & POLICIES</span>
           </div>
@@ -751,12 +751,12 @@ export default function PolicyPage({ defaultTab }) {
         </div>
 
         {/* Tab Selection Hub */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 p-1.5 bg-white border border-slate-200 rounded-2xl sm:rounded-full shadow-xs mb-10 max-w-2xl mx-auto">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 p-1.5 bg-white border border-slate-200 rounded-2xl sm:rounded-full shadow-xs mb-10 mx-auto">
           <button
             onClick={() => handleTabChange('returns')}
             className={`w-full sm:w-auto px-6 py-3 rounded-xl sm:rounded-full text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
               activeTab === 'returns'
-                ? 'bg-[#8EF705] text-black shadow-md shadow-[#8EF705]/20 font-black'
+                ? 'bg-[#0166dc] text-white shadow-md shadow-[#0166dc]/20 font-black'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
@@ -771,7 +771,7 @@ export default function PolicyPage({ defaultTab }) {
             onClick={() => handleTabChange('terms')}
             className={`w-full sm:w-auto px-6 py-3 rounded-xl sm:rounded-full text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
               activeTab === 'terms'
-                ? 'bg-[#8EF705] text-black shadow-md shadow-[#8EF705]/20 font-black'
+                ? 'bg-[#0166dc] text-white shadow-md shadow-[#0166dc]/20 font-black'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
@@ -786,7 +786,7 @@ export default function PolicyPage({ defaultTab }) {
             onClick={() => handleTabChange('privacy')}
             className={`w-full sm:w-auto px-6 py-3 rounded-xl sm:rounded-full text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
               activeTab === 'privacy'
-                ? 'bg-[#8EF705] text-black shadow-md shadow-[#8EF705]/20 font-black'
+                ? 'bg-[#0166dc] text-white shadow-md shadow-[#0166dc]/20 font-black'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
@@ -807,7 +807,7 @@ export default function PolicyPage({ defaultTab }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={`Search ${activeTab === 'returns' ? 'Return' : activeTab === 'terms' ? 'Terms' : 'Privacy'} sections...`}
-              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-[#8EF705] focus:ring-2 focus:ring-[#8EF705]/20 transition-all text-slate-900 placeholder:text-slate-400"
+              className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-hidden focus:border-[#0166dc] focus:ring-2 focus:ring-[#0166dc]/20 transition-all text-slate-900 placeholder:text-slate-400"
             />
           </div>
 
@@ -848,7 +848,7 @@ export default function PolicyPage({ defaultTab }) {
             </div>
 
             <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-start gap-3">
-              <div className="p-2.5 rounded-xl bg-lime-50 border border-lime-200 text-[#488203] shrink-0">
+              <div className="p-2.5 rounded-xl bg-lime-50 border border-lime-200 text-[#0166dc] shrink-0">
                 <RotateCcw className="w-5 h-5" />
               </div>
               <div>
@@ -894,7 +894,7 @@ export default function PolicyPage({ defaultTab }) {
             </div>
 
             <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-start gap-3">
-              <div className="p-2.5 rounded-xl bg-lime-50 border border-lime-200 text-[#488203] shrink-0">
+              <div className="p-2.5 rounded-xl bg-lime-50 border border-lime-200 text-[#0166dc] shrink-0">
                 <Truck className="w-5 h-5" />
               </div>
               <div>
@@ -940,7 +940,7 @@ export default function PolicyPage({ defaultTab }) {
             </div>
 
             <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-start gap-3">
-              <div className="p-2.5 rounded-xl bg-lime-50 border border-lime-200 text-[#488203] shrink-0">
+              <div className="p-2.5 rounded-xl bg-lime-50 border border-lime-200 text-[#0166dc] shrink-0">
                 <Lock className="w-5 h-5" />
               </div>
               <div>
@@ -978,7 +978,7 @@ export default function PolicyPage({ defaultTab }) {
               className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-xs hover:border-slate-300 transition-all scroll-mt-28"
             >
               <div className="flex items-center gap-3 mb-4">
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-slate-900 text-[#8EF705] font-black text-xs font-mono">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-slate-900 text-[#0166dc] font-black text-xs font-mono">
                   {sec.num}
                 </span>
                 <h2 className="font-heading text-lg sm:text-xl font-bold text-slate-900 uppercase">
@@ -1084,13 +1084,13 @@ export default function PolicyPage({ defaultTab }) {
         <div className="mt-14 p-8 rounded-3xl bg-white border border-slate-200 shadow-md">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="space-y-2 text-center md:text-left">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#488203] block">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#0166dc] block">
                 PHARSYDE CUSTOMER CARE
               </span>
               <h3 className="font-heading text-xl font-bold text-slate-900 uppercase">
                 Questions Regarding Policies or an Active Order?
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 max-w-xl leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                 Our knowledgeable staff at 117 Regent Ave W, Winnipeg are available during store hours to guide you through warranty claims, returns, and order verifications.
               </p>
             </div>
@@ -1098,7 +1098,7 @@ export default function PolicyPage({ defaultTab }) {
             <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
               <a
                 href={`tel:${STORE_INFO.phone}`}
-                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-[#8EF705]/20 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-[#0166dc]/20 flex items-center justify-center gap-2"
               >
                 <Phone className="w-4 h-4" />
                 <span>Call {STORE_INFO.phone}</span>
@@ -1115,7 +1115,7 @@ export default function PolicyPage({ defaultTab }) {
 
           <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-[#599e03]" />
+              <MapPin className="w-4 h-4 text-[#0166dc]" />
               <span>{STORE_INFO.address}</span>
             </div>
             <div className="flex items-center gap-4">

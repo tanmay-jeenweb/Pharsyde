@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   customerLoginApi,
@@ -49,39 +49,96 @@ export function AppProvider({ children }) {
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Cannabis Legal Limit State (Configurable via SettingMaster)
-  const [cannabisMaxGrams, setCannabisMaxGrams] = useState(MAX_CANNABIS_GRAMS);
+  // Cannabis Legal Limit State (Configurable dynamically via SettingMaster)
+  const [cannabisMaxGrams, setCannabisMaxGrams] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pharsyde_cannabis_limit');
+      const parsed = parseFloat(saved);
+      if (Number.isFinite(parsed) && parsed > 0) {
+        return parsed;
+      }
+    } catch {}
+    return MAX_CANNABIS_GRAMS;
+  });
 
-  // Free Delivery Threshold State (Configurable via SettingMaster)
-  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState(75.0);
+  // Free Delivery Threshold State (Configurable dynamically via SettingMaster)
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pharsyde_free_delivery_threshold');
+      const parsed = parseFloat(saved);
+      if (Number.isFinite(parsed) && parsed >= 0) {
+        return parsed;
+      }
+    } catch {}
+    return 75.0;
+  });
 
   // Load Storefront Settings (Dynamic Cannabis Limit, Free Delivery Threshold, etc.)
-  useEffect(() => {
-    let isMounted = true;
-    async function loadPublicSettings() {
-      try {
-        const res = await getPublicSettingsApi();
-        if (isMounted && res?.settings?.cannabis_max_grams) {
-          const parsed = parseFloat(res.settings.cannabis_max_grams);
-          if (Number.isFinite(parsed) && parsed > 0) {
-            setCannabisMaxGrams(parsed);
-          }
+  const refreshPublicSettings = useCallback(async () => {
+    try {
+      const res = await getPublicSettingsApi();
+      if (res?.settings?.cannabis_max_grams) {
+        const parsed = parseFloat(res.settings.cannabis_max_grams);
+        if (Number.isFinite(parsed) && parsed > 0) {
+          setCannabisMaxGrams(parsed);
+          try {
+            localStorage.setItem('pharsyde_cannabis_limit', String(parsed));
+          } catch {}
         }
-        if (isMounted && res?.settings?.free_delivery_threshold) {
-          const parsedThreshold = parseFloat(res.settings.free_delivery_threshold);
-          if (Number.isFinite(parsedThreshold) && parsedThreshold >= 0) {
-            setFreeDeliveryThreshold(parsedThreshold);
-          }
-        }
-      } catch (err) {
-        console.warn('Could not load storefront settings:', err);
       }
+      if (res?.settings?.free_delivery_threshold) {
+        const parsedThreshold = parseFloat(res.settings.free_delivery_threshold);
+        if (Number.isFinite(parsedThreshold) && parsedThreshold >= 0) {
+          setFreeDeliveryThreshold(parsedThreshold);
+          try {
+            localStorage.setItem('pharsyde_free_delivery_threshold', String(parsedThreshold));
+          } catch {}
+        }
+      }
+      return res?.settings;
+    } catch (err) {
+      console.warn('Could not load storefront settings:', err);
     }
-    loadPublicSettings();
-    return () => {
-      isMounted = false;
-    };
   }, []);
+
+  useEffect(() => {
+    refreshPublicSettings();
+
+    // Cross-tab synchronization
+    const handleStorageChange = (e) => {
+      if (e.key === 'pharsyde_cannabis_limit' && e.newValue) {
+        const parsed = parseFloat(e.newValue);
+        if (Number.isFinite(parsed) && parsed > 0) {
+          setCannabisMaxGrams(parsed);
+        }
+      }
+      if (e.key === 'pharsyde_free_delivery_threshold' && e.newValue) {
+        const parsed = parseFloat(e.newValue);
+        if (Number.isFinite(parsed) && parsed >= 0) {
+          setFreeDeliveryThreshold(parsed);
+        }
+      }
+    };
+
+    // Same-window/in-app synchronization (e.g. from SettingMaster)
+    const handleCustomSettingsChanged = (e) => {
+      if (e.detail?.key === 'cannabis_max_grams' && e.detail?.value) {
+        const parsed = parseFloat(e.detail.value);
+        if (Number.isFinite(parsed) && parsed > 0) {
+          setCannabisMaxGrams(parsed);
+        }
+      }
+      refreshPublicSettings();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('pharsyde_settings_changed', handleCustomSettingsChanged);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('pharsyde_settings_changed', handleCustomSettingsChanged);
+    };
+  }, [refreshPublicSettings]);
 
   // Search Modal State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -176,8 +233,8 @@ export function AppProvider({ children }) {
     throw new Error(res.message || 'Login failed');
   };
 
-  const customerRegister = async ({ name, email, password, phone, dateOfBirth }) => {
-    const res = await customerRegisterApi({ name, email, password, phone, dateOfBirth });
+  const customerRegister = async ({ name, email, password, phone, dateOfBirth, verificationToken }) => {
+    const res = await customerRegisterApi({ name, email, password, phone, dateOfBirth, verificationToken });
     if (res.success && res.token) {
       setCustomerToken(res.token);
       setCustomerUser(res.user);
@@ -271,7 +328,7 @@ export function AppProvider({ children }) {
   const cartSubtotal = cart.reduce((sum, item) => sum + item.variant.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const cartCannabisGrams = calculateCartCannabisGrams(cart);
-  const isCannabisLimitExceeded = cartCannabisGrams > cannabisMaxGrams;
+  const isCannabisLimitExceeded = Math.round(cartCannabisGrams * 100) > Math.round(cannabisMaxGrams * 100);
 
   // Age verification action
   const confirmAge = () => {
@@ -328,6 +385,8 @@ export function AppProvider({ children }) {
         cannabisMaxGrams,
         setCannabisMaxGrams,
         isCannabisLimitExceeded,
+        refreshPublicSettings,
+        refreshSettings: refreshPublicSettings,
         freeDeliveryThreshold,
         FREE_SHIPPING_THRESHOLD: freeDeliveryThreshold,
         setFreeDeliveryThreshold,

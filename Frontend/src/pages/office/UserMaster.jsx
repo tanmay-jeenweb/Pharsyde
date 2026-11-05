@@ -180,8 +180,7 @@ export default function UserMaster() {
           return <span className="text-xs text-slate-400 font-medium">—</span>;
         }
         const pts = Number(row.reward_points) || 0;
-        const storedVal = Number(row.reward_points_dollar_value) || 0;
-        const val = storedVal > 0 ? storedVal : (pts > 0 ? pts * 1.00 : 0);
+        const val = Number((pts * 0.001).toFixed(2));
         return (
           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-mono font-bold ${
             val > 0 

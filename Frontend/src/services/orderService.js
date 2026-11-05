@@ -1,4 +1,8 @@
-const API_BASE = '/api';
+/**
+ * Order & Customer Auth Service
+ * Reads from centralized apiConfig (.env driven)
+ */
+import { API_BASE, FALLBACK_API_BASE } from './apiConfig';
 
 /**
  * Helper to build auth headers
@@ -37,27 +41,17 @@ async function handleResponse(res) {
 }
 
 /**
- * Place a new order
+ * Fetch helper with fallback support
  */
-export async function createOrderApi(orderPayload, token = null) {
-  const url = `${API_BASE}/orders`;
+async function fetchWithFallback(endpoint, options = {}) {
+  const url = `${API_BASE}${endpoint}`;
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: getHeaders(token),
-      body: JSON.stringify(orderPayload),
-    });
-    return await handleResponse(res);
+    return await fetch(url, options);
   } catch (error) {
-    // Development fallback to absolute localhost if proxy is bypassed
-    if (!url.startsWith('http')) {
+    if (FALLBACK_API_BASE && FALLBACK_API_BASE !== API_BASE) {
       try {
-        const fallbackRes = await fetch(`http://localhost:5000/api/orders`, {
-          method: 'POST',
-          headers: getHeaders(token),
-          body: JSON.stringify(orderPayload),
-        });
-        return await handleResponse(fallbackRes);
+        const fallbackUrl = `${FALLBACK_API_BASE}${endpoint}`;
+        return await fetch(fallbackUrl, options);
       } catch {}
     }
     throw error;
@@ -65,30 +59,29 @@ export async function createOrderApi(orderPayload, token = null) {
 }
 
 /**
- * Get logged-in customer's order history (Strictly authenticated)
+ * Place a new order
+ */
+export async function createOrderApi(orderPayload, token = null) {
+  const res = await fetchWithFallback('/orders', {
+    method: 'POST',
+    headers: getHeaders(token),
+    body: JSON.stringify(orderPayload),
+  });
+  return await handleResponse(res);
+}
+
+/**
+ * Get logged-in customer's order history
  */
 export async function getMyOrdersApi(token = null) {
-  const url = `${API_BASE}/orders`;
-
   try {
-    const res = await fetch(url, {
+    const res = await fetchWithFallback('/orders', {
       method: 'GET',
       headers: getHeaders(token),
     });
     const data = await handleResponse(res);
     return data.orders || [];
   } catch (error) {
-    if (!url.startsWith('http')) {
-      try {
-        const fallbackUrl = `http://localhost:5000/api/orders`;
-        const fallbackRes = await fetch(fallbackUrl, {
-          method: 'GET',
-          headers: getHeaders(token),
-        });
-        const fallbackData = await handleResponse(fallbackRes);
-        return fallbackData.orders || [];
-      } catch {}
-    }
     throw error;
   }
 }
@@ -97,111 +90,49 @@ export async function getMyOrdersApi(token = null) {
  * Get single order details by ID or order_number
  */
 export async function getOrderByIdApi(id, token = null) {
-  const url = `${API_BASE}/orders/${encodeURIComponent(id)}`;
-  try {
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: getHeaders(token),
-    });
-    const data = await handleResponse(res);
-    return data.order || null;
-  } catch (error) {
-    if (!url.startsWith('http')) {
-      try {
-        const fallbackRes = await fetch(`http://localhost:5000/api/orders/${encodeURIComponent(id)}`, {
-          method: 'GET',
-          headers: getHeaders(token),
-        });
-        const fallbackData = await handleResponse(fallbackRes);
-        return fallbackData.order || null;
-      } catch {}
-    }
-    throw error;
-  }
+  const res = await fetchWithFallback(`/orders/${encodeURIComponent(id)}`, {
+    method: 'GET',
+    headers: getHeaders(token),
+  });
+  const data = await handleResponse(res);
+  return data.order || null;
 }
 
 /**
  * Customer Sign In
  */
 export async function customerLoginApi({ email, password }) {
-  const url = `${API_BASE}/auth/login`;
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    return await handleResponse(res);
-  } catch (error) {
-    if (!url.startsWith('http')) {
-      try {
-        const fallbackRes = await fetch(`http://localhost:5000/api/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-        return await handleResponse(fallbackRes);
-      } catch {}
-    }
-    throw error;
-  }
+  const res = await fetchWithFallback('/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  return await handleResponse(res);
 }
 
 /**
  * Customer Registration
  */
-export async function customerRegisterApi({ name, email, password, phone, dateOfBirth }) {
-  const url = `${API_BASE}/auth/register`;
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, phone, dateOfBirth }),
-    });
-    return await handleResponse(res);
-  } catch (error) {
-    if (!url.startsWith('http')) {
-      try {
-        const fallbackRes = await fetch(`http://localhost:5000/api/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password, phone, dateOfBirth }),
-        });
-        return await handleResponse(fallbackRes);
-      } catch {}
-    }
-    throw error;
-  }
+export async function customerRegisterApi({ name, email, password, phone, dateOfBirth, verificationToken }) {
+  const res = await fetchWithFallback('/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password, phone, dateOfBirth, verificationToken }),
+  });
+  return await handleResponse(res);
 }
 
 /**
  * Get Current Customer Profile
  */
 export async function getCustomerProfileApi(token = null) {
-  const url = `${API_BASE}/auth/me`;
-  try {
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: getHeaders(token),
-    });
-    const data = await handleResponse(res);
-    return data.user || null;
-  } catch (error) {
-    if (!url.startsWith('http')) {
-      try {
-        const fallbackRes = await fetch(`http://localhost:5000/api/auth/me`, {
-          method: 'GET',
-          headers: getHeaders(token),
-        });
-        const fallbackData = await handleResponse(fallbackRes);
-        return fallbackData.user || null;
-      } catch {}
-    }
-    throw error;
-  }
+  const res = await fetchWithFallback('/auth/me', {
+    method: 'GET',
+    headers: getHeaders(token),
+  });
+  const data = await handleResponse(res);
+  return data.user || null;
 }
-
-
 
 /**
  * Check if an email belongs to an existing registered user
@@ -209,23 +140,39 @@ export async function getCustomerProfileApi(token = null) {
 export async function checkEmailApi(email) {
   const cleanEmail = (email || '').trim().toLowerCase();
   if (!cleanEmail) return { exists: false };
-  const url = `${API_BASE}/auth/check-email?email=${encodeURIComponent(cleanEmail)}`;
-  try {
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    return await handleResponse(res);
-  } catch (error) {
-    if (!url.startsWith('http')) {
-      try {
-        const fallbackRes = await fetch(`http://localhost:5000/api/auth/check-email?email=${encodeURIComponent(cleanEmail)}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        return await handleResponse(fallbackRes);
-      } catch {}
-    }
-    throw error;
-  }
+
+  const res = await fetchWithFallback(`/auth/check-email?email=${encodeURIComponent(cleanEmail)}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return await handleResponse(res);
+}
+
+/**
+ * Request a 6-digit OTP email
+ * @param {{ email: string, purpose: 'customer_register' | 'guest_checkout' }}
+ */
+export async function sendOtpApi({ email, purpose }) {
+  const cleanEmail = (email || '').trim().toLowerCase();
+  const res = await fetchWithFallback('/auth/otp/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: cleanEmail, purpose }),
+  });
+  return await handleResponse(res);
+}
+
+/**
+ * Verify 6-digit OTP code and retrieve verificationToken
+ * @param {{ email: string, otp: string, purpose: 'customer_register' | 'guest_checkout' }}
+ */
+export async function verifyOtpApi({ email, otp, purpose }) {
+  const cleanEmail = (email || '').trim().toLowerCase();
+  const cleanOtp = String(otp || '').trim();
+  const res = await fetchWithFallback('/auth/otp/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: cleanEmail, otp: cleanOtp, purpose }),
+  });
+  return await handleResponse(res);
 }

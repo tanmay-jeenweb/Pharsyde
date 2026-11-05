@@ -127,7 +127,7 @@ export default function ProductDetailsPage() {
   if (loading) {
     return (
       <div className="min-h-screen pt-28 pb-24 bg-[#F8FAFC]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
           <div className="animate-pulse space-y-8">
             <div className="h-6 bg-slate-200 rounded-md w-48" />
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -155,7 +155,7 @@ export default function ProductDetailsPage() {
           <p className="text-sm text-slate-500 mb-6">{error || 'This product is no longer in active stock.'}</p>
           <button
             onClick={() => navigate('/catalog')}
-            className="w-full py-3 rounded-xl bg-[#8EF705] text-black font-bold uppercase tracking-wider text-xs hover:bg-[#80de04] transition-all shadow-md shadow-[#8EF705]/20"
+            className="w-full py-3 rounded-xl bg-[#0166dc] text-white font-bold uppercase tracking-wider text-xs hover:bg-[#0153b3] transition-all shadow-md shadow-[#0166dc]/20"
           >
             Return to Product Catalogue
           </button>
@@ -251,13 +251,13 @@ export default function ProductDetailsPage() {
 
   return (
     <div className="min-h-screen pt-28 pb-24 bg-[#F8FAFC] text-slate-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
         
         {/* Breadcrumb Navigation */}
         <div className="mb-8 flex items-center justify-between text-xs text-slate-500">
           <button
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-slate-800 hover:text-[#529402] font-semibold transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 text-slate-800 hover:text-[#0166dc] font-semibold transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Products</span>
@@ -274,7 +274,7 @@ export default function ProductDetailsPage() {
               </>
             )}
             <ChevronRight className="w-3.5 h-3.5" />
-            <span className="text-slate-900 truncate max-w-[220px] font-semibold">{productName}</span>
+            <span className="text-slate-900 truncate font-semibold">{productName}</span>
           </div>
         </div>
 
@@ -339,7 +339,7 @@ export default function ProductDetailsPage() {
                     }}
                     className={`relative w-20 h-20 rounded-2xl overflow-hidden bg-white border-2 p-2 transition-all shrink-0 ${
                       selectedImage === imgUrl
-                        ? 'border-[#8EF705] shadow-md shadow-[#8EF705]/30 scale-105'
+                        ? 'border-[#0166dc] shadow-md shadow-[#0166dc]/30 scale-105'
                         : 'border-slate-200 opacity-70 hover:opacity-100'
                     }`}
                   >
@@ -355,7 +355,7 @@ export default function ProductDetailsPage() {
             <div>
               {/* Brand & Category Breadcrumb */}
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-mono font-bold tracking-widest uppercase text-[#529402]">
+                <span className="text-xs font-mono font-bold tracking-widest uppercase text-[#0166dc]">
                   {productBrand}
                 </span>
                 <span className="text-xs text-slate-400 font-medium">
@@ -384,10 +384,10 @@ export default function ProductDetailsPage() {
 
                 {membershipPrice && membershipPrice > 0 && (
                   <div className="text-right border-l border-slate-100 pl-4">
-                    <span className="text-[10px] text-[#529402] uppercase font-black tracking-wider block">
+                    <span className="text-[10px] text-[#0166dc] uppercase font-black tracking-wider block">
                       Member Price
                     </span>
-                    <span className="font-heading text-xl font-black text-[#529402]">
+                    <span className="font-heading text-xl font-black text-[#0166dc]">
                       ${membershipPrice.toFixed(2)}
                     </span>
                   </div>
@@ -439,7 +439,7 @@ export default function ProductDetailsPage() {
               {product.long_description ? (
                 <div className="mb-6 space-y-2">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5 text-[#529402]" />
+                    <FileText className="w-3.5 h-3.5 text-[#0166dc]" />
                     <span>Product Description</span>
                   </h4>
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed bg-white p-4 rounded-2xl border border-slate-200">
@@ -490,14 +490,14 @@ export default function ProductDetailsPage() {
                         ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
                         : addedAnim
                         ? 'bg-slate-900 text-white'
-                        : 'bg-[#8EF705] hover:bg-[#80de04] text-black shadow-[#8EF705]/25'
+                        : 'bg-[#0166dc] hover:bg-[#0153b3] text-white shadow-[#0166dc]/25'
                     }`}
                   >
                     {isOutOfStock ? (
                       <span>Sold Out • Contact Store</span>
                     ) : addedAnim ? (
                       <>
-                        <Check className="w-4 h-4 text-[#8EF705]" />
+                        <Check className="w-4 h-4 text-[#0166dc]" />
                         <span>Added to Your Order</span>
                       </>
                     ) : (
@@ -512,7 +512,7 @@ export default function ProductDetailsPage() {
                 {/* Pickup and Compliance Note */}
                 <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-xs space-y-1.5 text-[11px] text-slate-600">
                   <div className="flex items-center gap-2 text-slate-900 font-bold">
-                    <Store className="w-3.5 h-3.5 text-[#529402]" />
+                    <Store className="w-3.5 h-3.5 text-[#0166dc]" />
                     <span>In-Store Express Pickup Available</span>
                   </div>
                   <p className="text-slate-500">
@@ -527,18 +527,13 @@ export default function ProductDetailsPage() {
         {/* Detailed Inventory Specifications Data Matrix */}
         <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-10 shadow-xs mb-16">
           <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100">
-            <Package className="w-5 h-5 text-[#529402]" />
+            <Package className="w-5 h-5 text-[#0166dc]" />
             <h3 className="font-heading text-lg sm:text-xl font-black text-slate-900 uppercase tracking-tight">
               Inventory & Compliance Specifications
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 text-xs">
-            {/* SKU */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">SKU Number</span>
-              <span className="font-mono font-bold text-slate-800 text-sm">{productSku || 'N/A'}</span>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 text-xs">
 
             {/* Barcode */}
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
@@ -613,7 +608,7 @@ export default function ProductDetailsPage() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs font-mono font-bold tracking-widest uppercase text-[#529402] block mb-1">
+                <span className="text-xs font-mono font-bold tracking-widest uppercase text-[#0166dc] block mb-1">
                   You May Also Like
                 </span>
                 <h3 className="font-heading text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
@@ -622,7 +617,7 @@ export default function ProductDetailsPage() {
               </div>
               <Link
                 to="/catalog"
-                className="text-xs font-bold text-slate-700 hover:text-[#529402] flex items-center gap-1 transition-colors"
+                className="text-xs font-bold text-slate-700 hover:text-[#0166dc] flex items-center gap-1 transition-colors"
               >
                 <span>View Full Catalogue</span>
                 <ChevronRight className="w-4 h-4" />

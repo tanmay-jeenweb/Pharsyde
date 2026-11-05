@@ -21,11 +21,11 @@ export default function AppDownloadBadge({
   const isDark = variant === "dark";
 
   const containerClasses = isDark
-    ? "bg-slate-900/90 hover:bg-slate-800 border-slate-700/70 hover:border-[#8EF705]/60 text-white shadow-md hover:shadow-lg hover:shadow-[#8EF705]/10"
+    ? "bg-slate-900/90 hover:bg-slate-800 border-slate-700/70 hover:border-[#0166dc]/60 text-white shadow-md hover:shadow-lg hover:shadow-[#0166dc]/10"
     : "bg-white hover:bg-slate-50 border-slate-300/80 hover:border-slate-400 text-slate-800 shadow-xs hover:shadow-md";
 
   const subtitleClasses = isDark ? "text-slate-400" : "text-slate-500";
-  const titleClasses = isDark ? "text-white group-hover:text-[#8EF705]" : "text-slate-900 group-hover:text-slate-950";
+  const titleClasses = isDark ? "text-white group-hover:text-[#0166dc]" : "text-slate-900 group-hover:text-slate-950";
   const dividerClasses = isDark ? "border-slate-800" : "border-slate-200";
 
   const activeDownloadUrl = downloadUrl || DEFAULT_DOWNLOAD_URL;
@@ -88,7 +88,7 @@ export default function AppDownloadBadge({
       </div>
 
       {/* APK indicator */}
-      <span className={`ml-0.5 pl-2 border-l ${dividerClasses} text-[10px] font-medium flex items-center gap-1 text-[#468202] group-hover:text-[#2d5601]`}>
+      <span className={`ml-0.5 pl-2 border-l ${dividerClasses} text-[10px] font-medium flex items-center gap-1 text-[#0166dc] group-hover:text-[#0153b3]`}>
         <span className="font-bold">APK</span>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor" className="w-3 h-3">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />

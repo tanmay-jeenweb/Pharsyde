@@ -1,6 +1,7 @@
 const OrderModel = require('../models/orderModel');
 const UserModel = require('../models/userModel');
 const SettingModel = require('../models/settingModel');
+const OtpModel = require('../models/otpModel');
 const pool = require('../config/db');
 const { syncOrderToTechPOS } = require('../services/techposOrderService');
 const { calculateOrderTaxes } = require('../utils/taxCalculator');
@@ -63,14 +64,31 @@ const createOrder = async (req, res, next) => {
       });
     }
 
-    // If guest checkout, verify email does not belong to an existing registered user
+    // If guest checkout, verify email does not belong to an existing registered user and is OTP verified
+    let guestVerificationToken = null;
     if (!authUser && customerEmail) {
-      const existingUser = await UserModel.findByEmail(customerEmail.trim().toLowerCase());
+      const cleanEmail = customerEmail.trim().toLowerCase();
+      const existingUser = await UserModel.findByEmail(cleanEmail);
       if (existingUser) {
         return res.status(400).json({
           success: false,
           code: 'ACCOUNT_EXISTS',
           message: 'An account with this email already exists. Please log in to complete your order.',
+        });
+      }
+
+      guestVerificationToken = req.body.verificationToken || req.body.verification_token || customer.verificationToken || customer.verification_token;
+      const isTokenValid = await OtpModel.validateVerificationToken({
+        email: cleanEmail,
+        purpose: 'guest_checkout',
+        verificationToken: guestVerificationToken,
+      });
+
+      if (!isTokenValid) {
+        return res.status(400).json({
+          success: false,
+          code: 'EMAIL_VERIFICATION_REQUIRED',
+          message: 'Email verification is required for guest checkout. Please verify your email with the 6-digit code.',
         });
       }
     }
@@ -111,9 +129,11 @@ const createOrder = async (req, res, next) => {
     const isPickup = fulfillmentType === 'pickup';
     const shipping = isPickup || subtotal >= FREE_SHIPPING_THRESHOLD ? 0.0 : 9.99;
 
-    // Reward points redemption logic
+    // Reward points redemption logic (1000 reward points = $1.00 CAD => 0.001 rate)
     let pointsDiscount = 0.00;
     let pointsRedeemed = 0;
+    const pointDollarRate = process.env.REWARD_POINT_DOLLAR_RATE ? Number(process.env.REWARD_POINT_DOLLAR_RATE) : 0.001;
+    const dollarRate = pointDollarRate;
     const { redeem_rewards, redeemed_points } = req.body;
 
     if (authUser && (redeem_rewards || Number(redeemed_points) > 0)) {
@@ -121,18 +141,13 @@ const createOrder = async (req, res, next) => {
       const userPoints = Number(dbUser?.reward_points || 0);
 
       if (userPoints > 0) {
-        // Calculate point conversion: default 1 pt = $1.00 (or ratio from TechPOS dollar value)
-        const dollarRate = (Number(dbUser.reward_points_dollar_value) > 0 && userPoints > 0)
-          ? (Number(dbUser.reward_points_dollar_value) / userPoints)
-          : 1.00;
-
         const maxPoints = Math.min(userPoints, Math.floor(subtotal / dollarRate));
-        pointsRedeemed = redeemed_points ? Math.min(Number(redeemed_points), maxPoints) : maxPoints;
+        pointsRedeemed = redeemed_points ? Math.min(Number(redeemed_points), maxPoints) : (redeem_rewards ? maxPoints : 0);
         pointsDiscount = Math.round(pointsRedeemed * dollarRate * 100) / 100;
 
         // Deduct points immediately to lock against re-use
         if (pointsRedeemed > 0) {
-          await UserModel.deductRewardPoints(authUser.id, pointsRedeemed);
+          await UserModel.deductRewardPoints(authUser.id, pointsRedeemed, dollarRate);
           console.log(`[Order Rewards] Customer ID ${authUser.id} redeemed ${pointsRedeemed} reward points (-$${pointsDiscount.toFixed(2)} CAD).`);
         }
       }
@@ -191,11 +206,19 @@ const createOrder = async (req, res, next) => {
     const tax = taxSummary.tax;
     const total = taxSummary.total;
 
+    // Calculate reward points earned: 1 CAD purchase -> 1 reward point
+    const pointsEarned = authUser ? Math.max(0, Math.floor(Number(total))) : 0;
+
     const orderNumber = generateOrderNumber();
+
+    const rewardNotes = [
+      pointsRedeemed > 0 ? `Redeemed ${pointsRedeemed} TechPOS loyalty points (-$${pointsDiscount.toFixed(2)} CAD discount)` : null,
+      pointsEarned > 0 ? `Earned ${pointsEarned} loyalty points (1 pt / $1 CAD)` : null,
+    ].filter(Boolean);
 
     const resolvedNotes = [
       notes,
-      pointsRedeemed > 0 ? `Redeemed ${pointsRedeemed} TechPOS loyalty points (-$${pointsDiscount.toFixed(2)} CAD discount)` : null,
+      ...rewardNotes,
     ].filter(Boolean).join(' | ');
 
     // Prepare normalized items list
@@ -238,6 +261,16 @@ const createOrder = async (req, res, next) => {
     // Attach techpos_member_id if customer is logged in
     createdOrder.techpos_member_id = authUser?.techpos_member_id || null;
 
+    // Award earned loyalty points to customer (1 CAD purchase -> 1 reward point)
+    if (authUser && pointsEarned > 0) {
+      try {
+        await UserModel.addRewardPoints(authUser.id, pointsEarned, dollarRate);
+        console.log(`[Order Rewards] Customer ID ${authUser.id} earned ${pointsEarned} reward points for $${Number(total).toFixed(2)} purchase.`);
+      } catch (ptsErr) {
+        console.warn(`[Order Rewards Warning] Could not award reward points:`, ptsErr.message);
+      }
+    }
+
     // Attempt live dispatch to TechPOS OpenAPI
     let syncResult = { success: false, message: 'Sync not attempted' };
     try {
@@ -259,6 +292,10 @@ const createOrder = async (req, res, next) => {
       }
     } catch (syncErr) {
       console.warn('[TechPOS Sync Non-blocking Error]', syncErr.message);
+    }
+
+    if (guestVerificationToken) {
+      await OtpModel.consumeVerificationToken(guestVerificationToken);
     }
 
     res.status(201).json({

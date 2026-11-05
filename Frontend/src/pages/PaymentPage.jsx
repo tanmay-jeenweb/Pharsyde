@@ -233,7 +233,7 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-screen pt-28 pb-24 bg-[#F8FAFC]">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6">
+      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
         
         {/* Navigation header */}
         <div className="flex items-center justify-between mb-6">
@@ -247,7 +247,7 @@ export default function PaymentPage() {
           </button>
           
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
-            <Lock className="w-3.5 h-3.5 text-emerald-600" />
+            <Lock className="w-3.5 h-3.5 text-[#0166dc]" />
             PCI-DSS SAQ-A Certified
           </div>
         </div>
@@ -257,7 +257,7 @@ export default function PaymentPage() {
           
           {/* Header */}
           <div className="text-center pb-6 border-b border-slate-100">
-            <span className="text-xs font-mono uppercase tracking-widest text-[#488203] font-bold block mb-1">
+            <span className="text-xs font-mono uppercase tracking-widest text-[#0166dc] font-bold block mb-1">
               Moneris Hosted Payment Gateway
             </span>
             <h1 className="font-heading text-2xl sm:text-3xl font-black text-slate-900 uppercase">
@@ -298,12 +298,12 @@ export default function PaymentPage() {
           {/* Finalization Progress Overlay */}
           {isFinalizing && (
             <div className="my-10 p-8 rounded-3xl bg-slate-50 border border-slate-200 text-center space-y-4">
-              <Loader2 className="w-10 h-10 text-[#488203] animate-spin mx-auto" />
+              <Loader2 className="w-10 h-10 text-[#0166dc] animate-spin mx-auto" />
               <div>
                 <h3 className="font-heading text-lg font-bold text-slate-900 uppercase">
                   Processing Verification
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-sm mx-auto">
+                <p className="text-xs sm:text-sm text-slate-600 mt-1">
                   {finalizingMsg}
                 </p>
               </div>
@@ -316,7 +316,7 @@ export default function PaymentPage() {
           {/* Loading form spinner */}
           {loading && !error && !isFinalizing && (
             <div className="py-16 text-center space-y-3">
-              <Loader2 className="w-8 h-8 text-[#488203] animate-spin mx-auto" />
+              <Loader2 className="w-8 h-8 text-[#0166dc] animate-spin mx-auto" />
               <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Connecting to Moneris Hosted Gateway...
               </p>
@@ -328,7 +328,7 @@ export default function PaymentPage() {
             <div className="my-6 p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-200">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#0166dc]" />
                   Moneris QA Sandbox • $0.00 Charged
                 </span>
                 <span className="text-xs font-mono text-slate-500 font-bold">{session.ticket}</span>
@@ -361,7 +361,7 @@ export default function PaymentPage() {
                 type="button"
                 onClick={() => handleFinalize('qa_test_approved')}
                 disabled={isFinalizing}
-                className="w-full py-3.5 rounded-xl bg-[#8EF705] hover:bg-[#80de04] text-black font-heading font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-[#8EF705]/20 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white font-heading font-black text-xs uppercase tracking-wider transition-all shadow-md shadow-[#0166dc]/20 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <CreditCard className="w-4 h-4" />
                 Submit Moneris QA Test Payment ($0.00)
@@ -380,11 +380,11 @@ export default function PaymentPage() {
           {/* Compliance & Security Trust Badges */}
           <div className="pt-6 border-t border-slate-100 mt-6 grid grid-cols-2 gap-4 text-left text-slate-500 text-xs">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-[#0166dc] flex-shrink-0" />
               <span>Zero card data touches Pharsyde servers</span>
             </div>
             <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <Lock className="w-4 h-4 text-[#0166dc] flex-shrink-0" />
               <span>Direct Bank TLS 1.3 256-bit Encryption</span>
             </div>
           </div>

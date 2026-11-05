@@ -101,37 +101,37 @@ export default function NewArrivalsPage() {
   }, [products, selectedCategory, searchQuery, sortOption]);
 
   return (
-    <div className="min-h-screen pt-24 pb-20 bg-slate-50 font-sans selection:bg-[#8EF705] selection:text-black">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div className="min-h-screen pt-24 pb-20 bg-slate-50 font-sans selection:bg-[#0166dc] selection:text-white">
+      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16 space-y-8">
         
         {/* Hero Section */}
         <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-slate-950 via-slate-900 to-emerald-950 text-white p-8 sm:p-12 shadow-2xl border border-slate-800">
           {/* Subtle Ambient Glow */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[#8EF705]/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#0166dc]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-[#0166dc]/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 max-w-3xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#8EF705]/20 border border-[#8EF705]/40 text-[#8EF705] text-xs font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(142,247,5,0.2)]">
+          <div className="relative z-10 space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#0166dc]/20 border border-[#0166dc]/40 text-[#0166dc] text-xs font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(142,247,5,0.2)]">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Fresh Drops & Curated Inventory</span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
-              New <span className="text-[#8EF705]">Arrivals</span>
+              New <span className="text-[#0166dc]">Arrivals</span>
             </h1>
 
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
               Explore the latest hand-picked additions to our live store menu. From freshly harvested strains 
               and premium flower to artisan edibles, concentrates, and hardware.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3 text-xs font-medium text-slate-300">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/10">
-                <Flame className="w-3.5 h-3.5 text-[#8EF705]" />
+                <Flame className="w-3.5 h-3.5 text-[#0166dc]" />
                 <span>Showing latest <strong>{products.length}</strong> items</span>
               </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/10 backdrop-blur-md border border-white/10">
-                <Package className="w-3.5 h-3.5 text-emerald-400" />
+                <Package className="w-3.5 h-3.5 text-[#0166dc]" />
                 <span>Default limit: <strong>{limit}</strong></span>
               </span>
               <Link 
@@ -150,14 +150,14 @@ export default function NewArrivalsPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             
             {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
+            <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search new arrivals by strain, brand, or SKU..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 outline-none focus:border-[#8EF705] focus:bg-white focus:ring-2 focus:ring-[#8EF705]/20 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 outline-none focus:border-[#0166dc] focus:bg-white focus:ring-2 focus:ring-[#0166dc]/20 transition-all"
               />
               {searchQuery && (
                 <button
@@ -177,7 +177,7 @@ export default function NewArrivalsPage() {
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
-                  className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-[#8EF705] cursor-pointer"
+                  className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-700 outline-none focus:border-[#0166dc] cursor-pointer"
                 >
                   <option value="newest">Sort: Newest First</option>
                   <option value="price-low">Price: Low to High</option>
@@ -282,7 +282,7 @@ export default function NewArrivalsPage() {
           </div>
         ) : filteredProducts.length === 0 ? (
           <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center max-w-lg mx-auto shadow-sm space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-[#0166dc] flex items-center justify-center mx-auto">
               <Sparkles className="w-7 h-7" />
             </div>
             <h2 className="text-lg font-bold text-slate-900">No matching products found</h2>
@@ -306,7 +306,7 @@ export default function NewArrivalsPage() {
               )}
               <Link
                 to="/catalog"
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-[#0166dc] hover:bg-[#0153b3] text-white transition-colors"
               >
                 Explore Full Catalog
               </Link>
@@ -326,7 +326,7 @@ export default function NewArrivalsPage() {
             <h3 className="text-xl sm:text-2xl font-black text-slate-900">
               Looking for something specific?
             </h3>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-xl">
+            <p className="text-xs sm:text-sm text-slate-500">
               Browse our complete catalog featuring thousands of cannabis products, concentrates, edibles, beverages, and accessories with advanced filters.
             </p>
           </div>
@@ -336,7 +336,7 @@ export default function NewArrivalsPage() {
             className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition-all shadow-md active:scale-[0.98] shrink-0"
           >
             <span>Browse Full Catalog</span>
-            <ArrowRight className="w-4 h-4 text-[#8EF705]" />
+            <ArrowRight className="w-4 h-4 text-[#0166dc]" />
           </Link>
         </div>
 

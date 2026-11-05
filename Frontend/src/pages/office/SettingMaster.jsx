@@ -341,6 +341,14 @@ export default function SettingMaster() {
       const res = await updateOfficeSettingApi('cannabis_max_grams', String(num));
       if (res.success) {
         setOriginalCannabisMaxGrams(num);
+        try {
+          localStorage.setItem('pharsyde_cannabis_limit', String(num));
+          window.dispatchEvent(
+            new CustomEvent('pharsyde_settings_changed', {
+              detail: { key: 'cannabis_max_grams', value: num },
+            })
+          );
+        } catch {}
         notify(`Cannabis purchase limit successfully updated to ${num}g.`);
       } else {
         notify(res.message || 'Failed to update cannabis purchase limit.', 'error');
@@ -366,6 +374,14 @@ export default function SettingMaster() {
       const res = await updateOfficeSettingApi('free_delivery_threshold', String(num));
       if (res.success) {
         setOriginalFreeDeliveryThreshold(num);
+        try {
+          localStorage.setItem('pharsyde_free_delivery_threshold', String(num));
+          window.dispatchEvent(
+            new CustomEvent('pharsyde_settings_changed', {
+              detail: { key: 'free_delivery_threshold', value: num },
+            })
+          );
+        } catch {}
         notify(`Free delivery minimum threshold successfully updated to $${num.toFixed(2)} CAD.`);
       } else {
         notify(res.message || 'Failed to update free delivery threshold.', 'error');
@@ -1403,7 +1419,7 @@ export default function SettingMaster() {
                 onClick={() => setGovIdMandatory(false)}
                 className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
                   !govIdMandatory
-                    ? 'border-[#488203] bg-[#8EF705]/10 ring-1 ring-[#488203]'
+                    ? 'border-[#0166dc] bg-[#0166dc]/10 ring-1 ring-[#0166dc]'
                     : 'border-slate-200 bg-white hover:bg-slate-50'
                 }`}
               >
@@ -1412,7 +1428,7 @@ export default function SettingMaster() {
                     Optional (Default)
                   </span>
                   <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                    !govIdMandatory ? 'border-[#488203] bg-[#488203]' : 'border-slate-300'
+                    !govIdMandatory ? 'border-[#0166dc] bg-[#0166dc]' : 'border-slate-300'
                   }`}>
                     {!govIdMandatory && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                   </div>
@@ -1503,7 +1519,7 @@ export default function SettingMaster() {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="border-b border-slate-100 px-6 py-4.5 bg-slate-50/60 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#8EF705]/20 border border-[#8EF705]/40 text-[#488203] flex items-center justify-center font-bold">
+            <div className="w-8 h-8 rounded-lg bg-[#0166dc]/20 border border-[#0166dc]/40 text-[#0166dc] flex items-center justify-center font-bold">
               <Scale className="w-4 h-4" />
             </div>
             <div>
@@ -1517,7 +1533,7 @@ export default function SettingMaster() {
           </div>
 
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-emerald-50 text-emerald-800 border-emerald-200">
-            Active: {cannabisMaxGrams}g Limit
+            Active: {originalCannabisMaxGrams}g Limit
           </span>
         </div>
 
@@ -1529,7 +1545,7 @@ export default function SettingMaster() {
                 <span className="text-xs font-normal text-slate-400 font-mono">(cannabis_max_grams)</span>
               </span>
               <span className="text-xs text-slate-500">
-                Current Setting: <strong className="text-slate-900 font-bold">{cannabisMaxGrams} grams</strong>
+                Active in Database: <strong className="text-slate-900 font-bold">{originalCannabisMaxGrams} grams</strong>
               </span>
             </div>
 
@@ -1557,7 +1573,7 @@ export default function SettingMaster() {
                       setCannabisMaxGrams(e.target.value === '' ? '' : parseFloat(e.target.value) || 0);
                     }}
                     placeholder="e.g. 30"
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:bg-white focus:border-[#488203] focus:ring-1 focus:ring-[#488203]"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:bg-white focus:border-[#0166dc] focus:ring-1 focus:ring-[#0166dc]"
                   />
                   <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
                     grams (g)
@@ -1573,7 +1589,7 @@ export default function SettingMaster() {
                     }}
                     className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                       Number(cannabisMaxGrams) === 30
-                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        ? 'bg-[#0166dc]/20 border-[#0166dc] text-[#0166dc] ring-1 ring-[#0166dc]'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -1587,7 +1603,7 @@ export default function SettingMaster() {
                     }}
                     className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                       Number(cannabisMaxGrams) === 45
-                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        ? 'bg-[#0166dc]/20 border-[#0166dc] text-[#0166dc] ring-1 ring-[#0166dc]'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -1601,7 +1617,7 @@ export default function SettingMaster() {
                     }}
                     className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                       Number(cannabisMaxGrams) === 60
-                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        ? 'bg-[#0166dc]/20 border-[#0166dc] text-[#0166dc] ring-1 ring-[#0166dc]'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -1615,7 +1631,7 @@ export default function SettingMaster() {
                     }}
                     className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                       Number(cannabisMaxGrams) === 100
-                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        ? 'bg-[#0166dc]/20 border-[#0166dc] text-[#0166dc] ring-1 ring-[#0166dc]'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -1640,7 +1656,7 @@ export default function SettingMaster() {
               <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
                 <div className="flex items-center justify-between text-xs font-medium">
                   <span className="flex items-center gap-1.5 text-slate-700">
-                    <Scale className="w-4 h-4 text-[#529402]" />
+                    <Scale className="w-4 h-4 text-[#0166dc]" />
                     <span>
                       Cannabis Legal Limit: <strong className="text-slate-900">{Math.max(0, Number(cannabisMaxGrams || 30) - 7).toFixed(1)}g</strong> remaining
                     </span>
@@ -1651,7 +1667,7 @@ export default function SettingMaster() {
                 </div>
                 <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-[#8EF705] to-[#529402] h-full rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-[#0166dc] to-[#0166dc] h-full rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(100, (7 / Math.max(1, Number(cannabisMaxGrams || 30))) * 100)}%` }}
                   />
                 </div>
@@ -1774,7 +1790,7 @@ export default function SettingMaster() {
                       setFreeDeliveryThreshold(e.target.value === '' ? '' : parseFloat(e.target.value) || 0);
                     }}
                     placeholder="e.g. 75"
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-8 pr-16 py-2.5 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:bg-white focus:border-[#488203] focus:ring-1 focus:ring-[#488203]"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-8 pr-16 py-2.5 text-sm font-mono font-bold text-slate-900 focus:outline-none focus:bg-white focus:border-[#0166dc] focus:ring-1 focus:ring-[#0166dc]"
                   />
                   <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
                     CAD
@@ -1790,7 +1806,7 @@ export default function SettingMaster() {
                     }}
                     className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                       Number(freeDeliveryThreshold) === 50
-                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        ? 'bg-[#0166dc]/20 border-[#0166dc] text-[#0166dc] ring-1 ring-[#0166dc]'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -1804,7 +1820,7 @@ export default function SettingMaster() {
                     }}
                     className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                       Number(freeDeliveryThreshold) === 75
-                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        ? 'bg-[#0166dc]/20 border-[#0166dc] text-[#0166dc] ring-1 ring-[#0166dc]'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -1818,7 +1834,7 @@ export default function SettingMaster() {
                     }}
                     className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                       Number(freeDeliveryThreshold) === 100
-                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        ? 'bg-[#0166dc]/20 border-[#0166dc] text-[#0166dc] ring-1 ring-[#0166dc]'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -1832,7 +1848,7 @@ export default function SettingMaster() {
                     }}
                     className={`px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                       Number(freeDeliveryThreshold) === 150
-                        ? 'bg-[#8EF705]/20 border-[#488203] text-[#488203] ring-1 ring-[#488203]'
+                        ? 'bg-[#0166dc]/20 border-[#0166dc] text-[#0166dc] ring-1 ring-[#0166dc]'
                         : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -1857,9 +1873,9 @@ export default function SettingMaster() {
               <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
                 <div className="flex items-center justify-between text-xs font-medium">
                   <span className="flex items-center gap-1.5 text-slate-700">
-                    <Truck className="w-4 h-4 text-[#529402]" />
+                    <Truck className="w-4 h-4 text-[#0166dc]" />
                     {45 >= Number(freeDeliveryThreshold || 75) ? (
-                      <span className="text-[#529402] font-black">Unlocked Free Winnipeg Delivery!</span>
+                      <span className="text-[#0166dc] font-black">Unlocked Free Winnipeg Delivery!</span>
                     ) : (
                       <span>
                         Add <strong className="text-slate-900">${Math.max(0, Number(freeDeliveryThreshold || 75) - 45).toFixed(2)}</strong> for Free Delivery
@@ -1872,7 +1888,7 @@ export default function SettingMaster() {
                 </div>
                 <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-[#8EF705] to-orange-500 h-full rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-[#0166dc] to-orange-500 h-full rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(100, (45 / Math.max(1, Number(freeDeliveryThreshold || 75))) * 100)}%` }}
                   />
                 </div>

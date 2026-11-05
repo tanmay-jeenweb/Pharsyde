@@ -118,7 +118,7 @@ export default function GlobalSearchModal() {
         <div className="max-h-[60vh] overflow-y-auto p-4 space-y-2">
           <div className="flex items-center justify-between px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
             <span>{query ? 'Matching Inventory (Photos Verified)' : 'Popular Cultivars & Releases'}</span>
-            {loading && <span className="text-[#529402] animate-pulse">Searching...</span>}
+            {loading && <span className="text-[#0166dc] animate-pulse">Searching...</span>}
           </div>
 
           {results.length === 0 && !loading ? (
@@ -149,7 +149,7 @@ export default function GlobalSearchModal() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#529402]">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#0166dc]">
                           {product.brand || 'PHARSYDE'}
                         </span>
                         {product.strain && (
@@ -158,7 +158,7 @@ export default function GlobalSearchModal() {
                           </span>
                         )}
                       </div>
-                      <h4 className="font-heading text-sm font-bold text-slate-900 truncate group-hover:text-[#529402] transition-colors">
+                      <h4 className="font-heading text-sm font-bold text-slate-900 truncate group-hover:text-[#0166dc] transition-colors">
                         {pName}
                       </h4>
                       <span className="text-[11px] text-slate-400">{product.category}</span>
@@ -171,7 +171,7 @@ export default function GlobalSearchModal() {
                         ${Number(pPrice).toFixed(2)}
                       </span>
                     )}
-                    <div className="w-7 h-7 rounded-full bg-slate-100 group-hover:bg-[#8EF705] text-slate-400 group-hover:text-black flex items-center justify-center transition-all">
+                    <div className="w-7 h-7 rounded-full bg-slate-100 group-hover:bg-[#0166dc] text-slate-400 group-hover:text-black flex items-center justify-center transition-all">
                       <ArrowRight className="w-3.5 h-3.5" />
                     </div>
                   </div>
@@ -184,7 +184,7 @@ export default function GlobalSearchModal() {
         {/* Footer info */}
         <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
           <span className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-[#8EF705]" />
+            <Sparkles className="w-3.5 h-3.5 text-[#0166dc]" />
             <span>Pharsyde Live Inventory</span>
           </span>
           <button
@@ -192,7 +192,7 @@ export default function GlobalSearchModal() {
               setIsSearchOpen(false);
               navigateTo('cannabis');
             }}
-            className="text-[#529402] hover:underline font-semibold"
+            className="text-[#0166dc] hover:underline font-semibold"
           >
             View Cannabis Collection →
           </button>

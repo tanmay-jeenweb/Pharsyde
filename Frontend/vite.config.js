@@ -1,21 +1,27 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [tailwindcss(), react()],
-  server: {
-    port: 5173,
-    allowedHosts: ['pharsyde.jeenhost.in', '.jeenhost.in'],
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true
-      },
-      '/uploads': {
-        target: 'http://localhost:5000',
-        changeOrigin: true
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const frontendPort = parseInt(env.VITE_PORT || env.PORT || '5173', 10)
+  const backendTarget = env.VITE_BACKEND_URL || env.BACKEND_URL || 'http://localhost:5000'
+
+  return {
+    plugins: [tailwindcss(), react()],
+    server: {
+      port: frontendPort,
+      allowedHosts: ['pharsyde.jeenhost.in', '.jeenhost.in'],
+      proxy: {
+        '/api': {
+          target: backendTarget,
+          changeOrigin: true
+        },
+        '/uploads': {
+          target: backendTarget,
+          changeOrigin: true
+        }
       }
     }
   }
