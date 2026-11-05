@@ -5,6 +5,7 @@ import {
   customerRegisterApi,
   getCustomerProfileApi,
 } from '../services/orderService';
+import { getPublicSettingsApi } from '../services/productService';
 
 import {
   MAX_CANNABIS_GRAMS,
@@ -47,6 +48,40 @@ export function AppProvider({ children }) {
     }
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Cannabis Legal Limit State (Configurable via SettingMaster)
+  const [cannabisMaxGrams, setCannabisMaxGrams] = useState(MAX_CANNABIS_GRAMS);
+
+  // Free Delivery Threshold State (Configurable via SettingMaster)
+  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState(75.0);
+
+  // Load Storefront Settings (Dynamic Cannabis Limit, Free Delivery Threshold, etc.)
+  useEffect(() => {
+    let isMounted = true;
+    async function loadPublicSettings() {
+      try {
+        const res = await getPublicSettingsApi();
+        if (isMounted && res?.settings?.cannabis_max_grams) {
+          const parsed = parseFloat(res.settings.cannabis_max_grams);
+          if (Number.isFinite(parsed) && parsed > 0) {
+            setCannabisMaxGrams(parsed);
+          }
+        }
+        if (isMounted && res?.settings?.free_delivery_threshold) {
+          const parsedThreshold = parseFloat(res.settings.free_delivery_threshold);
+          if (Number.isFinite(parsedThreshold) && parsedThreshold >= 0) {
+            setFreeDeliveryThreshold(parsedThreshold);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load storefront settings:', err);
+      }
+    }
+    loadPublicSettings();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Search Modal State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -172,9 +207,9 @@ export function AppProvider({ children }) {
     const additionalGrams = itemGrams * quantity;
     const currentGrams = calculateCartCannabisGrams(cart);
 
-    if (currentGrams + additionalGrams > MAX_CANNABIS_GRAMS) {
+    if (currentGrams + additionalGrams > cannabisMaxGrams) {
       showToast(
-        `Cannot add: Exceeds 30.0g legal limit for cannabis (current: ${currentGrams.toFixed(1)}g, adding: ${additionalGrams.toFixed(1)}g).`,
+        `Cannot add: Exceeds ${cannabisMaxGrams.toFixed(1)}g legal limit for cannabis (current: ${currentGrams.toFixed(1)}g, adding: ${additionalGrams.toFixed(1)}g).`,
         'warning'
       );
       return false;
@@ -209,10 +244,10 @@ export function AppProvider({ children }) {
     );
     const proposedGrams = calculateCartCannabisGrams(proposedCart);
 
-    if (proposedGrams > MAX_CANNABIS_GRAMS) {
+    if (proposedGrams > cannabisMaxGrams) {
       const currentGrams = calculateCartCannabisGrams(cart);
       showToast(
-        `Cannot increase quantity: Exceeds 30.0g legal cannabis limit (current: ${currentGrams.toFixed(1)}g, proposed: ${proposedGrams.toFixed(1)}g).`,
+        `Cannot increase quantity: Exceeds ${cannabisMaxGrams.toFixed(1)}g legal cannabis limit (current: ${currentGrams.toFixed(1)}g, proposed: ${proposedGrams.toFixed(1)}g).`,
         'warning'
       );
       return false;
@@ -236,7 +271,7 @@ export function AppProvider({ children }) {
   const cartSubtotal = cart.reduce((sum, item) => sum + item.variant.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const cartCannabisGrams = calculateCartCannabisGrams(cart);
-  const isCannabisLimitExceeded = cartCannabisGrams > MAX_CANNABIS_GRAMS;
+  const isCannabisLimitExceeded = cartCannabisGrams > cannabisMaxGrams;
 
   // Age verification action
   const confirmAge = () => {
@@ -287,8 +322,13 @@ export function AppProvider({ children }) {
         cartSubtotal,
         cartCount,
         cartCannabisGrams,
-        MAX_CANNABIS_GRAMS,
+        MAX_CANNABIS_GRAMS: cannabisMaxGrams,
+        cannabisMaxGrams,
+        setCannabisMaxGrams,
         isCannabisLimitExceeded,
+        freeDeliveryThreshold,
+        FREE_SHIPPING_THRESHOLD: freeDeliveryThreshold,
+        setFreeDeliveryThreshold,
         isCartOpen,
         setIsCartOpen,
         isSearchOpen,

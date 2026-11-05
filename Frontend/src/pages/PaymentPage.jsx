@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
@@ -339,15 +339,20 @@ export default function PaymentPage() {
                 <p className="text-[11px] text-slate-500">Test with Moneris dummy test cards:</p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                 <div className="p-3 rounded-xl bg-white border border-slate-200">
-                  <span className="font-bold text-slate-800 block">💳 Test Visa (Approved)</span>
+                  <span className="font-bold text-slate-800 block">💳 Test Credit (Visa)</span>
                   <code className="text-slate-600 text-[11px]">4242 •••• •••• 4242</code>
                   <span className="block text-[10px] text-slate-400">Exp: 12/28 • CVV: 123</span>
                 </div>
                 <div className="p-3 rounded-xl bg-white border border-slate-200">
-                  <span className="font-bold text-slate-800 block">💳 Test MasterCard (Approved)</span>
+                  <span className="font-bold text-slate-800 block">💳 Test Credit (MC)</span>
                   <code className="text-slate-600 text-[11px]">5454 •••• •••• 5454</code>
+                  <span className="block text-[10px] text-slate-400">Exp: 12/28 • CVV: 123</span>
+                </div>
+                <div className="p-3 rounded-xl bg-white border border-slate-200">
+                  <span className="font-bold text-slate-800 block">💳 Test Visa Debit</span>
+                  <code className="text-slate-600 text-[11px]">4500 •••• •••• 4500</code>
                   <span className="block text-[10px] text-slate-400">Exp: 12/28 • CVV: 123</span>
                 </div>
               </div>

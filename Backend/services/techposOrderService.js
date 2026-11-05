@@ -55,7 +55,7 @@ function buildTechPosPayload(order, storeId) {
     lastName: lastName,
     phone: order.customer_phone || '',
     email: order.customer_email || '',
-    paymentCardType: order.card_brand || (order.payment_method === 'card' ? 'Visa' : 'None'),
+    paymentCardType: order.card_brand || (order.payment_method === 'debit' ? 'Debit' : (order.payment_method === 'credit' || order.payment_method === 'card' ? 'Visa' : 'None')),
     deliverySlot: null,
     expireDate: null,
     products: products.length > 0 ? products : [{ productId: 1, quantity: 1, unitPrice: Number(order.total) || 0 }],

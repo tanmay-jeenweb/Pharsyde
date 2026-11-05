@@ -90,6 +90,36 @@ const updateOfficeSetting = async (req, res, next) => {
       finalValue = strVal;
     }
 
+    // Specific validation for cannabis_max_grams
+    if (key === 'cannabis_max_grams') {
+      const numVal = parseFloat(value);
+      if (isNaN(numVal) || numVal <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannabis Purchase Limit must be a positive number greater than 0.',
+        });
+      }
+      if (numVal > 1000) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannabis Purchase Limit cannot exceed 1000 grams.',
+        });
+      }
+      finalValue = String(Math.round(numVal * 100) / 100);
+    }
+
+    // Specific validation for free_delivery_threshold
+    if (key === 'free_delivery_threshold') {
+      const numVal = parseFloat(value);
+      if (isNaN(numVal) || numVal < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Free delivery threshold must be a number equal to or greater than 0.',
+        });
+      }
+      finalValue = String(Math.round(numVal * 100) / 100);
+    }
+
     // Specific validation for mobile_force_update
     if (key === 'mobile_force_update') {
       const strVal = String(value).trim().toLowerCase();
@@ -165,6 +195,8 @@ const getPublicSettings = async (req, res, next) => {
       'new_arrivals_limit', 
       'best_seller_product_ids', 
       'gov_id_mandatory',
+      'cannabis_max_grams',
+      'free_delivery_threshold',
       'mobile_latest_version',
       'mobile_min_supported_version',
       'mobile_apk_url',
@@ -185,6 +217,12 @@ const getPublicSettings = async (req, res, next) => {
     }
     if (!publicSettings.best_seller_product_ids) {
       publicSettings.best_seller_product_ids = '[]';
+    }
+    if (!publicSettings.cannabis_max_grams) {
+      publicSettings.cannabis_max_grams = '30.0';
+    }
+    if (!publicSettings.free_delivery_threshold) {
+      publicSettings.free_delivery_threshold = '75.0';
     }
     if (!publicSettings.mobile_latest_version) {
       publicSettings.mobile_latest_version = '1.0.0';
