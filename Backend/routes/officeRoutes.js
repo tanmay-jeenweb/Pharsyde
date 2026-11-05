@@ -35,6 +35,14 @@ const {
   getOfficeSettingByKey,
   updateOfficeSetting,
 } = require('../controllers/settingController');
+const {
+  getAdminSections,
+  createSection,
+  updateSection,
+  toggleSectionActive,
+  deleteSection,
+  reorderSections,
+} = require('../controllers/homeSectionController');
 const { verifyToken } = require('../utils/jwt');
 const pool = require('../config/db');
 
@@ -112,5 +120,13 @@ router.get('/pos-order-items/:orderId', getTechPosOrderItems);
 router.get('/settings', getOfficeSettings);
 router.get('/settings/:key', getOfficeSettingByKey);
 router.put('/settings/:key', updateOfficeSetting);
+
+// 10. Home Page Section Master
+router.get('/home-sections', getAdminSections);
+router.post('/home-sections', createSection);
+router.put('/home-sections/reorder', reorderSections);
+router.put('/home-sections/:id', updateSection);
+router.patch('/home-sections/:id/toggle-active', toggleSectionActive);
+router.delete('/home-sections/:id', deleteSection);
 
 module.exports = router;

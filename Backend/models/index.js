@@ -5,6 +5,7 @@ const UserTypeModel = require('./userTypeModel');
 const AuditLogModel = require('./auditLogModel');
 const OrderModel = require('./orderModel');
 const SettingModel = require('./settingModel');
+const HomeSectionModel = require('./homeSectionModel');
 
 /**
  * Initialize database tables defined inside all models in correct order
@@ -24,6 +25,8 @@ const initModelTables = async () => {
   await OrderModel.createTable();
   // 7. System & App Settings table
   await SettingModel.createTable();
+  // 8. Dynamic Home Page Sections table
+  await HomeSectionModel.createTable();
 };
 
 module.exports = {
@@ -35,4 +38,5 @@ module.exports = {
   AuditLogModel,
   OrderModel,
   SettingModel,
+  HomeSectionModel,
 };

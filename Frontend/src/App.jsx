@@ -39,6 +39,7 @@ import ProductImageMaster from './pages/office/ProductImageMaster';
 import ActivityReport from './pages/office/ActivityReport';
 import OrderMaster from './pages/office/OrderMaster';
 import SettingMaster from './pages/office/SettingMaster';
+import HomeSectionMaster from './pages/office/HomeSectionMaster';
 
 function MainStoreApp() {
   return (
@@ -252,6 +253,22 @@ export default function App() {
           element={
             <OfficeProtectedRoute>
               <SettingMaster />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route
+          path="/office/home-section-master"
+          element={
+            <OfficeProtectedRoute>
+              <HomeSectionMaster />
+            </OfficeProtectedRoute>
+          }
+        />
+        <Route
+          path="/office/section-master"
+          element={
+            <OfficeProtectedRoute>
+              <HomeSectionMaster />
             </OfficeProtectedRoute>
           }
         />

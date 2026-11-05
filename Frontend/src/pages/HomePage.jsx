@@ -6,7 +6,8 @@ import {
   getBestSellersProductsApi,
   getNewArrivalsProductsApi,
   getProductsApi,
-  getPublicSettingsApi
+  getPublicSettingsApi,
+  getPublicHomeSectionsApi
 } from '../services/productService';
 import heroBg from '../assets/hero-bg.png';
 import {
@@ -30,6 +31,11 @@ export default function HomePage() {
   const [loadingBestSellers, setLoadingBestSellers] = useState(true);
   const [loadingNewArrivals, setLoadingNewArrivals] = useState(true);
 
+  // Dynamic Custom Sections (Configured via Home Page Section Master)
+  const [homeSections, setHomeSections] = useState([]);
+  const [loadingHomeSections, setLoadingHomeSections] = useState(true);
+  const [expandedSections, setExpandedSections] = useState({});
+
   // Toggle State for 4-Card Preview vs Full List
   const [showAllBestSellers, setShowAllBestSellers] = useState(false);
   const [showAllNewArrivals, setShowAllNewArrivals] = useState(false);
@@ -52,6 +58,13 @@ export default function HomePage() {
       newArrivalsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     setShowAllNewArrivals((prev) => !prev);
+  };
+
+  const handleToggleDynamicSection = (secId) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [secId]: !prev[secId],
+    }));
   };
 
   // Newsletter State
@@ -149,9 +162,24 @@ export default function HomePage() {
       }
     }
 
+    async function loadHomeSections() {
+      try {
+        setLoadingHomeSections(true);
+        const res = await getPublicHomeSectionsApi();
+        if (isMounted && res && res.success && Array.isArray(res.sections)) {
+          setHomeSections(res.sections);
+        }
+      } catch (err) {
+        console.warn('Could not load dynamic home sections:', err);
+      } finally {
+        if (isMounted) setLoadingHomeSections(false);
+      }
+    }
+
     loadSettings();
     loadBestSellers();
     loadNewArrivals();
+    loadHomeSections();
 
     return () => {
       isMounted = false;
@@ -440,6 +468,87 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* =========================================================================
+          DYNAMIC CUSTOM HOME SECTIONS (Configured via Home Page Section Master)
+         ========================================================================= */}
+      {homeSections.map((sec) => {
+        const isExpanded = Boolean(expandedSections[sec.id]);
+        const displayedProducts = isExpanded ? sec.products : sec.products.slice(0, 4);
+
+        return (
+          <section
+            key={sec.id}
+            className="py-20 relative bg-white border-t border-slate-200 overflow-hidden"
+          >
+            <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#8EF705]/5 blur-[120px] pointer-events-none rounded-full" />
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+              {/* Header Row */}
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 sm:mb-10 gap-4">
+                <div>
+                  <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight uppercase leading-none">
+                    {sec.heading}
+                  </h2>
+                  {sec.sub_heading && (
+                    <p className="text-xs sm:text-sm text-slate-600 mt-2 max-w-xl font-light">
+                      {sec.sub_heading}
+                    </p>
+                  )}
+                </div>
+
+                {/* Header Action Button (View All / Show Less) */}
+                {sec.products.length > 4 && (
+                  <div className="flex items-center gap-3 self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleDynamicSection(sec.id)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-heading font-extrabold text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer group"
+                    >
+                      <span>{isExpanded ? 'Show Less' : `View All (${sec.products.length})`}</span>
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                          isExpanded ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Products Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 py-2">
+                {displayedProducts.map((product) => (
+                  <ProductCard
+                    key={product.pk || product.id}
+                    product={product}
+                  />
+                ))}
+              </div>
+
+              {/* Bottom Centered Toggle Button */}
+              {sec.products.length > 4 && (
+                <div className="mt-10 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleDynamicSection(sec.id)}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-heading font-extrabold text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer group"
+                  >
+                    <span>
+                      {isExpanded ? 'Show Less' : `View All (${sec.products.length} Products)`}
+                    </span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                        isExpanded ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })}
 
       {/* =========================================================================
           SECTION 6: NEWSLETTER ("STAY IN THE LOOP")

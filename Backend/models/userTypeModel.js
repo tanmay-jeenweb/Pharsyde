@@ -7,7 +7,8 @@ const OFFICE_MASTERS = [
   { key: 'product_master', label: 'Product Master' },
   { key: 'product_image_master', label: 'Product Image Master' },
   { key: 'activity_report', label: 'Activity Report' },
-  { key: 'setting_master', label: 'Setting Master' }
+  { key: 'setting_master', label: 'Setting Master' },
+  { key: 'home_section_master', label: 'Home Page Section Master' }
 ];
 
 const UserTypeModel = {

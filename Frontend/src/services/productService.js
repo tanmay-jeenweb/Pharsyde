@@ -257,3 +257,25 @@ export async function getBestSellersProductsApi() {
     throw error;
   }
 }
+
+/**
+ * Fetch dynamic storefront home page sections (active only, with hydrated products)
+ */
+export async function getPublicHomeSectionsApi() {
+  const url = `${API_BASE}/products/home-sections`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: ${res.statusText}`);
+    return await res.json();
+  } catch (error) {
+    try {
+      const fallbackUrl = 'http://localhost:5000/api/products/home-sections';
+      const resFallback = await fetch(fallbackUrl);
+      if (resFallback.ok) {
+        return await resFallback.json();
+      }
+    } catch {}
+    throw error;
+  }
+}
+

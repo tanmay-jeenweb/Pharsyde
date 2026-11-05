@@ -1,3 +1,4 @@
+
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import logoImage from "../assets/image.webp";
@@ -119,6 +120,15 @@ export default function Navbar({ title = "ERP Admin" }) {
             color: "bg-indigo-50 text-indigo-700 border border-indigo-100/50",
             activeColor: "bg-indigo-100 text-indigo-800",
             desc: "Storefront product limits, defaults & ERP configuration"
+        },
+        {
+            name: "Home Section Master",
+            path: "/office/home-section-master",
+            masterKey: "home_section_master",
+            icon: "fa-solid fa-layer-group",
+            color: "bg-amber-50 text-amber-700 border border-amber-100/50",
+            activeColor: "bg-amber-100 text-amber-800",
+            desc: "Dynamically create, reorder & curate product showcase sections on Home page"
         }
     ];
 
