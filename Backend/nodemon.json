@@ -1,0 +1,21 @@
+{
+  "watch": [
+    "controllers",
+    "models",
+    "routes",
+    "services",
+    "utils",
+    "config",
+    "index.js"
+  ],
+  "ignore": [
+    "data/**",
+    "uploads/**",
+    "*.json",
+    "*.csv",
+    "node_modules/**"
+  ],
+  "ext": "js",
+  "delay": "500"
+}
+

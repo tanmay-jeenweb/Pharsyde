@@ -1,0 +1,122 @@
+[
+  {
+    "key": "cannabis_max_grams",
+    "value": "30",
+    "label": "Cannabis Purchase Limit (Grams)",
+    "description": "Maximum allowed dried cannabis equivalent in grams (DFE) per customer order/transaction.",
+    "category": "general",
+    "updated_at": "2026-11-05T12:13:48.556Z"
+  },
+  {
+    "key": "gov_id_mandatory",
+    "value": "false",
+    "label": "Government ID Mandatory at Checkout",
+    "description": "When enabled, customers must upload a valid government-approved ID before completing checkout.",
+    "category": "compliance",
+    "updated_at": "2026-11-04T09:19:04.000Z"
+  },
+  {
+    "key": "mobile_force_update",
+    "value": "true",
+    "label": "Force Mobile App Update",
+    "description": "When enabled, users with an outdated or mismatched version cannot dismiss the update screen.",
+    "category": "mobile_app",
+    "updated_at": "2026-11-04T11:07:06.000Z"
+  },
+  {
+    "key": "mobile_latest_version",
+    "value": "1.0.0",
+    "label": "Latest Mobile App Version",
+    "description": "The active latest production version code of the mobile app (e.g. 1.0.0).",
+    "category": "mobile_app",
+    "updated_at": "2026-11-04T11:07:06.000Z"
+  },
+  {
+    "key": "mobile_min_supported_version",
+    "value": "1.0.0",
+    "label": "Minimum Supported Mobile Version",
+    "description": "Any mobile app version strictly below this will always be forced to update immediately.",
+    "category": "mobile_app",
+    "updated_at": "2026-11-04T11:07:06.000Z"
+  },
+  {
+    "key": "mobile_apk_url",
+    "value": "https://pharsyde.jeenhost.in/uploads/apk/app-release.apk",
+    "label": "Mobile APK Download URL",
+    "description": "Direct public URL to download the latest Android application package (APK).",
+    "category": "mobile_app",
+    "updated_at": "2026-11-04T11:07:06.000Z"
+  },
+  {
+    "key": "mobile_release_notes",
+    "value": "Performance improvements, checkout optimizations, and bug fixes.",
+    "label": "Mobile Release Notes",
+    "description": "Release changelog notes displayed to the user inside the update modal.",
+    "category": "mobile_app",
+    "updated_at": "2026-11-04T11:07:06.000Z"
+  },
+  {
+    "key": "best_seller_product_ids",
+    "value": "[]",
+    "label": "Best Seller Products",
+    "description": "JSON array of selected product IDs to display on the customer storefront Best Sellers page.",
+    "category": "storefront",
+    "updated_at": "2026-11-04T08:38:37.000Z"
+  },
+  {
+    "key": "free_delivery_threshold",
+    "value": "75.0",
+    "label": "Free Delivery Minimum Threshold ($ CAD)",
+    "description": "Minimum product subtotal required for a customer order to qualify for free courier delivery.",
+    "category": "storefront",
+    "updated_at": "2026-11-05T07:35:50.000Z"
+  },
+  {
+    "key": "new_arrivals_limit",
+    "value": "24",
+    "label": "New Arrivals Display Limit",
+    "description": "Number of latest products to display on the customer storefront New Arrivals page by default.",
+    "category": "storefront",
+    "updated_at": "2026-11-04T08:38:37.000Z"
+  },
+  {
+    "key": "reward_point_dollar_rate",
+    "value": "0.001",
+    "label": "Reward Point Dollar Value ($ CAD per Point)",
+    "description": "Cash discount value of 1 reward point in CAD ($0.001 CAD per point).",
+    "category": "storefront",
+    "updated_at": "2026-11-05T11:59:09.000Z"
+  },
+  {
+    "key": "reward_points_per_cad_spent",
+    "value": "1.0",
+    "label": "Reward Points Earned per $1 CAD Spent",
+    "description": "Number of reward points a customer earns for each $1 CAD spent on completed purchases (1 CAD = 1 point).",
+    "category": "storefront",
+    "updated_at": "2026-11-05T11:59:09.000Z"
+  },
+  {
+    "key": "reward_points_redemption_rate",
+    "value": "1000",
+    "label": "Reward Points per $1 CAD Redemption",
+    "description": "Number of reward points required to redeem $1.00 CAD instant discount at checkout (1,000 points = $1.00 CAD).",
+    "category": "storefront",
+    "updated_at": "2026-11-05T11:59:09.000Z"
+  },
+  {
+    "key": "show_best_sellers",
+    "value": "true",
+    "label": "Show Best Sellers Section on Home Page",
+    "description": "Toggle switch to show or hide the Best Sellers section on the customer storefront home page.",
+    "category": "storefront",
+    "updated_at": "2026-11-05T09:46:04.000Z"
+  },
+  {
+    "key": "show_new_arrivals",
+    "value": "true",
+    "label": "Show New Arrivals Section on Home Page",
+    "description": "Toggle switch to show or hide the New Arrivals section on the customer storefront home page.",
+    "category": "storefront",
+    "updated_at": "2026-11-05T09:46:04.000Z"
+  }
+]
