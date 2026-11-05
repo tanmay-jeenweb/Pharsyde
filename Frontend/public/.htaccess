@@ -38,8 +38,8 @@
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # Exclude API, Uploads, and Downloads from SPA rewrites
-  RewriteCond %{REQUEST_URI} ^/(api|uploads|download) [NC]
+  # Exclude API, Uploads, Downloads, and APK directory from SPA rewrites
+  RewriteCond %{REQUEST_URI} ^/(api|uploads|download|apk) [NC]
   RewriteRule ^ - [L]
 
   # Fallback all other routes to React index.html
