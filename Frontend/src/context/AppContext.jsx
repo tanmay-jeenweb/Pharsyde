@@ -260,6 +260,35 @@ export function AppProvider({ children }) {
     const targetVariant =
       variant || (product.variants && product.variants[0]) || { id: 'default', label: 'Standard', price: product.price };
 
+    // ── Stock Check (local DB qty_available — no TechPOS API call) ──────────
+    const dbQty = product.qty_available !== undefined ? parseFloat(product.qty_available) : null;
+    if (dbQty !== null && !isNaN(dbQty)) {
+      // How many of this product+variant are already in the cart?
+      const alreadyInCart = cart.reduce((sum, item) => {
+        if (item.product.id === product.id && item.variant.id === targetVariant.id) {
+          return sum + item.quantity;
+        }
+        return sum;
+      }, 0);
+
+      if (alreadyInCart + quantity > dbQty) {
+        const remaining = Math.max(0, dbQty - alreadyInCart);
+        if (remaining <= 0) {
+          showToast(
+            `"${product.name}" is already at max available stock (${dbQty} in stock).`,
+            'warning'
+          );
+        } else {
+          showToast(
+            `Only ${remaining} unit${remaining !== 1 ? 's' : ''} of "${product.name}" available. You already have ${alreadyInCart} in your cart.`,
+            'warning'
+          );
+        }
+        return false;
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const itemGrams = getProductCannabisGrams({ product, variant: targetVariant });
     const additionalGrams = itemGrams * quantity;
     const currentGrams = calculateCartCannabisGrams(cart);
@@ -294,6 +323,26 @@ export function AppProvider({ children }) {
       removeFromCart(productId, variantId);
       return;
     }
+
+    // ── Stock Check (local DB qty_available — no TechPOS API call) ──────────
+    const cartItem = cart.find(
+      (item) => item.product.id === productId && item.variant.id === variantId
+    );
+    if (cartItem) {
+      const dbQty =
+        cartItem.product.qty_available !== undefined
+          ? parseFloat(cartItem.product.qty_available)
+          : null;
+      if (dbQty !== null && !isNaN(dbQty) && qty > dbQty) {
+        showToast(
+          `Only ${dbQty} unit${dbQty !== 1 ? 's' : ''} of "${cartItem.product.name}" available in stock.`,
+          'warning'
+        );
+        return false;
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const proposedCart = cart.map((item) =>
       item.product.id === productId && item.variant.id === variantId
         ? { ...item, quantity: qty }
