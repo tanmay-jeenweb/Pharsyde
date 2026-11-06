@@ -8,6 +8,7 @@ const SettingModel = require('./settingModel');
 const HomeSectionModel = require('./homeSectionModel');
 const ContactInquiryModel = require('./contactInquiryModel');
 const NewsletterModel = require('./newsletterModel');
+const OtpModel = require('./otpModel');
 
 /**
  * Initialize database tables defined inside all models in correct order
@@ -33,6 +34,8 @@ const initModelTables = async () => {
   await ContactInquiryModel.createTable();
   // 10. Newsletter Subscriptions table
   await NewsletterModel.createTable();
+  // 11. Email OTPs table
+  await OtpModel.createTable();
 };
 
 module.exports = {
@@ -47,4 +50,5 @@ module.exports = {
   HomeSectionModel,
   ContactInquiryModel,
   NewsletterModel,
+  OtpModel,
 };
