@@ -6,7 +6,7 @@ const SettingModel = require('../models/settingModel');
 // =========================================================================
 const HARDCODED_APP_VERSION = '1.0.0';
 const HARDCODED_MIN_VERSION = '1.0.0';
-const HARDCODED_APK_URL = 'https://pharsyde.jeenhost.in/apk/app-release.apk';
+const HARDCODED_APK_URL = 'https://pharsyde.ca/apk/app-release.apk';
 const HARDCODED_FORCE_UPDATE = 'true';
 const HARDCODED_RELEASE_NOTES = 'Performance improvements, checkout optimizations, and bug fixes.';
 

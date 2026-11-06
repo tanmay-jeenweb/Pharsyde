@@ -1,7 +1,7 @@
 import React, { useId } from 'react';
 
 const DEFAULT_VERSION = "01.00.00";
-const DEFAULT_DOWNLOAD_URL = "https://pharsyde.jeenhost.in/apk/app-release.apk";
+const DEFAULT_DOWNLOAD_URL = "https://pharsyde.ca/apk/app-release.apk";
 
 /**
  * AppDownloadBadge component for Pharsyde Customer Home & Navigation

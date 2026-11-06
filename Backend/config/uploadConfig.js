@@ -20,13 +20,13 @@ if (!fs.existsSync(uploadDir)) {
 
 module.exports = {
   uploadDir,
-  uploadBaseUrl: process.env.UPLOAD_BASE_URL || 'https://pharsyde.jeenhost.in/uploads',
+  uploadBaseUrl: process.env.UPLOAD_BASE_URL || 'https://pharsyde.ca/uploads',
   serveMethod: process.env.UPLOAD_SERVE_METHOD || 'express',
 
   // Helper to generate public URL for a file
   getFileUrl: (filename) => {
     if (!filename) return null;
-    const baseUrl = process.env.UPLOAD_BASE_URL || 'https://pharsyde.jeenhost.in/uploads';
+    const baseUrl = process.env.UPLOAD_BASE_URL || 'https://pharsyde.ca/uploads';
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     const cleanFilename = filename.startsWith('/') ? filename.slice(1) : filename;
     return `${cleanBaseUrl}/${cleanFilename}`;

@@ -24,14 +24,14 @@ export default function ForceUpdateModal({ updateData, onDismiss }) {
   const {
     latestVersion = '1.0.0',
     currentVersion = '1.0.0',
-    downloadUrl = 'https://pharsyde.jeenhost.in/apk/app-release.apk',
+    downloadUrl = 'https://pharsyde.ca/apk/app-release.apk',
     forceUpdate = true,
     releaseNotes = '',
   } = updateData;
 
   const handleUpdateClick = () => {
     // Open APK download URL in browser / system download manager
-    window.location.href = downloadUrl || 'https://pharsyde.jeenhost.in/apk/app-release.apk';
+    window.location.href = downloadUrl || 'https://pharsyde.ca/apk/app-release.apk';
   };
 
   return (

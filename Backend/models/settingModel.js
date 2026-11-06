@@ -114,7 +114,7 @@ const DEFAULT_SETTINGS = [
   },
   {
     key: 'mobile_apk_url',
-    value: 'https://pharsyde.jeenhost.in/apk/app-release.apk',
+    value: 'https://pharsyde.ca/apk/app-release.apk',
     label: 'Mobile APK Download URL',
     description: 'Direct public URL to download the latest Android application package (APK).',
     category: 'mobile_app'

@@ -6,10 +6,10 @@ let transporter = null;
 function getTransporter() {
   if (transporter) return transporter;
 
-  const host = process.env.SMTP_HOST || 'mail.pharsyde.jeenhost.in';
+  const host = process.env.SMTP_HOST || 'mail.pharsyde.ca';
   const port = parseInt(process.env.SMTP_PORT || '465', 10);
   const secure = process.env.SMTP_SECURE === 'true' || port === 465;
-  const user = process.env.SMTP_USER || 'noreply@pharsyde.jeenhost.in';
+  const user = process.env.SMTP_USER || 'noreply@pharsyde.ca';
   const pass = process.env.SMTP_PASS || 'Jeenweb@123';
 
   transporter = nodemailer.createTransport({
@@ -140,7 +140,7 @@ async function sendOtpEmail({ to, otp, purpose }) {
     : `Your Pharsyde Order Verification Code: ${otp}`;
 
   const html = generateOtpEmailHtml({ otp, purpose });
-  const from = process.env.SMTP_FROM || '"PHARSYDE Dispensary" <noreply@pharsyde.jeenhost.in>';
+  const from = process.env.SMTP_FROM || '"PHARSYDE Dispensary" <noreply@pharsyde.ca>';
 
   try {
     const t = getTransporter();
