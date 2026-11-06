@@ -149,10 +149,10 @@ export default function ProductDetailsPage() {
   if (error || !product) {
     return (
       <div className="min-h-screen pt-32 pb-24 bg-[#F8FAFC] flex flex-col items-center justify-center px-4">
-        <div className="bg-white rounded-3xl border border-slate-200 p-8 max-w-md w-full text-center shadow-lg">
-          <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
+        <div className="bg-white rounded-3xl border border-red-200 p-8 max-w-md w-full text-center shadow-lg">
+          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
           <h2 className="text-xl font-bold font-heading text-slate-900 mb-2">Product Not Found</h2>
-          <p className="text-sm text-slate-500 mb-6">{error || 'This product is no longer in active stock.'}</p>
+          <p className="text-sm text-red-600 font-medium mb-6">{error || 'This product is no longer in active stock.'}</p>
           <button
             onClick={() => navigate('/catalog')}
             className="w-full py-3 rounded-xl bg-[#0166dc] text-white font-bold uppercase tracking-wider text-xs hover:bg-[#0153b3] transition-all shadow-md shadow-[#0166dc]/20"

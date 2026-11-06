@@ -222,16 +222,16 @@ export default function ContactPage() {
               <div
                 className={`mb-6 p-4 rounded-2xl border text-xs flex items-start gap-3 ${
                   status === 'error'
-                    ? 'bg-rose-50 border-rose-200 text-rose-800'
+                    ? 'bg-red-50 border-red-200 text-red-700'
                     : 'bg-[#0166dc]/15 border-[#0166dc]/40 text-[#3d6e03]'
                 }`}
               >
                 {status === 'error' ? (
-                  <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                  <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                 ) : (
                   <CheckCircle2 className="w-5 h-5 text-[#0166dc] shrink-0 mt-0.5" />
                 )}
-                <p className="leading-relaxed">{feedbackMessage}</p>
+                <p className="leading-relaxed font-medium">{feedbackMessage}</p>
               </div>
             )}
 

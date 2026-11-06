@@ -21,7 +21,8 @@ import {
   Check,
   Mail,
   Sparkles,
-  Zap
+  Zap,
+  AlertCircle
 } from 'lucide-react';
 
 export default function HomePage() {
@@ -770,12 +771,14 @@ export default function HomePage() {
                       <div className={`p-3.5 rounded-xl text-xs flex items-center gap-2 ${
                         newsletterStatus === 'success'
                           ? 'bg-[#0166dc]/20 text-slate-900 border border-[#0166dc]'
-                          : 'bg-red-50 text-red-800 border border-red-200'
+                          : 'bg-red-50 text-red-700 border border-red-200'
                       }`}>
                         {newsletterStatus === 'success' ? (
                           <CheckCircle2 className="w-4 h-4 shrink-0 text-[#0166dc]" />
-                        ) : null}
-                        <span>{newsletterMsg}</span>
+                        ) : (
+                          <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                        )}
+                        <span className={newsletterStatus === 'error' ? 'text-red-700 font-semibold' : ''}>{newsletterMsg}</span>
                       </div>
                     )}
 
