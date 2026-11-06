@@ -558,7 +558,7 @@ export default function PolicyPage({ defaultTab }) {
       title: "Contact & Corporate Notices",
       paragraphs: [
         "For legal notices, inquiries regarding these Terms of Service, or corporate matters, please contact:",
-        "Pharsyde Inc. | 117 Regent Ave W, Winnipeg, MB R2C 1R1 | Phone: (204) 222-4753 | Email: pharsydecannabis@gmail.com"
+        "Pharsyde Inc. | 117 Regent Ave W, Winnipeg, MB R2C 1R1 | Phone: (204) 222-4753 | Email: cannabis@pharsyde.ca"
       ]
     }
   ];
@@ -701,7 +701,7 @@ export default function PolicyPage({ defaultTab }) {
       title: "Contact Our Privacy Officer",
       paragraphs: [
         "For questions, access requests, or feedback regarding our privacy practices, please contact:",
-        "Privacy Officer | Pharsyde Inc. | 117 Regent Ave W, Winnipeg, MB R2C 1R1 | Phone: (204) 222-4753 | Email: pharsydecannabis@gmail.com"
+        "Privacy Officer | Pharsyde Inc. | 117 Regent Ave W, Winnipeg, MB R2C 1R1 | Phone: (204) 222-4753 | Email: cannabis@pharsyde.ca"
       ]
     }
   ];

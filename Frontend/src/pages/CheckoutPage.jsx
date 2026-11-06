@@ -151,9 +151,9 @@ export default function CheckoutPage() {
   const [redeemRewards, setRedeemRewards] = useState(false);
   const POINT_DOLLAR_RATE = 0.001; // 1,000 points = $1.00 CAD ($0.001 CAD per point)
   const availablePoints = isCustomerLoggedIn ? Number(customerUser?.reward_points || 0) : 0;
-  const availableDollarValue = Number((availablePoints * POINT_DOLLAR_RATE).toFixed(2));
+  const availableDollarValue = availablePoints * POINT_DOLLAR_RATE;
   const maxRedeemablePoints = Math.min(availablePoints, Math.floor(cartSubtotal / POINT_DOLLAR_RATE));
-  const rewardDiscount = redeemRewards ? Math.round(maxRedeemablePoints * POINT_DOLLAR_RATE * 100) / 100 : 0.00;
+  const rewardDiscount = redeemRewards ? maxRedeemablePoints * POINT_DOLLAR_RATE : 0.00;
 
   // Calculations
   const isPickup = formData.fulfillmentType === 'pickup';
@@ -1143,7 +1143,7 @@ export default function CheckoutPage() {
                       ⭐ {availablePoints} pts
                     </span>
                     <span className="text-[10px] text-slate-500 font-mono block">
-                      (${availableDollarValue.toFixed(2)} CAD)
+                      (${availableDollarValue.toFixed(3)} CAD)
                     </span>
                   </div>
                 </div>
@@ -1162,7 +1162,7 @@ export default function CheckoutPage() {
                           Redeem {maxRedeemablePoints} points for instant discount
                         </span>
                         <span className="text-[11px] text-[#0166dc] font-mono font-bold block mt-0.5">
-                          -${(maxRedeemablePoints * POINT_DOLLAR_RATE).toFixed(2)} CAD off order total (1,000 pts = $1.00 CAD)
+                          -${(maxRedeemablePoints * POINT_DOLLAR_RATE).toFixed(3)} CAD off order total (1,000 pts = $1.00 CAD)
                         </span>
                       </div>
                     </label>
@@ -1218,7 +1218,7 @@ export default function CheckoutPage() {
                     </span>
                   </span>
                   <span className={`font-mono font-bold ${redeemRewards && rewardDiscount > 0 ? 'text-[#0166dc]' : 'text-slate-500'}`}>
-                    {redeemRewards && rewardDiscount > 0 ? `-${rewardDiscount.toFixed(2)} CAD` : '$0.00 CAD'}
+                    {redeemRewards && rewardDiscount > 0 ? `-${rewardDiscount.toFixed(3)} CAD` : '$0.00 CAD'}
                   </span>
                 </div>
 
