@@ -183,7 +183,7 @@ export default function CartDrawer() {
 
           {/* Footer & Checkout Breakdown */}
           {cart.length > 0 && (
-            <div className="p-6 bg-white border-t border-slate-200 space-y-4">
+            <div className="px-6 py-3 bg-white border-t border-slate-200 space-y-2.5">
               {/* Price Calculation Breakdown */}
               <div className="space-y-1.5 text-xs text-slate-600">
                 <div className="flex justify-between">
@@ -194,23 +194,13 @@ export default function CartDrawer() {
                   <span>{taxSummary.hasCannabis && taxSummary.hasNicotine ? 'Estimated Taxes (5% Cannabis / 12% Nicotine)' : taxSummary.hasNicotine ? 'Nicotine Tax (5% GST + 7% PST = 12%)' : 'Cannabis Tax (5% GST)'}</span>
                   <span className="font-mono text-slate-900">${estimatedTax.toFixed(2)} CAD</span>
                 </div>
-                {taxSummary.hasCannabis && taxSummary.hasNicotine && (
-                  <div className="flex justify-between text-[11px] text-slate-400 pl-2">
-                    <span>• Cannabis 5% GST: ${taxSummary.cannabisTax.toFixed(2)} | Nicotine 12% (5% GST+7% PST): ${taxSummary.nicotineTax.toFixed(2)}</span>
-                  </div>
-                )}
+                
                 {cartCannabisGrams > 0 && (
                   <div className="flex justify-between items-center text-xs pt-1 border-t border-slate-100">
-                    <span className="flex items-center gap-1.5 text-slate-600">
-                      <Scale className="w-3.5 h-3.5 text-slate-700" />
-                      <span>Cannabis Weight</span>
-                    </span>
-                    <span className={`font-mono font-bold ${isCannabisLimitExceeded ? 'text-red-600' : 'text-slate-900'}`}>
-                      {cartCannabisGrams.toFixed(1)}g / {CANNABIS_LIMIT.toFixed(1)}g
-                    </span>
+                    
                   </div>
                 )}
-                <div className="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200">
+                <div className="flex justify-between text-sm font-bold text-slate-900 pt-1.5 border-t border-slate-200">
                   <span>Estimated Total</span>
                   <span className="font-mono text-base text-[#0166dc] font-black">${finalTotal.toFixed(2)} CAD</span>
                 </div>
