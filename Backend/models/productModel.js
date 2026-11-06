@@ -249,7 +249,7 @@ const ProductModel = {
     const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'modified';
     const safeSortOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-    query += ` ORDER BY \`${safeSortBy}\` ${safeSortOrder} LIMIT ? OFFSET ?`;
+    query += ` ORDER BY \`${safeSortBy}\` ${safeSortOrder}, \`pk\` ASC LIMIT ? OFFSET ?`;
     params.push(Number(limit), Number(offset));
 
     const [rows] = await pool.query(query, params);
@@ -276,7 +276,7 @@ const ProductModel = {
   /**
    * Count products matching filters
    */
-  async count({ category, brand, strain, minPrice, maxPrice, active, hasImage, search, storeId } = {}) {
+  async count({ category, subCategory, brand, strain, minPrice, maxPrice, active, hasImage, search, storeId } = {}) {
     let query = 'SELECT COUNT(*) as total FROM products WHERE 1=1';
     const params = [];
 
@@ -303,6 +303,11 @@ const ProductModel = {
         query += ` AND category IN (${categories.map(() => '?').join(', ')})`;
         params.push(...categories);
       }
+    }
+
+    if (subCategory) {
+      query += ' AND subCategory = ?';
+      params.push(subCategory);
     }
 
     if (brand) {
@@ -353,9 +358,9 @@ const ProductModel = {
     }
 
     if (search) {
-      query += ' AND (product_name LIKE ? OR brand LIKE ? OR sku LIKE ? OR barcode LIKE ?)';
+      query += ' AND (product_name LIKE ? OR brand LIKE ? OR sku LIKE ? OR barcode LIKE ? OR long_description LIKE ?)';
       const term = `%${search}%`;
-      params.push(term, term, term, term);
+      params.push(term, term, term, term, term);
     }
 
     const [rows] = await pool.query(query, params);

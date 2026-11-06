@@ -41,6 +41,7 @@ export async function getProductsApi({
   search = '',
   page = 1,
   limit = 24,
+  offset,
   hasImage = true,
   storeId,
   sortBy = 'featured',
@@ -86,8 +87,13 @@ export async function getProductsApi({
     params.append('search', search.trim());
   }
 
-  params.append('page', String(page));
-  params.append('limit', String(limit));
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = parseInt(limit, 10) || 24;
+  const computedOffset = offset !== undefined ? Number(offset) : (pageNum - 1) * limitNum;
+
+  params.append('page', String(pageNum));
+  params.append('limit', String(limitNum));
+  params.append('offset', String(computedOffset));
 
   if (hasImage) {
     params.append('hasImage', 'true');
