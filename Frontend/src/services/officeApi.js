@@ -347,6 +347,23 @@ export async function retryTechPosOrderSyncApi(orderId) {
   return await handleResponse(res);
 }
 
+export async function cancelOfficeOrderApi(orderId, { reason = '' } = {}) {
+  const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}/cancel`, {
+    method: 'POST',
+    headers: getHeaders('application/json'),
+    body: JSON.stringify({ reason }),
+  });
+  return await handleResponse(res);
+}
+
+export async function checkOfficeOrderStockApi(orderId) {
+  const res = await fetch(`${API_BASE}/orders/${encodeURIComponent(orderId)}/stock-check`, {
+    method: 'GET',
+    headers: getHeaders('application/json'),
+  });
+  return await handleResponse(res);
+}
+
 export async function getOfficeOrdersApi({ limit = 50, offset = 0, status = '' } = {}) {
   const params = new URLSearchParams();
   if (limit) params.append('limit', String(limit));

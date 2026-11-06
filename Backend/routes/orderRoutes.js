@@ -5,6 +5,8 @@ const {
   getOrderById,
   retryTechPosSync,
   getOfficeOrders,
+  cancelOrder,
+  checkOrderStock,
 } = require('../controllers/orderController');
 const { verifyToken } = require('../utils/jwt');
 const pool = require('../config/db');
@@ -23,7 +25,7 @@ const attachUserIfPresent = async (req, res, next) => {
       if (decoded && decoded.id) {
         try {
           const [rows] = await pool.query(
-            'SELECT id, name, email, role, mob_no, date_of_birth FROM users WHERE id = ?',
+            'SELECT id, name, email, role, user_type, mob_no, date_of_birth FROM users WHERE id = ?',
             [decoded.id]
           );
           if (rows.length > 0) {
@@ -31,7 +33,7 @@ const attachUserIfPresent = async (req, res, next) => {
           }
         } catch {
           // If DB is offline, decode basic JWT claims into req.user
-          req.user = { id: decoded.id, email: decoded.email, role: decoded.role || 'user' };
+          req.user = { id: decoded.id, email: decoded.email, role: decoded.role || 'user', user_type: decoded.user_type || 'User' };
         }
       }
     } catch {
@@ -55,6 +57,12 @@ router.get('/office/all', getOfficeOrders);
 
 // Single order inspection
 router.get('/:id', getOrderById);
+
+// Order cancellation with stock restoration & TechPOS sync
+router.post('/:id/cancel', cancelOrder);
+
+// TechPOS & local real-time stock inspection for order items
+router.get('/:id/stock-check', checkOrderStock);
 
 // TechPOS manual re-sync
 router.post('/:id/sync-techpos', retryTechPosSync);

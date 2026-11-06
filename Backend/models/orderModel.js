@@ -377,6 +377,138 @@ const OrderModel = {
   },
 
   /**
+   * Cancel an order, restore product stock, update status to 'Cancelled', and reverse loyalty points
+   * @param {Object} params
+   * @param {string|number} params.orderId - Numeric ID or order_number
+   * @param {string} [params.reason] - Reason for cancellation
+   * @param {string} [params.cancelledBy] - User or Admin email/name
+   */
+  async cancelOrder({ orderId, reason = 'Cancelled by customer', cancelledBy = 'Customer' }) {
+    const order = await this.findById(orderId);
+    if (!order) {
+      throw new Error(`Order #${orderId} not found.`);
+    }
+
+    if (order.order_status?.toLowerCase() === 'cancelled') {
+      throw new Error(`Order #${order.order_number} is already cancelled.`);
+    }
+
+    const nonCancellable = ['shipped', 'delivered', 'completed'];
+    if (nonCancellable.includes(order.order_status?.toLowerCase())) {
+      throw new Error(`Cannot cancel an order that is already ${order.order_status}.`);
+    }
+
+    const cancelTimestamp = new Date().toISOString();
+    const cancellationNote = `[Cancelled on ${cancelTimestamp} by ${cancelledBy} - Reason: ${reason}]`;
+    const updatedNotes = order.notes ? `${order.notes} | ${cancellationNote}` : cancellationNote;
+
+    try {
+      // 1. Atomically update order status in MySQL
+      const isNum = !isNaN(orderId) && String(orderId).indexOf('PHAR-') === -1;
+      const updateQuery = isNum
+        ? `UPDATE orders 
+           SET order_status = 'Cancelled',
+               payment_status = CASE WHEN payment_status = 'Paid' THEN 'Refund Pending' ELSE payment_status END,
+               notes = ?
+           WHERE id = ? AND order_status NOT IN ('Cancelled', 'Shipped', 'Delivered')`
+        : `UPDATE orders 
+           SET order_status = 'Cancelled',
+               payment_status = CASE WHEN payment_status = 'Paid' THEN 'Refund Pending' ELSE payment_status END,
+               notes = ?
+           WHERE order_number = ? AND order_status NOT IN ('Cancelled', 'Shipped', 'Delivered')`;
+
+      const [res] = await pool.query(updateQuery, [updatedNotes, orderId]);
+      if (res.affectedRows === 0) {
+        throw new Error('Order could not be cancelled. It may have already been cancelled or dispatched.');
+      }
+
+      // 2. Restore local MySQL stock for all items
+      if (Array.isArray(order.items) && order.items.length > 0) {
+        for (const item of order.items) {
+          const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
+          const productId = item.product_id || item.productId || item.pk || null;
+          const techPosId = item.techpos_product_id || item.techPosProductId || null;
+          const sku = item.sku || null;
+
+          try {
+            if (productId) {
+              await pool.query(
+                `UPDATE products 
+                 SET qty_available = COALESCE(qty_available, 0) + ? 
+                 WHERE pk = ?`,
+                [qty, String(productId)]
+              );
+            } else if (sku) {
+              await pool.query(
+                `UPDATE products 
+                 SET qty_available = COALESCE(qty_available, 0) + ? 
+                 WHERE sku = ?`,
+                [qty, String(sku)]
+              );
+            } else if (techPosId) {
+              await pool.query(
+                `UPDATE products 
+                 SET qty_available = COALESCE(qty_available, 0) + ? 
+                 WHERE pk = ?`,
+                [qty, String(techPosId)]
+              );
+            }
+          } catch (stockErr) {
+            console.warn(`[Stock Restoration Warning] Product ${productId || sku}:`, stockErr.message);
+          }
+        }
+      }
+
+      // 3. Reconcile customer reward points if user is authenticated
+      if (order.user_id) {
+        try {
+          const redeemMatch = order.notes?.match(/Redeemed (\d+) (?:TechPOS )?(?:loyalty )?points/i);
+          const earnedMatch = order.notes?.match(/Earned (\d+) (?:loyalty )?points/i);
+
+          const redeemedPoints = redeemMatch ? parseInt(redeemMatch[1], 10) : 0;
+          const earnedPoints = earnedMatch ? parseInt(earnedMatch[1], 10) : 0;
+
+          // Refund redeemed points back to customer
+          if (redeemedPoints > 0) {
+            await pool.query(
+              'UPDATE users SET reward_points = reward_points + ?, reward_points_dollar_value = ROUND((reward_points + ?) * 0.001, 2) WHERE id = ?',
+              [redeemedPoints, redeemedPoints, order.user_id]
+            );
+            console.log(`[Order Cancel] Refunded ${redeemedPoints} redeemed reward points to User ID ${order.user_id}`);
+          }
+
+          // Claw back points earned from this cancelled order
+          if (earnedPoints > 0) {
+            await pool.query(
+              'UPDATE users SET reward_points = GREATEST(0, reward_points - ?), reward_points_dollar_value = ROUND(GREATEST(0, reward_points - ?) * 0.001, 2) WHERE id = ?',
+              [earnedPoints, earnedPoints, order.user_id]
+            );
+            console.log(`[Order Cancel] Deducted ${earnedPoints} unearned reward points from User ID ${order.user_id}`);
+          }
+        } catch (ptsErr) {
+          console.warn('[Order Cancel Loyalty Warning]', ptsErr.message);
+        }
+      }
+
+      // Fetch refreshed order
+      const refreshedOrder = await this.findById(order.id);
+      return refreshedOrder;
+    } catch (dbError) {
+      console.warn('[OrderModel DB Error] MySQL failed, updating fallback storage:', dbError.message);
+      const orders = getFallbackOrders();
+      const match = orders.find((o) => String(o.id) === String(orderId) || o.order_number === orderId);
+      if (match) {
+        match.order_status = 'Cancelled';
+        if (match.payment_status === 'Paid') match.payment_status = 'Refund Pending';
+        match.notes = updatedNotes;
+        saveFallbackOrders(orders);
+        return match;
+      }
+      throw dbError;
+    }
+  },
+
+  /**
    * Get all orders with pagination (for Office / Admin view)
    */
   async getAllOrders({ limit = 50, offset = 0, status = '' } = {}) {

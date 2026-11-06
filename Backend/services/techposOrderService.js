@@ -207,9 +207,22 @@ async function syncOrderToTechPOS(order) {
   }
 }
 
+/**
+ * Cancel an online order in TechPOS OpenAPI
+ * Transitions TechPOS online order status to 'Cancelled'
+ */
+async function cancelTechPosOrder(techposOrderId, branchId = 1) {
+  if (!techposOrderId) {
+    return { success: false, message: 'No TechPOS order ID provided' };
+  }
+  console.log(`[TechPOS Order Cancel] Attempting cancellation for TechPOS Order #${techposOrderId}...`);
+  return await updateTechPosOrderStatus(techposOrderId, 'Cancelled', branchId);
+}
+
 module.exports = {
   buildTechPosPayload,
   syncOrderToTechPOS,
   updateTechPosOrderStatus,
+  cancelTechPosOrder,
 };
 

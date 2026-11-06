@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { getOfficeOrdersApi, getTechPosPurchaseOrdersApi, getTechPosLiveOrdersApi, getTechPosOrderItemsApi, retryTechPosOrderSyncApi } from '../../services/officeApi';
+import {
+  getOfficeOrdersApi,
+  getTechPosPurchaseOrdersApi,
+  getTechPosLiveOrdersApi,
+  getTechPosOrderItemsApi,
+  retryTechPosOrderSyncApi,
+  cancelOfficeOrderApi,
+  checkOfficeOrderStockApi,
+} from '../../services/officeApi';
 import {
   ShoppingBag,
   Package,
@@ -20,6 +28,8 @@ import {
   AlertCircle,
   FileText,
   Monitor,
+  XCircle,
+  AlertTriangle,
 } from 'lucide-react';
 
 export default function OrderMaster() {
@@ -41,6 +51,9 @@ export default function OrderMaster() {
   const [liveOrderItems, setLiveOrderItems] = useState([]);
   const [liveItemsLoading, setLiveItemsLoading] = useState(false);
   const [reSyncing, setReSyncing] = useState(false);
+  const [cancellingOrder, setCancellingOrder] = useState(false);
+  const [stockChecking, setStockChecking] = useState(false);
+  const [orderStockResults, setOrderStockResults] = useState(null);
 
   const handleRetrySync = async (orderId) => {
     setReSyncing(true);
@@ -61,6 +74,50 @@ export default function OrderMaster() {
       alert('Network or server error syncing to TechPOS: ' + err.message);
     } finally {
       setReSyncing(false);
+    }
+  };
+
+  const handleCancelStoreOrder = async (order) => {
+    const reason = prompt(
+      `Cancel Order #${order.order_number} and restore all product quantities to inventory?\n\nEnter reason for cancellation:`,
+      'Customer requested cancellation'
+    );
+    if (!reason) return;
+
+    setCancellingOrder(true);
+    try {
+      const res = await cancelOfficeOrderApi(order.id || order.order_number, { reason });
+      if (res.success) {
+        alert(`Order #${order.order_number} has been cancelled! Inventory has been restored.`);
+        fetchAllOrders();
+        setSelectedOrder((prev) => ({
+          ...prev,
+          order_status: 'Cancelled',
+          payment_status: 'Refund Pending',
+          notes: res.order?.notes || prev?.notes,
+        }));
+      } else {
+        alert('Cancellation failed: ' + (res.message || 'Unknown error'));
+      }
+    } catch (err) {
+      alert('Error cancelling order: ' + err.message);
+    } finally {
+      setCancellingOrder(false);
+    }
+  };
+
+  const handleCheckLiveStock = async (orderId) => {
+    setStockChecking(true);
+    setOrderStockResults(null);
+    try {
+      const res = await checkOfficeOrderStockApi(orderId);
+      if (res.success && res.stock) {
+        setOrderStockResults(res.stock);
+      }
+    } catch (err) {
+      console.warn('Failed to verify live stock:', err.message);
+    } finally {
+      setStockChecking(false);
     }
   };
 
@@ -398,9 +455,20 @@ export default function OrderMaster() {
                           ${Number(order.total || 0).toFixed(2)}
                         </td>
                         <td className="p-3.5">
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700">
-                            {order.payment_method}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 w-fit">
+                              {order.payment_method}
+                            </span>
+                            {order.order_status?.toLowerCase() === 'cancelled' ? (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300 w-fit flex items-center gap-1">
+                                <XCircle className="w-2.5 h-2.5 text-rose-600" /> Cancelled
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 w-fit">
+                                {order.order_status || 'Confirmed'}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="p-3.5">
                           <span
@@ -979,24 +1047,106 @@ export default function OrderMaster() {
                   </div>
 
 
+                  {/* Cancellation Status & Actions */}
+                  {selectedOrder.order_status?.toLowerCase() === 'cancelled' ? (
+                    <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-1">
+                      <div className="flex items-center gap-2 font-bold">
+                        <XCircle className="w-4 h-4 text-rose-600" />
+                        <span>ORDER CANCELLED — INVENTORY RESTORED</span>
+                      </div>
+                      <p className="text-slate-600">
+                        Payment Status: <strong className="font-semibold text-rose-900">{selectedOrder.payment_status || 'Refund Pending'}</strong>
+                      </p>
+                      {selectedOrder.notes && (
+                        <p className="font-mono text-[11px] text-slate-500 pt-1 border-t border-rose-200/50">
+                          {selectedOrder.notes}
+                        </p>
+                      )}
+                    </div>
+                  ) : ['confirmed', 'pending'].includes(selectedOrder.order_status?.toLowerCase()) ? (
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-bold">Store Actions</span>
+                        <span className="font-semibold text-slate-700 text-xs">Customer or phone cancellation request</span>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={cancellingOrder}
+                        onClick={() => handleCancelStoreOrder(selectedOrder)}
+                        className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
+                      >
+                        {cancellingOrder ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Restocking...</span>
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Cancel & Restock Order</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : null}
+
                   <div className="space-y-2">
-                    <span className="font-bold text-slate-900 uppercase tracking-wider text-[11px] block">
-                      Ordered Products:
-                    </span>
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-900 uppercase tracking-wider text-[11px] block">
+                        Ordered Products:
+                      </span>
+                      <button
+                        type="button"
+                        disabled={stockChecking}
+                        onClick={() => handleCheckLiveStock(selectedOrder.id || selectedOrder.order_number)}
+                        className="text-[11px] font-bold text-[#0166dc] hover:underline flex items-center gap-1 cursor-pointer"
+                        title="Query live TechPOS & local DB stock for these items"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${stockChecking ? 'animate-spin' : ''}`} />
+                        <span>{stockChecking ? 'Checking TechPOS...' : 'Verify TechPOS Stock'}</span>
+                      </button>
+                    </div>
+
                     <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
-                      {(selectedOrder.items || []).map((item, idx) => (
-                        <div key={idx} className="p-3 flex justify-between bg-white">
-                          <div>
-                            <span className="font-bold text-slate-900 block">{item.product_name}</span>
-                            <span className="text-[11px] text-slate-500">
-                              Qty: {item.quantity} • {item.variant_label || 'Standard'} @ ${Number(item.unit_price).toFixed(2)}
-                            </span>
+                      {(selectedOrder.items || []).map((item, idx) => {
+                        const verifiedStock = orderStockResults?.find(
+                          (s) =>
+                            String(s.productId) === String(item.techpos_product_id || item.product_id) ||
+                            (item.sku && s.sku === item.sku)
+                        );
+
+                        return (
+                          <div key={idx} className="p-3 bg-white space-y-1">
+                            <div className="flex justify-between">
+                              <div>
+                                <span className="font-bold text-slate-900 block">{item.product_name}</span>
+                                <span className="text-[11px] text-slate-500">
+                                  Qty: {item.quantity} • {item.variant_label || 'Standard'} @ ${Number(item.unit_price).toFixed(2)}
+                                </span>
+                              </div>
+                              <span className="font-mono font-bold text-slate-900">
+                                ${(Number(item.unit_price) * Number(item.quantity)).toFixed(2)}
+                              </span>
+                            </div>
+
+                            {/* Live TechPOS Stock Verification badge */}
+                            {verifiedStock && (
+                              <div className="flex items-center gap-2 pt-1 border-t border-slate-100 text-[10px]">
+                                <span className="font-bold text-slate-500">Live Inventory Check:</span>
+                                <span
+                                  className={`px-2 py-0.5 rounded-md font-mono font-bold ${
+                                    verifiedStock.techPosStock > 0
+                                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                      : 'bg-rose-50 text-rose-800 border border-rose-200'
+                                  }`}
+                                >
+                                  TechPOS: {verifiedStock.techPosStock} units available ({verifiedStock.source})
+                                </span>
+                              </div>
+                            )}
                           </div>
-                          <span className="font-mono font-bold text-slate-900">
-                            ${(Number(item.unit_price) * Number(item.quantity)).toFixed(2)}
-                          </span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 
