@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
     plugins: [tailwindcss(), react()],
     server: {
       port: frontendPort,
-      allowedHosts: ['pharsyde.jeenhost.in', '.jeenhost.in'],
+      allowedHosts: ['pharsyde.ca', 'www.pharsyde.ca', '.pharsyde.ca'],
       proxy: {
         '/api': {
           target: backendTarget,

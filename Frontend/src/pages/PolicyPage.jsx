@@ -414,7 +414,7 @@ export default function PolicyPage({ defaultTab }) {
       id: "tc-01",
       title: "Acceptance of Terms & Mandatory 19+ Legal Age",
       paragraphs: [
-        "Welcome to Pharsyde (operated by Pharsyde Inc., Winnipeg, Manitoba). By visiting our website (pharsyde.jeenhost.in / pharsyde.ca), registering an online account, placing an order, or utilizing our pickup or delivery services, you explicitly agree to be legally bound by these Terms and Conditions of Service, our Return & Refund Policy, and our Privacy Policy.",
+        "Welcome to Pharsyde (operated by Pharsyde Inc., Winnipeg, Manitoba). By visiting our website (pharsyde.ca), registering an online account, placing an order, or utilizing our pickup or delivery services, you explicitly agree to be legally bound by these Terms and Conditions of Service, our Return & Refund Policy, and our Privacy Policy.",
         "STRICT AGE REQUIREMENT (19+): In strict compliance with the Manitoba Liquor, Gaming and Cannabis Control Act (C.C.S.M. c. L153) and federal cannabis legislation, you MUST be at least 19 years of age to enter our premises, view age-restricted catalog products, create an account, or purchase any cannabis, nicotine, or vaporizer products. Misrepresenting your age or attempting to purchase age-restricted goods for minors is illegal and constitutes a direct breach of these Terms."
       ]
     },

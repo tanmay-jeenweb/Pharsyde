@@ -40,7 +40,7 @@ app.use(helmet({
 }));
 app.use(
   cors({
-    origin: (process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',').map(u => u.trim()) : ['https://pharsyde.jeenhost.in', 'http://pharsyde.jeenhost.in', 'http://localhost:5173']),
+    origin: (process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',').map(u => u.trim()) : ['https://pharsyde.ca', 'https://www.pharsyde.ca', 'http://localhost:5173', 'http://localhost:3000']),
     credentials: true,
   })
 );

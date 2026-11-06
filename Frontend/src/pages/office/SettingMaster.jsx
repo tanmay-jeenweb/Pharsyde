@@ -84,8 +84,8 @@ export default function SettingMaster() {
   const [originalLatestVersion, setOriginalLatestVersion] = useState('1.0.0');
   const [mobileMinVersion, setMobileMinVersion] = useState('1.0.0');
   const [originalMinVersion, setOriginalMinVersion] = useState('1.0.0');
-  const [mobileApkUrl, setMobileApkUrl] = useState('https://pharsyde.jeenhost.in/apk/app-release.apk');
-  const [originalApkUrl, setOriginalApkUrl] = useState('https://pharsyde.jeenhost.in/apk/app-release.apk');
+  const [mobileApkUrl, setMobileApkUrl] = useState('https://pharsyde.ca/apk/app-release.apk');
+  const [originalApkUrl, setOriginalApkUrl] = useState('https://pharsyde.ca/apk/app-release.apk');
   const [mobileForceUpdate, setMobileForceUpdate] = useState(true);
   const [originalForceUpdate, setOriginalForceUpdate] = useState(true);
   const [mobileReleaseNotes, setMobileReleaseNotes] = useState('Performance improvements, checkout optimizations, and bug fixes.');
@@ -2080,7 +2080,7 @@ export default function SettingMaster() {
                 type="text"
                 value={mobileApkUrl}
                 onChange={(e) => setMobileApkUrl(e.target.value)}
-                placeholder="https://pharsyde.jeenhost.in/apk/app-release.apk"
+                placeholder="https://pharsyde.ca/apk/app-release.apk"
                 className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs font-mono text-slate-900 outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 bg-white pr-20"
               />
               <button
