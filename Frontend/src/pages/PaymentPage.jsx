@@ -272,21 +272,21 @@ export default function PaymentPage() {
 
           {/* Error Banner */}
           {error && (
-            <div className="my-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-rose-800 text-sm">
-              <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+            <div className="my-6 p-4 rounded-2xl bg-red-50 border border-red-200 flex items-start gap-3 text-red-700 text-sm">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <strong className="block font-bold">Transaction Alert</strong>
-                <span>{error}</span>
+                <strong className="block font-bold text-red-800">Transaction Alert</strong>
+                <span className="text-red-700 font-medium">{error}</span>
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={() => window.location.reload()}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-rose-300 text-xs font-bold text-rose-900 hover:bg-rose-100 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-red-300 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors"
                   >
                     <RefreshCw className="w-3.5 h-3.5" /> Retry Payment
                   </button>
                   <button
                     onClick={handleCancel}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-transparent text-xs font-bold text-rose-700 hover:underline"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-transparent text-xs font-bold text-red-700 hover:underline"
                   >
                     Back to Cart
                   </button>

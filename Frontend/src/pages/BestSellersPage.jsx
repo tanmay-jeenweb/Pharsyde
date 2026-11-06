@@ -252,12 +252,12 @@ export default function BestSellersPage() {
             ))}
           </div>
         ) : error ? (
-          <div className="bg-white rounded-3xl border border-rose-200 p-12 text-center max-w-lg mx-auto shadow-sm space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto font-bold text-xl">
+          <div className="bg-white rounded-3xl border border-red-200 p-12 text-center max-w-lg mx-auto shadow-sm space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto font-bold text-xl">
               !
             </div>
             <h2 className="text-lg font-bold text-slate-900">Unable to load best sellers</h2>
-            <p className="text-xs text-slate-500 leading-relaxed">{error}</p>
+            <p className="text-xs text-red-600 font-semibold leading-relaxed">{error}</p>
             <div className="pt-2 flex items-center justify-center gap-3">
               <button
                 type="button"
