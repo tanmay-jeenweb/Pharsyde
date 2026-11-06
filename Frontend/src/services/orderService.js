@@ -11,7 +11,10 @@ function getHeaders(token = null) {
   const headers = {
     'Content-Type': 'application/json',
   };
-  const activeToken = token || localStorage.getItem('pharsyde_customer_token');
+  const activeToken =
+    token ||
+    localStorage.getItem('office_token') ||
+    localStorage.getItem('pharsyde_customer_token');
   if (activeToken) {
     headers['Authorization'] = `Bearer ${activeToken}`;
   }
@@ -96,6 +99,29 @@ export async function getOrderByIdApi(id, token = null) {
   });
   const data = await handleResponse(res);
   return data.order || null;
+}
+
+/**
+ * Cancel an order and restore product inventory
+ */
+export async function cancelOrderApi(id, { reason = '' } = {}, token = null) {
+  const res = await fetchWithFallback(`/orders/${encodeURIComponent(id)}/cancel`, {
+    method: 'POST',
+    headers: getHeaders(token),
+    body: JSON.stringify({ reason }),
+  });
+  return await handleResponse(res);
+}
+
+/**
+ * Check real-time TechPOS and local stock for order items
+ */
+export async function checkOrderStockApi(id, token = null) {
+  const res = await fetchWithFallback(`/orders/${encodeURIComponent(id)}/stock-check`, {
+    method: 'GET',
+    headers: getHeaders(token),
+  });
+  return await handleResponse(res);
 }
 
 /**

@@ -3,7 +3,8 @@ const UserModel = require('../models/userModel');
 const SettingModel = require('../models/settingModel');
 const OtpModel = require('../models/otpModel');
 const pool = require('../config/db');
-const { syncOrderToTechPOS } = require('../services/techposOrderService');
+const { syncOrderToTechPOS, cancelTechPosOrder } = require('../services/techposOrderService');
+const { getLiveTechPosStock, reconcileCancelledOrderStock } = require('../services/techposInventoryService');
 const { calculateOrderTaxes } = require('../utils/taxCalculator');
 const { validateCannabisLimit } = require('../utils/cannabisLimit');
 
@@ -113,6 +114,37 @@ const createOrder = async (req, res, next) => {
           success: false,
           message: 'Delivery address and postal code are required for courier orders.',
         });
+      }
+    }
+
+    // Pre-order Live TechPOS Quantity Check
+    for (const item of items) {
+      const quantity = Math.max(1, parseInt(item.quantity, 10) || 1);
+      const productId = item.product_id || item.productId || item.pk || item.id || null;
+      const techPosProductId = item.techpos_product_id || item.techPosProductId || null;
+      const sku = item.sku || null;
+      const productName = item.product_name || item.name || item.product?.name || 'Selected Item';
+
+      const stockResult = await getLiveTechPosStock({
+        productId: techPosProductId || productId,
+        sku,
+      });
+
+      if (stockResult.found) {
+        if (stockResult.stock <= 0) {
+          return res.status(409).json({
+            success: false,
+            code: 'INSUFFICIENT_INVENTORY',
+            message: `"${productName}" is currently out of stock. Please adjust your cart.`,
+          });
+        }
+        if (quantity > stockResult.stock) {
+          return res.status(409).json({
+            success: false,
+            code: 'INSUFFICIENT_INVENTORY',
+            message: `Only ${stockResult.stock} units of "${productName}" are available in store (you requested ${quantity}).`,
+          });
+        }
       }
     }
 
@@ -424,11 +456,161 @@ const getOfficeOrders = async (req, res, next) => {
   }
 };
 
+/**
+ * @route   POST /api/orders/:id/cancel
+ * @desc    Cancel customer order, restore stock, and sync with TechPOS
+ * @access  Private / Protected (Order owner or Admin/Office)
+ */
+const cancelOrder = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { reason = 'Cancelled by customer' } = req.body;
+    const authUser = req.user || null;
+
+    const order = await OrderModel.findById(id);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: `Order #${id} not found.`,
+      });
+    }
+
+    // Authorization: customer who placed order or any staff/office/admin can cancel
+    const userRole = String(authUser?.role || '').toLowerCase();
+    const userType = String(authUser?.user_type || '').toLowerCase();
+    const isOfficeRoute = Boolean(req.baseUrl && req.baseUrl.includes('office'));
+
+    const isAdmin =
+      (authUser &&
+        (userRole === 'admin' ||
+          userRole === 'office' ||
+          userRole === 'staff' ||
+          userType === 'admin' ||
+          userType === 'staff' ||
+          userType === 'manager' ||
+          userType === 'employee' ||
+          (userType && userType !== 'customer' && userType !== 'user'))) ||
+      (isOfficeRoute && Boolean(authUser));
+
+    const isOwner = authUser && order.user_id && String(order.user_id) === String(authUser.id);
+    const guestEmailMatches =
+      authUser?.email &&
+      order.customer_email &&
+      order.customer_email.trim().toLowerCase() === authUser.email.trim().toLowerCase();
+
+    if (!isAdmin && !isOwner && !guestEmailMatches) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to cancel this order.',
+      });
+    }
+
+    // Validate current order status
+    const status = String(order.order_status || '').toLowerCase();
+    if (status === 'cancelled') {
+      return res.status(400).json({
+        success: false,
+        message: `Order #${order.order_number} is already cancelled.`,
+      });
+    }
+    if (['shipped', 'delivered', 'completed'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Order #${order.order_number} has already been ${order.order_status} and cannot be cancelled online.`,
+      });
+    }
+
+    const cancelledBy = isAdmin
+      ? `Staff (${authUser?.email || 'Admin'})`
+      : `Customer (${authUser?.email || order.customer_email})`;
+
+    // Perform cancellation in database, restore stock, and revert loyalty points
+    const updatedOrder = await OrderModel.cancelOrder({
+      orderId: order.id,
+      reason,
+      cancelledBy,
+    });
+
+    // Trigger TechPOS cancellation if order was synced to TechPOS
+    let techPosCancelResult = null;
+    if (order.techpos_order_id) {
+      try {
+        techPosCancelResult = await cancelTechPosOrder(order.techpos_order_id);
+        console.log(`[TechPOS Cancel Status] Order #${order.techpos_order_id}:`, techPosCancelResult);
+      } catch (posErr) {
+        console.warn('[TechPOS Cancel Warning]', posErr.message);
+      }
+    }
+
+    // Reconcile and inspect TechPOS live stock for items
+    let stockReconciliation = [];
+    try {
+      stockReconciliation = await reconcileCancelledOrderStock(order.items || []);
+    } catch (recErr) {
+      console.warn('[TechPOS Stock Reconciliation Warning]', recErr.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Order #${order.order_number} has been cancelled successfully. All stock has been restored.`,
+      order: updatedOrder,
+      techpos_cancel: techPosCancelResult,
+      stock_reconciliation: stockReconciliation,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @route   GET /api/orders/:id/stock-check
+ * @desc    Query real-time TechPOS and local stock for all items in an order
+ * @access  Private / Protected
+ */
+const checkOrderStock = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const order = await OrderModel.findById(id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: `Order #${id} not found.` });
+    }
+
+    const itemsStock = [];
+    for (const item of (order.items || [])) {
+      const pid = item.techpos_product_id || item.product_id;
+      const liveCheck = await getLiveTechPosStock({
+        productId: pid,
+        sku: item.sku,
+        skipCacheUpdate: true,
+      });
+
+      itemsStock.push({
+        name: item.product_name,
+        sku: item.sku,
+        productId: pid,
+        orderQuantity: item.quantity,
+        techPosStock: liveCheck.stock,
+        source: liveCheck.source,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      orderNumber: order.order_number,
+      stock: itemsStock,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
   getOrderById,
   retryTechPosSync,
   getOfficeOrders,
+  cancelOrder,
+  checkOrderStock,
 };
 

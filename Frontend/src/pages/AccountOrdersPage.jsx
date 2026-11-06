@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { getMyOrdersApi } from '../services/orderService';
+import { getMyOrdersApi, cancelOrderApi, checkOrderStockApi } from '../services/orderService';
 import {
   Package,
   ShoppingBag,
@@ -21,15 +21,26 @@ import {
   ExternalLink,
   LogOut,
   Lock,
+  XCircle,
+  AlertTriangle,
+  AlertCircle,
+  X,
+  RotateCcw,
 } from 'lucide-react';
 
 export default function AccountOrdersPage() {
-  const { customerUser, customerToken, isCustomerLoggedIn, customerLogout, openAuthModal, navigateTo } = useApp();
+  const { customerUser, customerToken, isCustomerLoggedIn, customerLogout, openAuthModal, navigateTo, showToast } = useApp();
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [filterTab, setFilterTab] = useState('all');
+
+  // Cancel order modal state
+  const [cancelModalOrder, setCancelModalOrder] = useState(null);
+  const [cancelReason, setCancelReason] = useState('Changed my mind');
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelError, setCancelError] = useState(null);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -56,11 +67,54 @@ export default function AccountOrdersPage() {
     setExpandedOrderId((prev) => (prev === id ? null : id));
   };
 
+  const handleConfirmCancel = async () => {
+    if (!cancelModalOrder) return;
+    setCancelLoading(true);
+    setCancelError(null);
+
+    try {
+      const res = await cancelOrderApi(
+        cancelModalOrder.id || cancelModalOrder.order_number,
+        { reason: cancelReason },
+        customerToken
+      );
+
+      // In-place update of order status in list
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === cancelModalOrder.id || o.order_number === cancelModalOrder.order_number
+            ? {
+                ...o,
+                order_status: 'Cancelled',
+                payment_status: 'Refund Pending',
+                notes: res.order?.notes || o.notes,
+              }
+            : o
+        )
+      );
+
+      if (showToast) {
+        showToast(
+          `Order #${cancelModalOrder.order_number} cancelled. Items returned to inventory.`,
+          'success'
+        );
+      }
+
+      setCancelModalOrder(null);
+    } catch (err) {
+      console.error('[Order Cancel Error]', err);
+      setCancelError(err.message || 'Failed to cancel order. Please try again or contact support.');
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
   // Filter orders
   const filteredOrders = orders.filter((order) => {
     if (filterTab === 'pickup') return order.fulfillment_type === 'pickup';
     if (filterTab === 'delivery') return order.fulfillment_type === 'delivery';
     if (filterTab === 'confirmed') return order.order_status?.toLowerCase() === 'confirmed';
+    if (filterTab === 'cancelled') return order.order_status?.toLowerCase() === 'cancelled';
     return true;
   });
 
@@ -261,6 +315,16 @@ export default function AccountOrdersPage() {
                 >
                   Courier Delivery
                 </button>
+                <button
+                  onClick={() => setFilterTab('cancelled')}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    filterTab === 'cancelled'
+                      ? 'bg-rose-600 text-white shadow-xs'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:text-rose-700'
+                  }`}
+                >
+                  Cancelled ({orders.filter((o) => o.order_status?.toLowerCase() === 'cancelled').length})
+                </button>
               </div>
 
               <button
@@ -302,6 +366,8 @@ export default function AccountOrdersPage() {
                   const isExpanded = expandedOrderId === order.id || expandedOrderId === order.order_number;
                   const isPickup = order.fulfillment_type === 'pickup';
                   const isSynced = order.sync_status === 'synced' || Boolean(order.techpos_order_id);
+                  const isCancelled = order.order_status?.toLowerCase() === 'cancelled';
+                  const isCancellable = ['confirmed', 'pending'].includes(order.order_status?.toLowerCase());
 
                   return (
                     <div
@@ -316,12 +382,14 @@ export default function AccountOrdersPage() {
                         <div className="flex items-center gap-4">
                           <div
                             className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border ${
-                              isPickup
+                              isCancelled
+                                ? 'bg-rose-50 border-rose-200 text-rose-600'
+                                : isPickup
                                 ? 'bg-[#0166dc]/15 border-[#0166dc]/40 text-[#0166dc]'
                                 : 'bg-orange-50 border-orange-200 text-orange-600'
                             }`}
                           >
-                            {isPickup ? <Store className="w-6 h-6" /> : <Truck className="w-6 h-6" />}
+                            {isCancelled ? <XCircle className="w-6 h-6" /> : isPickup ? <Store className="w-6 h-6" /> : <Truck className="w-6 h-6" />}
                           </div>
 
                           <div>
@@ -347,7 +415,25 @@ export default function AccountOrdersPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-4 self-end md:self-center">
+                        <div className="flex items-center gap-3 sm:gap-4 self-end md:self-center flex-wrap">
+                          {/* Cancel Order Button (if eligible) */}
+                          {isCancellable && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCancelModalOrder(order);
+                                setCancelReason('Changed my mind');
+                                setCancelError(null);
+                              }}
+                              className="px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50/80 hover:bg-rose-100 text-rose-700 hover:text-rose-900 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                              title="Cancel order and restore item stock"
+                            >
+                              <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                              <span>Cancel Order</span>
+                            </button>
+                          )}
+
                           {/* Sync status pill */}
                           <span
                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold uppercase tracking-wider border ${
@@ -364,7 +450,9 @@ export default function AccountOrdersPage() {
                           {/* Fulfillment status pill */}
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
-                              order.order_status?.toLowerCase() === 'confirmed' || order.order_status?.toLowerCase() === 'delivered'
+                              isCancelled
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : order.order_status?.toLowerCase() === 'confirmed' || order.order_status?.toLowerCase() === 'delivered'
                                 ? 'bg-[#0166dc]/20 text-[#386502] border-[#0166dc]/50'
                                 : 'bg-slate-100 text-slate-700 border-slate-200'
                             }`}
@@ -390,13 +478,35 @@ export default function AccountOrdersPage() {
                       {/* Expandable Order Breakdown */}
                       {isExpanded && (
                         <div className="border-t border-slate-100 bg-slate-50/60 p-6 space-y-6">
+                          {/* Cancelled Banner */}
+                          {isCancelled && (
+                            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-xs text-rose-800">
+                              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                              <div className="space-y-1">
+                                <p className="font-bold text-rose-900">
+                                  This order has been cancelled and its inventory was returned to stock.
+                                </p>
+                                <p className="text-rose-700">
+                                  Payment Status: <strong className="font-semibold text-rose-900">{order.payment_status || 'Refund Pending'}</strong>. Your refund will credit back to your card within 3–5 business days.
+                                </p>
+                                {order.notes && order.notes.includes('Cancelled on') && (
+                                  <p className="font-mono text-[11px] text-rose-600 pt-1 border-t border-rose-200/60">
+                                    {order.notes.split('|').filter((n) => n.includes('Cancelled on')).pop()?.trim()}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           {/* Compliance notice */}
-                          <div className="flex items-center gap-2 p-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-600">
-                            <ShieldCheck className="w-4 h-4 text-[#0166dc] shrink-0" />
-                            <span>
-                              Manitoba Cannabis Compliance verified • Photo ID must be presented upon collection.
-                            </span>
-                          </div>
+                          {!isCancelled && (
+                            <div className="flex items-center gap-2 p-3 rounded-xl bg-white border border-slate-200 text-xs text-slate-600">
+                              <ShieldCheck className="w-4 h-4 text-[#0166dc] shrink-0" />
+                              <span>
+                                Manitoba Cannabis Compliance verified • Photo ID must be presented upon collection.
+                              </span>
+                            </div>
+                          )}
 
                           {/* Items Table */}
                           <div className="space-y-3">
@@ -459,6 +569,25 @@ export default function AccountOrdersPage() {
                                 ${Number(order.total).toFixed(2)} CAD
                               </span>
                             </div>
+
+                            {/* Additional Cancellation link in footer if eligible */}
+                            {isCancellable && (
+                              <div className="pt-3 border-t border-slate-100 flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCancelModalOrder(order);
+                                    setCancelReason('Changed my mind');
+                                    setCancelError(null);
+                                  }}
+                                  className="text-xs font-bold text-rose-600 hover:text-rose-800 flex items-center gap-1.5 cursor-pointer hover:underline"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" />
+                                  <span>Cancel this order</span>
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
@@ -470,6 +599,116 @@ export default function AccountOrdersPage() {
           </>
         )}
       </div>
+
+      {/* Cancel Order Confirmation Modal */}
+      {cancelModalOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-2xl space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-heading text-lg font-black text-slate-900 uppercase">
+                    Cancel Order #{cancelModalOrder.order_number}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Total Amount:{' '}
+                    <span className="font-mono font-bold text-slate-800">
+                      ${Number(cancelModalOrder.total).toFixed(2)} CAD
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCancelModalOrder(null)}
+                disabled={cancelLoading}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {cancelError && (
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{cancelError}</span>
+              </div>
+            )}
+
+            <div className="space-y-3 p-4 rounded-2xl bg-slate-50 border border-slate-100 text-xs text-slate-600">
+              <div className="flex items-start gap-2.5">
+                <Package className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Automatic Inventory Restock:</strong> All{' '}
+                  {cancelModalOrder.items?.length || 1} item(s) will be added back to store inventory immediately.
+                </span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <Receipt className="w-4 h-4 text-[#0166dc] shrink-0 mt-0.5" />
+                <span>
+                  <strong>Payment Refund:</strong> A refund of{' '}
+                  <strong>${Number(cancelModalOrder.total).toFixed(2)} CAD</strong> will be credited to your card in 3–5 business days.
+                </span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Loyalty Points Reversal:</strong> Any points redeemed on this order will be refunded to your account balance.
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                Reason for Cancellation
+              </label>
+              <select
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                disabled={cancelLoading}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#0166dc]"
+              >
+                <option value="Changed my mind">Changed my mind</option>
+                <option value="Ordered wrong item or variant">Ordered wrong item or variant</option>
+                <option value="Need to change delivery/pickup details">Need to change delivery/pickup details</option>
+                <option value="Ordered by mistake">Ordered by mistake</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setCancelModalOrder(null)}
+                disabled={cancelLoading}
+                className="px-5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors cursor-pointer"
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmCancel}
+                disabled={cancelLoading}
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-rose-600/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {cancelLoading ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Restocking & Cancelling...</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-3.5 h-3.5" />
+                    <span>Confirm Cancellation</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
