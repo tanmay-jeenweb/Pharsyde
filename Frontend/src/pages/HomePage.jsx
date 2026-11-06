@@ -354,16 +354,16 @@ export default function HomePage() {
             <Link
               to="/cannabis"
               aria-label="Shop Cannabis Collection"
-              className="group relative flex flex-col sm:flex-row items-stretch justify-between p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-[#0A121E] text-white border border-slate-800/90 hover:border-[#0166dc] shadow-xl hover:shadow-[0_20px_50px_rgba(1, 102, 220,0.22)] transition-all duration-500 overflow-hidden cursor-pointer h-full"
+              className="group relative flex flex-col sm:flex-row items-stretch justify-between p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-[#0A161E] text-white border border-slate-800/90 hover:border-cyan-400 shadow-xl hover:shadow-[0_20px_50px_rgba(6,182,212,0.22)] transition-all duration-500 overflow-hidden cursor-pointer h-full"
             >
               {/* Internal Accent Glow */}
-              <div className="absolute -top-24 -left-24 w-72 h-72 bg-[#0166dc]/15 blur-3xl pointer-events-none rounded-full group-hover:bg-[#0166dc]/25 transition-all duration-700" />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#0166dc]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+              <div className="absolute -top-24 -left-24 w-72 h-72 bg-cyan-400/15 blur-3xl pointer-events-none rounded-full group-hover:bg-cyan-400/25 transition-all duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
               {/* Text / Action Content */}
               <div className="relative z-10 flex flex-col justify-between w-full sm:w-1/2 pr-0 sm:pr-4 h-full">
                 <div>
-                  <h3 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight uppercase text-white group-hover:text-[#0166dc] transition-colors duration-300">
+                  <h3 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight uppercase text-white group-hover:text-cyan-300 transition-colors duration-300">
                     Cannabis
                   </h3>
 
@@ -375,7 +375,7 @@ export default function HomePage() {
 
                 {/* Styled Button Target (aligned at the bottom) */}
                 <div className="mt-8">
-                  <div className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-[#0166dc] text-white font-heading font-extrabold text-xs uppercase tracking-wider group-hover:bg-white group-hover:scale-105 transition-all duration-300 shadow-md shadow-[#0166dc]/30">
+                  <div className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-cyan-400 text-slate-950 font-heading font-extrabold text-xs uppercase tracking-wider group-hover:bg-cyan-300 group-hover:scale-105 transition-all duration-300 shadow-md shadow-cyan-400/30">
                     <span>Shop Cannabis</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -384,11 +384,11 @@ export default function HomePage() {
 
               {/* Image Preview / Showcase */}
               <div className="relative z-10 w-full sm:w-1/2 mt-6 sm:mt-0 flex items-center justify-center">
-                <div className="absolute inset-0 bg-radial from-[#0166dc]/25 to-transparent blur-2xl rounded-full scale-90 group-hover:scale-115 transition-transform duration-700" />
+                <div className="absolute inset-0 bg-radial from-cyan-400/25 to-transparent blur-2xl rounded-full scale-90 group-hover:scale-115 transition-transform duration-700" />
                 <img
                   src={cannabisCategoryImg}
                   alt="Cannabis"
-                  className="relative z-10 max-h-56 sm:max-h-64 w-auto object-contain rounded-2xl drop-shadow-[0_15px_35px_rgba(1, 102, 220,0.4)] group-hover:scale-105 group-hover:-translate-y-1 transition-all duration-500"
+                  className="relative z-10 max-h-56 sm:max-h-64 w-auto object-contain rounded-2xl drop-shadow-[0_15px_35px_rgba(6,182,212,0.4)] group-hover:scale-105 group-hover:-translate-y-1 transition-all duration-500"
                 />
               </div>
             </Link>
@@ -417,7 +417,7 @@ export default function HomePage() {
 
                 {/* Styled Button Target (aligned at the bottom) */}
                 <div className="mt-8">
-                  <div className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-cyan-400 text-slate-950 font-heading font-extrabold text-xs uppercase tracking-wider group-hover:bg-white group-hover:scale-105 transition-all duration-300 shadow-md shadow-cyan-400/30">
+                  <div className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-cyan-400 text-slate-950 font-heading font-extrabold text-xs uppercase tracking-wider group-hover:bg-cyan-300 group-hover:scale-105 transition-all duration-300 shadow-md shadow-cyan-400/30">
                     <span>Shop Nicotine Vape</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </div>

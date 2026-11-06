@@ -28,28 +28,29 @@ export default function ProductCard({ product }) {
   };
   const productStrain = detectStrain();
 
-  // Transparentish frosted-glass strain badge styling
+  // Frosted-glass strain badge styling
+  // Indica = Blue, Hybrid = Black, Sativa = Red
   const getStrainStyle = (strain) => {
     const lower = (strain || '').toLowerCase();
     if (lower.includes('indica')) {
       return {
-        badge: 'bg-purple-950/70 text-purple-100 border border-purple-400/35 backdrop-blur-md shadow-xs',
-        pill: 'bg-purple-500/10 text-purple-700 border border-purple-300/60 backdrop-blur-xs',
-        dot: 'bg-purple-400'
+        badge: 'bg-blue-700/80 text-blue-50 border border-blue-400/40 backdrop-blur-md shadow-xs',
+        pill: 'bg-blue-500/10 text-blue-700 border border-blue-300/60 backdrop-blur-xs',
+        dot: 'bg-blue-400'
       };
     }
     if (lower.includes('sativa')) {
       return {
-        badge: 'bg-amber-950/70 text-amber-100 border border-amber-400/35 backdrop-blur-md shadow-xs',
-        pill: 'bg-amber-500/10 text-amber-800 border border-amber-300/60 backdrop-blur-xs',
-        dot: 'bg-amber-400'
+        badge: 'bg-red-700/80 text-red-50 border border-red-400/40 backdrop-blur-md shadow-xs',
+        pill: 'bg-red-500/10 text-red-700 border border-red-300/60 backdrop-blur-xs',
+        dot: 'bg-red-400'
       };
     }
     if (lower.includes('hybrid')) {
       return {
-        badge: 'bg-teal-950/70 text-teal-100 border border-teal-400/35 backdrop-blur-md shadow-xs',
-        pill: 'bg-teal-500/10 text-teal-800 border border-teal-300/60 backdrop-blur-xs',
-        dot: 'bg-teal-400'
+        badge: 'bg-slate-900/85 text-slate-100 border border-slate-500/40 backdrop-blur-md shadow-xs',
+        pill: 'bg-slate-900/10 text-slate-800 border border-slate-400/60 backdrop-blur-xs',
+        dot: 'bg-slate-500'
       };
     }
     return {
@@ -151,7 +152,7 @@ export default function ProductCard({ product }) {
               Sold Out
             </span>
           ) : qtyAvailable !== null && qtyAvailable <= 5 ? (
-            <span className="px-2.5 py-1 rounded-full bg-amber-500/80 backdrop-blur-md text-white text-[10px] font-black tracking-wider uppercase border border-amber-300/40 shadow-xs">
+            <span className="px-2.5 py-1 rounded-full bg-red-600/85 backdrop-blur-md text-white text-[10px] font-black tracking-wider uppercase border border-red-400/40 shadow-xs">
               {qtyAvailable} Left
             </span>
           ) : null}

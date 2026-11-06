@@ -30,6 +30,7 @@ const {
   getTechPosLiveOrders,
   getTechPosOrderItems,
 } = require('../controllers/officeController');
+const { retryTechPosSync } = require('../controllers/orderController');
 const {
   getOfficeSettings,
   getOfficeSettingByKey,
@@ -121,6 +122,7 @@ router.get('/activity-logs', getActivityLogs);
 
 // 8. Order Master, TechPOS Purchase Orders & Live POS Orders
 router.get('/orders', getOfficeOrders);
+router.post('/orders/:id/sync-techpos', retryTechPosSync);
 router.get('/purchase-orders', getTechPosPurchaseOrders);
 router.get('/pos-live-orders', getTechPosLiveOrders);
 router.get('/pos-order-items/:orderId', getTechPosOrderItems);
