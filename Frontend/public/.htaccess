@@ -1,6 +1,6 @@
 # ==============================================================================
 # Pharsyde Web Application - Apache Configuration (.htaccess)
-# Domain: pharsyde.jeenhost.in
+# Domain: pharsyde.ca / www.pharsyde.ca
 # ==============================================================================
 
 <IfModule mod_rewrite.c>
@@ -47,7 +47,7 @@
 </IfModule>
 
 # ----------------------------------------------------------------------
-# 4. Security Headers
+# 4. Security & CORS Headers
 # ----------------------------------------------------------------------
 <IfModule mod_headers.c>
   # Clickjacking Protection
@@ -61,6 +61,9 @@
 
   # Referrer Policy
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+  # Cross-Origin Resource Policy for assets and media
+  Header set Cross-Origin-Resource-Policy "cross-origin"
 
   # Do NOT cache index.html (guarantees users always get latest React build)
   <FilesMatch "^(index\.html)?$">
@@ -98,4 +101,3 @@
 </IfModule>
 
 Options -Indexes
-

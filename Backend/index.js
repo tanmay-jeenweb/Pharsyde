@@ -114,18 +114,25 @@ const startServer = async () => {
     }
   }
 
-  app.listen(PORT, () => {
-    console.log(`===============================================`);
-    console.log(`🚀 Pharsyde Server running on port ${PORT}`);
-    console.log(`🔗 API Base URL: http://localhost:${PORT}`);
-    console.log(`📦 Orders API: http://localhost:${PORT}/api/orders`);
-    console.log(`🏢 Office API: http://localhost:${PORT}/api/office`);
-    console.log(`📱 App Version API: http://localhost:${PORT}/api/app/check-update`);
-    console.log(`📥 App Download URL: http://localhost:${PORT}/download/apk`);
-    console.log(`📁 Upload API: http://localhost:${PORT}/api/upload/document`);
-    console.log(`🩺 Health check: http://localhost:${PORT}/api/health`);
-    console.log(`===============================================`);
-  });
+  // Check if running under cPanel / Phusion Passenger
+  if (typeof PhusionPassenger !== 'undefined') {
+    app.listen('passenger', () => {
+      console.log('[Passenger] Pharsyde Server running under Phusion Passenger');
+    });
+  } else {
+    app.listen(PORT, () => {
+      console.log(`===============================================`);
+      console.log(`🚀 Pharsyde Server running on port ${PORT}`);
+      console.log(`🔗 API Base URL: http://localhost:${PORT}`);
+      console.log(`📦 Orders API: http://localhost:${PORT}/api/orders`);
+      console.log(`🏢 Office API: http://localhost:${PORT}/api/office`);
+      console.log(`📱 App Version API: http://localhost:${PORT}/api/app/check-update`);
+      console.log(`📥 App Download URL: http://localhost:${PORT}/download/apk`);
+      console.log(`📁 Upload API: http://localhost:${PORT}/api/upload/document`);
+      console.log(`🩺 Health check: http://localhost:${PORT}/api/health`);
+      console.log(`===============================================`);
+    });
+  }
 };
 
 startServer();

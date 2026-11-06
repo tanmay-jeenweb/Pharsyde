@@ -1,32 +1,63 @@
 const nodemailer = require('nodemailer');
 
-// Initialize Transporter
-let transporter = null;
-
-function getTransporter() {
-  if (transporter) return transporter;
-
-  const host = process.env.SMTP_HOST || 'mail.pharsyde.ca';
-  const port = parseInt(process.env.SMTP_PORT || '465', 10);
-  const secure = process.env.SMTP_SECURE === 'true' || port === 465;
-  const user = process.env.SMTP_USER || 'noreply@pharsyde.ca';
-  const pass = process.env.SMTP_PASS || 'Jeenweb@123';
-
-  transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure,
+function buildTransport(config) {
+  return nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
     auth: {
-      user,
-      pass,
+      user: config.user,
+      pass: config.pass,
     },
     tls: {
       rejectUnauthorized: false,
     },
-    connectionTimeout: 10000,
+    connectionTimeout: 4000,
+    greetingTimeout: 4000,
   });
+}
 
-  return transporter;
+function getCandidateConfigs() {
+  const primaryHost = process.env.SMTP_HOST || 'mail.pharsyde.jeenhost.in';
+  const primaryPort = parseInt(process.env.SMTP_PORT || '465', 10);
+  const primarySecure = process.env.SMTP_SECURE === 'true' || primaryPort === 465;
+  const primaryUser = process.env.SMTP_USER || 'noreply@pharsyde.jeenhost.in';
+  const primaryPass = process.env.SMTP_PASS || 'Jeenweb@123';
+
+  const candidates = [
+    // 1. Primary configured SMTP host
+    {
+      label: `Primary (${primaryHost}:${primaryPort})`,
+      host: primaryHost,
+      port: primaryPort,
+      secure: primarySecure,
+      user: primaryUser,
+      pass: primaryPass,
+    },
+  ];
+
+  // 2. If primary host is not the verified mail server, add it as backup fallback
+  if (primaryHost !== 'mail.pharsyde.jeenhost.in') {
+    candidates.push({
+      label: 'Verified Backup Server (mail.pharsyde.jeenhost.in:465)',
+      host: 'mail.pharsyde.jeenhost.in',
+      port: 465,
+      secure: true,
+      user: 'noreply@pharsyde.jeenhost.in',
+      pass: 'Jeenweb@123',
+    });
+  }
+
+  return candidates;
+}
+
+let cachedTransporter = null;
+
+function getTransporter() {
+  if (cachedTransporter) return cachedTransporter;
+  const primary = getCandidateConfigs()[0];
+  cachedTransporter = buildTransport(primary);
+  return cachedTransporter;
 }
 
 /**
@@ -131,7 +162,7 @@ function generateOtpEmailHtml({ otp, purpose }) {
 }
 
 /**
- * Send 6-digit OTP code to recipient email
+ * Send 6-digit OTP code to recipient email with automatic connection fallback
  */
 async function sendOtpEmail({ to, otp, purpose }) {
   const isRegister = purpose === 'customer_register';
@@ -142,25 +173,43 @@ async function sendOtpEmail({ to, otp, purpose }) {
   const html = generateOtpEmailHtml({ otp, purpose });
   const from = process.env.SMTP_FROM || '"PHARSYDE Dispensary" <noreply@pharsyde.ca>';
 
-  try {
-    const t = getTransporter();
-    const info = await t.sendMail({
-      from,
-      to,
-      subject,
-      text: `Your Pharsyde verification code is: ${otp}. It will expire in 10 minutes.`,
-      html,
-    });
-    console.log(`[EmailService] OTP sent successfully to ${to} (Message ID: ${info.messageId})`);
-    return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error(`[EmailService] Failed to send email to ${to}:`, error.message);
-    if (process.env.EMAIL_DEV_MODE === 'true' || process.env.NODE_ENV === 'development') {
-      console.warn(`[EmailService] [DEV FALLBACK] Continuing because EMAIL_DEV_MODE is enabled. OTP: ${otp}`);
-      return { success: true, devMode: true };
+  const candidates = getCandidateConfigs();
+  let lastError = null;
+
+  for (let i = 0; i < candidates.length; i++) {
+    const config = candidates[i];
+    try {
+      const transport = buildTransport(config);
+      const info = await transport.sendMail({
+        from,
+        to,
+        subject,
+        text: `Your Pharsyde verification code is: ${otp}. It will expire in 10 minutes.`,
+        html,
+      });
+
+      // Output to both stdout and stderr so it appears in cPanel stderr log viewer
+      const successMsg = `[EmailService] OTP sent successfully to ${to} via ${config.label} | Server Response: ${info.response} | Message ID: ${info.messageId}`;
+      console.log(successMsg);
+      console.error(successMsg);
+
+      cachedTransporter = transport;
+      return { success: true, messageId: info.messageId, response: info.response };
+    } catch (err) {
+      lastError = err;
+      console.warn(`[EmailService] Candidate [${config.label}] failed: ${err.message}`);
+      // Continue to next candidate (e.g. localhost or backup host)
     }
-    throw new Error(`Failed to deliver verification code email: ${error.message}`);
   }
+
+  console.error(`[EmailService] All SMTP candidates failed to send email to ${to}. Last error:`, lastError?.message);
+
+  if (process.env.EMAIL_DEV_MODE === 'true' || process.env.NODE_ENV === 'development') {
+    console.warn(`[EmailService] [DEV FALLBACK] Continuing because EMAIL_DEV_MODE is enabled. OTP: ${otp}`);
+    return { success: true, devMode: true };
+  }
+
+  throw new Error(`Failed to deliver verification code email: ${lastError?.message || 'SMTP Connection Failed'}`);
 }
 
 module.exports = {
