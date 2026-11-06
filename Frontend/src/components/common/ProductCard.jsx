@@ -13,12 +13,18 @@ export default function ProductCard({ product }) {
   const productImage = product.imageUrl || product.image;
   const productBrand = product.brand || 'PHARSYDE';
   const productCategory = product.category || 'Cannabis';
-  const productWeight = product.size || product.weight || (product.equivalent_g ? `${product.equivalent_g}g eq.` : null);
+  // Suppress zero / falsy weight values (e.g. nicotine products with size="0" or equivalent_g=0)
+  const rawWeight = product.size || product.weight || (product.equivalent_g ? `${product.equivalent_g}g eq.` : null);
+  const productWeight = rawWeight && parseFloat(rawWeight) !== 0 ? rawWeight : null;
 
   // Intelligent Strain normalization & detection
   const rawStrain = product.strain || product.strainType || product.strain_type;
   const detectStrain = () => {
-    if (rawStrain && typeof rawStrain === 'string' && rawStrain.trim()) return rawStrain.trim();
+    if (rawStrain && typeof rawStrain === 'string' && rawStrain.trim()) {
+      const trimmed = rawStrain.trim();
+      if (trimmed.toLowerCase() === 'none') return null;
+      return trimmed;
+    }
     const text = `${product.product_name || product.name || ''} ${product.description || ''}`.toLowerCase();
     if (text.includes('indica')) return 'Indica';
     if (text.includes('sativa')) return 'Sativa';
