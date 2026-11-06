@@ -846,8 +846,8 @@ export default function CheckoutPage() {
                         </div>
                       )}
                     </label>
-                    {uploadDocError && (
-                      <p className="mt-1.5 text-[11px] text-red-600 font-medium">{uploadDocError}</p>
+                    {(uploadDocError || errors.govId) && (
+                      <p className="mt-1.5 text-[11px] text-red-600 font-medium">{uploadDocError || errors.govId}</p>
                     )}
                   </div>
                 ) : (

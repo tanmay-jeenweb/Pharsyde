@@ -1152,12 +1152,12 @@ export default function CatalogPage({ pageType: propPageType }) {
 
             {/* Error State */}
             {error && (
-              <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-center text-rose-700 flex flex-col items-center gap-3">
-                <AlertCircle className="w-8 h-8 text-rose-500" />
-                <p className="font-semibold">{error}</p>
+              <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-700 flex flex-col items-center gap-3">
+                <AlertCircle className="w-8 h-8 text-red-600" />
+                <p className="font-semibold text-red-700">{error}</p>
                 <button
                   onClick={() => setPage(1)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold uppercase hover:bg-rose-700 transition-colors shadow-sm cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold uppercase hover:bg-red-700 transition-colors shadow-sm cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>Retry</span>
