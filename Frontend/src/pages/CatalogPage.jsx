@@ -135,24 +135,31 @@ export default function CatalogPage({ pageType: propPageType }) {
   }, [minPrice, maxPrice]);
 
   // Fetch available categories once on mount or when refreshed
+  // Only shows categories that actually have products with images in the DB
   useEffect(() => {
     let isMounted = true;
     async function loadCategories() {
-      if (isCannabisPage) {
-        if (isMounted) setCategories(CANNABIS_CATEGORIES);
-        return;
-      }
-      if (isNicotinePage) {
-        if (isMounted) setCategories(NICOTINE_CATEGORIES);
-        return;
-      }
       try {
         const fetchedCategories = await getCategoriesApi({ hasImage: true });
         if (isMounted && fetchedCategories && fetchedCategories.length > 0) {
-          setCategories(fetchedCategories);
+          // Filter to only the categories relevant to the current page
+          if (isCannabisPage) {
+            const filtered = fetchedCategories.filter(isCannabisCategory);
+            if (isMounted) setCategories(filtered.length > 0 ? filtered : CANNABIS_CATEGORIES);
+          } else if (isNicotinePage) {
+            const filtered = fetchedCategories.filter(isNicotineCategory);
+            if (isMounted) setCategories(filtered.length > 0 ? filtered : NICOTINE_CATEGORIES);
+          } else {
+            if (isMounted) setCategories(fetchedCategories);
+          }
         }
       } catch (err) {
         console.warn('Could not load categories:', err);
+        // Fall back to static lists so the filter doesn't appear empty
+        if (isMounted) {
+          if (isCannabisPage) setCategories(CANNABIS_CATEGORIES);
+          else if (isNicotinePage) setCategories(NICOTINE_CATEGORIES);
+        }
       }
     }
     loadCategories();
@@ -450,12 +457,12 @@ export default function CatalogPage({ pageType: propPageType }) {
     } else if (val === 'price_desc') {
       setSortBy('retail_price');
       setSortOrder('DESC');
-    } else if (val === 'name_asc') {
-      setSortBy('product_name');
-      setSortOrder('ASC');
-    } else if (val === 'stock_desc') {
-      setSortBy('qty_available');
+    } else if (val === 'thc_desc') {
+      setSortBy('thc');
       setSortOrder('DESC');
+    } else if (val === 'thc_asc') {
+      setSortBy('thc');
+      setSortOrder('ASC');
     } else {
       setSortBy('modified');
       setSortOrder('DESC');
@@ -618,10 +625,10 @@ export default function CatalogPage({ pageType: propPageType }) {
                     ? 'price_asc'
                     : sortBy === 'retail_price' && sortOrder === 'DESC'
                     ? 'price_desc'
-                    : sortBy === 'product_name'
-                    ? 'name_asc'
-                    : sortBy === 'qty_available'
-                    ? 'stock_desc'
+                    : sortBy === 'thc' && sortOrder === 'DESC'
+                    ? 'thc_desc'
+                    : sortBy === 'thc' && sortOrder === 'ASC'
+                    ? 'thc_asc'
                     : 'newest'
                 }
                 className="px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#0166dc]"
@@ -629,8 +636,8 @@ export default function CatalogPage({ pageType: propPageType }) {
                 <option value="newest">Recently Updated</option>
                 <option value="price_asc">Price: Low to High</option>
                 <option value="price_desc">Price: High to Low</option>
-                <option value="name_asc">Name: A to Z</option>
-                <option value="stock_desc">Highest Stock</option>
+                <option value="thc_desc">THC: High to Low</option>
+                <option value="thc_asc">THC: Low to High</option>
               </select>
             </div>
           </div>
@@ -1109,10 +1116,10 @@ export default function CatalogPage({ pageType: propPageType }) {
                         ? 'price_asc'
                         : sortBy === 'retail_price' && sortOrder === 'DESC'
                         ? 'price_desc'
-                        : sortBy === 'product_name'
-                        ? 'name_asc'
-                        : sortBy === 'qty_available'
-                        ? 'stock_desc'
+                        : sortBy === 'thc' && sortOrder === 'DESC'
+                        ? 'thc_desc'
+                        : sortBy === 'thc' && sortOrder === 'ASC'
+                        ? 'thc_asc'
                         : 'newest'
                     }
                     className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#0166dc]"
@@ -1120,8 +1127,8 @@ export default function CatalogPage({ pageType: propPageType }) {
                     <option value="newest">Recently Updated</option>
                     <option value="price_asc">Price: Low to High</option>
                     <option value="price_desc">Price: High to Low</option>
-                    <option value="name_asc">Name: A to Z</option>
-                    <option value="stock_desc">Highest Stock</option>
+                    <option value="thc_desc">THC: High to Low</option>
+                    <option value="thc_asc">THC: Low to High</option>
                   </select>
                 </div>
 
