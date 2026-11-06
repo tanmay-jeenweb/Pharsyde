@@ -1554,8 +1554,8 @@ export default function CatalogPage({ pageType: propPageType }) {
         </div>
       )}
 
-      {/* Floating Bottom Cannabis Legal Limit Progress Bar */}
-      {(!isNicotinePage || cartCannabisGrams > 0) && (
+      {/* Floating Bottom Cannabis Legal Limit Progress Bar — hidden when cart is empty (0g) */}
+      {cartCannabisGrams > 0 && (!isNicotinePage || cartCannabisGrams > 0) && (
         <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-2xl bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-xl shadow-slate-900/10 p-3.5 sm:p-4 transition-all">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2 font-medium text-xs">
             <span className="flex items-center gap-2 text-slate-700">
