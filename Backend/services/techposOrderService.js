@@ -55,7 +55,13 @@ function buildTechPosPayload(order, storeId) {
     lastName: lastName,
     phone: order.customer_phone || '',
     email: order.customer_email || '',
-    paymentCardType: order.card_brand || (order.payment_method === 'debit' ? 'Debit' : (order.payment_method === 'credit' || order.payment_method === 'card' ? 'Visa' : 'None')),
+    paymentCardType: (() => {
+      const b = String(order.card_brand || order.payment_method || '').toLowerCase().trim();
+      if (b.includes('visa') || b === 'v') return 'Visa';
+      if (b.includes('master') || b.includes('mc') || b === 'm') return 'MasterCard';
+      if (b.includes('amex') || b.includes('american') || b === 'ax' || b === 'a') return 'AMEX';
+      return 'None';
+    })(),
     deliverySlot: null,
     expireDate: null,
     products: products.length > 0 ? products : [{ productId: 1, quantity: 1, unitPrice: Number(order.total) || 0 }],
@@ -151,8 +157,25 @@ async function syncOrderToTechPOS(order) {
       };
     }
 
-    // Success response handling
-    const techposOrderId = data.orderId || data.data?.orderId || data.id || null;
+    // Success response handling - support all possible TechPOS order identifier field names
+    const techposOrderId =
+      data.techpos_order_id ||
+      data.techPOSOrderId ||
+      data.orderNumber ||
+      data.OrderNumber ||
+      data.orderId ||
+      data.OrderId ||
+      data.id ||
+      data.Id ||
+      data.data?.techPOSOrderId ||
+      data.data?.orderNumber ||
+      data.data?.OrderNumber ||
+      data.data?.orderId ||
+      data.data?.OrderId ||
+      data.data?.id ||
+      (typeof data.data === 'number' || typeof data.data === 'string' ? data.data : null) ||
+      (typeof data === 'number' ? data : null) ||
+      null;
 
     console.log(`[TechPOS Order Sync] ✓ Order #${order.order_number} successfully posted to TechPOS. ID: ${techposOrderId}`);
 

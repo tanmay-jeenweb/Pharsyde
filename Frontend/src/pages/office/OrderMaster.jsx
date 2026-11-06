@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getOfficeOrdersApi, getTechPosPurchaseOrdersApi, getTechPosLiveOrdersApi, getTechPosOrderItemsApi } from '../../services/officeApi';
+import { getOfficeOrdersApi, getTechPosPurchaseOrdersApi, getTechPosLiveOrdersApi, getTechPosOrderItemsApi, retryTechPosOrderSyncApi } from '../../services/officeApi';
 import {
   ShoppingBag,
   Package,
@@ -40,6 +40,29 @@ export default function OrderMaster() {
   const [liveDatePreset, setLiveDatePreset] = useState('today');
   const [liveOrderItems, setLiveOrderItems] = useState([]);
   const [liveItemsLoading, setLiveItemsLoading] = useState(false);
+  const [reSyncing, setReSyncing] = useState(false);
+
+  const handleRetrySync = async (orderId) => {
+    setReSyncing(true);
+    try {
+      const res = await retryTechPosOrderSyncApi(orderId);
+      if (res.success) {
+        fetchAllOrders();
+        setSelectedOrder((prev) => ({
+          ...prev,
+          sync_status: 'synced',
+          techpos_order_id: res.sync?.techpos_order_id || prev?.techpos_order_id,
+          sync_error: null,
+        }));
+      } else {
+        alert('Sync error: ' + (res.sync?.message || 'Failed to dispatch to TechPOS'));
+      }
+    } catch (err) {
+      alert('Network or server error syncing to TechPOS: ' + err.message);
+    } finally {
+      setReSyncing(false);
+    }
+  };
 
   const handleInspectLiveOrder = async (lo) => {
     setSelectedOrder({ isLivePOS: true, ...lo });
@@ -384,11 +407,17 @@ export default function OrderMaster() {
                             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
                               isSynced
                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : order.sync_status === 'failed'
+                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                 : 'bg-amber-50 text-amber-700 border border-amber-200'
                             }`}
                           >
                             <CheckCircle2 className="w-3 h-3" />
-                            {isSynced ? 'Synced TechPOS' : 'Pending'}
+                            {isSynced
+                              ? `Synced TechPOS${order.techpos_order_id ? ` (#${order.techpos_order_id})` : ''}`
+                              : order.sync_status === 'failed'
+                              ? 'Sync Failed'
+                              : 'Pending'}
                           </span>
                         </td>
                         <td className="p-3.5 text-slate-500 font-mono text-[11px]">
@@ -871,6 +900,56 @@ export default function OrderMaster() {
                       </strong>
                     </div>
                   </div>
+                  {/* TechPOS Sync Status Card */}
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">TechPOS Dispatch Status</span>
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                          selectedOrder.sync_status === 'synced' || selectedOrder.techpos_order_id
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : selectedOrder.sync_status === 'failed'
+                            ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                            : 'bg-amber-100 text-amber-800 border border-amber-300'
+                        }`}
+                      >
+                        <CheckCircle2 className="w-3 h-3" />
+                        {selectedOrder.sync_status === 'synced' || selectedOrder.techpos_order_id
+                          ? `Synced to TechPOS ${selectedOrder.techpos_order_id ? `(#${selectedOrder.techpos_order_id})` : ''}`
+                          : selectedOrder.sync_status === 'failed'
+                          ? 'Sync Failed'
+                          : 'Pending Sync'}
+                      </span>
+                    </div>
+
+                    {selectedOrder.techpos_order_id && (
+                      <div className="text-[11px] text-slate-600 flex items-center justify-between">
+                        <span>TechPOS Ticket ID:</span>
+                        <strong className="font-mono text-slate-900 font-bold">#{selectedOrder.techpos_order_id}</strong>
+                      </div>
+                    )}
+
+                    {selectedOrder.sync_error && (
+                      <div className="text-[11px] text-rose-700 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+                        <strong>Error:</strong> {selectedOrder.sync_error}
+                      </div>
+                    )}
+
+                    {(!selectedOrder.sync_status || selectedOrder.sync_status === 'pending' || selectedOrder.sync_status === 'failed') && !selectedOrder.techpos_order_id && (
+                      <div className="pt-2 flex justify-end">
+                        <button
+                          type="button"
+                          disabled={reSyncing}
+                          onClick={() => handleRetrySync(selectedOrder.id || selectedOrder.order_number)}
+                          className="px-3 py-1.5 rounded-xl bg-[#0166dc] hover:bg-[#0153b3] text-white font-bold text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${reSyncing ? 'animate-spin' : ''}`} />
+                          <span>{reSyncing ? 'Dispatching to TechPOS...' : 'Retry TechPOS Sync'}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Government ID Verification */}
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
                     <div>

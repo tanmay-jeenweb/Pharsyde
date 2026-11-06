@@ -199,7 +199,7 @@ export default function AccountOrdersPage() {
                 <div className="pl-4 border-l border-amber-200/60">
                   <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Discount Value</span>
                   <span className="font-mono text-xl font-black text-[#0166dc]">
-                    ${((Number(customerUser?.reward_points) || 0) * 0.001).toFixed(2)} CAD
+                    ${((Number(customerUser?.reward_points) || 0) * 0.001).toFixed(3)} CAD
                   </span>
                   <span className="text-[9px] text-slate-400 block font-mono">1,000 pts = $1 CAD</span>
                 </div>

@@ -17,16 +17,28 @@ import {
   Grid,
   CheckCircle2,
   Check,
-  X
+  X,
+  Scale
 } from 'lucide-react';
 
 export default function CatalogPage({ pageType: propPageType }) {
-  const { showToast } = useApp();
+  const {
+    showToast,
+    cartCannabisGrams = 0,
+    cannabisMaxGrams,
+    isCannabisLimitExceeded = false,
+    setIsCartOpen,
+  } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
 
   const isCannabisPage = propPageType === 'cannabis' || location.pathname === '/cannabis';
   const isNicotinePage = propPageType === 'nicotine' || location.pathname === '/nicotine';
+
+  const CANNABIS_LIMIT = Number(cannabisMaxGrams) > 0 ? Number(cannabisMaxGrams) : 30.0;
+  const cannabisProgressPercent = Math.min(100, (cartCannabisGrams / CANNABIS_LIMIT) * 100);
+  const remainingCannabis = Math.max(0, CANNABIS_LIMIT - cartCannabisGrams);
+  const excessCannabis = isCannabisLimitExceeded ? Math.max(0, cartCannabisGrams - CANNABIS_LIMIT) : 0;
 
   // Helper to parse categories from URL parameter (comma-separated or multiple)
   const parseCategoriesFromUrl = () => {
@@ -66,7 +78,7 @@ export default function CatalogPage({ pageType: propPageType }) {
     if (isNicotinePage) return NICOTINE_CATEGORIES;
     return [];
   });
-  const [showAllCategories, setShowAllCategories] = useState(true);
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState(parseCategoriesFromUrl);
   const [categoryFilterQuery, setCategoryFilterQuery] = useState('');
 
@@ -91,7 +103,9 @@ export default function CatalogPage({ pageType: propPageType }) {
 
   const [searchQuery, setSearchQuery] = useState(urlSearch || '');
   const [debouncedSearch, setDebouncedSearch] = useState(urlSearch || '');
-  const [page, setPage] = useState(1);
+  const urlPageRaw = searchParams.get('page');
+  const initialPage = urlPageRaw ? parseInt(urlPageRaw, 10) : 1;
+  const [page, setPage] = useState(!isNaN(initialPage) && initialPage > 0 ? initialPage : 1);
   const [limit, setLimit] = useState(24);
   const [sortBy, setSortBy] = useState('modified');
   const [sortOrder, setSortOrder] = useState('DESC');
@@ -121,24 +135,31 @@ export default function CatalogPage({ pageType: propPageType }) {
   }, [minPrice, maxPrice]);
 
   // Fetch available categories once on mount or when refreshed
+  // Only shows categories that actually have products with images in the DB
   useEffect(() => {
     let isMounted = true;
     async function loadCategories() {
-      if (isCannabisPage) {
-        if (isMounted) setCategories(CANNABIS_CATEGORIES);
-        return;
-      }
-      if (isNicotinePage) {
-        if (isMounted) setCategories(NICOTINE_CATEGORIES);
-        return;
-      }
       try {
         const fetchedCategories = await getCategoriesApi({ hasImage: true });
         if (isMounted && fetchedCategories && fetchedCategories.length > 0) {
-          setCategories(fetchedCategories);
+          // Filter to only the categories relevant to the current page
+          if (isCannabisPage) {
+            const filtered = fetchedCategories.filter(isCannabisCategory);
+            if (isMounted) setCategories(filtered.length > 0 ? filtered : CANNABIS_CATEGORIES);
+          } else if (isNicotinePage) {
+            const filtered = fetchedCategories.filter(isNicotineCategory);
+            if (isMounted) setCategories(filtered.length > 0 ? filtered : NICOTINE_CATEGORIES);
+          } else {
+            if (isMounted) setCategories(fetchedCategories);
+          }
         }
       } catch (err) {
         console.warn('Could not load categories:', err);
+        // Fall back to static lists so the filter doesn't appear empty
+        if (isMounted) {
+          if (isCannabisPage) setCategories(CANNABIS_CATEGORIES);
+          else if (isNicotinePage) setCategories(NICOTINE_CATEGORIES);
+        }
       }
     }
     loadCategories();
@@ -252,6 +273,12 @@ export default function CatalogPage({ pageType: propPageType }) {
     const uMax = searchParams.get('maxPrice') || '';
     if (uMin !== minPrice) setMinPrice(uMin);
     if (uMax !== maxPrice) setMaxPrice(uMax);
+
+    const uPageRaw = searchParams.get('page');
+    const uPage = uPageRaw ? parseInt(uPageRaw, 10) : 1;
+    if (!isNaN(uPage) && uPage > 0 && uPage !== page) {
+      setPage(uPage);
+    }
   }, [searchParams]);
 
   // Multiselect category toggle handler
@@ -270,6 +297,7 @@ export default function CatalogPage({ pageType: propPageType }) {
 
       setSearchParams((params) => {
         const p = new URLSearchParams(params);
+        p.delete('page');
         if (next.length === 0) {
           p.delete('category');
         } else {
@@ -289,6 +317,7 @@ export default function CatalogPage({ pageType: propPageType }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setSearchParams((params) => {
       const p = new URLSearchParams(params);
+      p.delete('page');
       p.delete('category');
       return p;
     }, { replace: true });
@@ -304,6 +333,7 @@ export default function CatalogPage({ pageType: propPageType }) {
         : [...prev, brandName];
       setSearchParams((params) => {
         const p = new URLSearchParams(params);
+        p.delete('page');
         if (next.length === 0) p.delete('brand');
         else p.set('brand', next.join(','));
         return p;
@@ -317,6 +347,7 @@ export default function CatalogPage({ pageType: propPageType }) {
     setPage(1);
     setSearchParams((params) => {
       const p = new URLSearchParams(params);
+      p.delete('page');
       p.delete('brand');
       return p;
     }, { replace: true });
@@ -332,6 +363,7 @@ export default function CatalogPage({ pageType: propPageType }) {
         : [...prev, strainName];
       setSearchParams((params) => {
         const p = new URLSearchParams(params);
+        p.delete('page');
         if (next.length === 0) p.delete('strain');
         else p.set('strain', next.join(','));
         return p;
@@ -345,6 +377,7 @@ export default function CatalogPage({ pageType: propPageType }) {
     setPage(1);
     setSearchParams((params) => {
       const p = new URLSearchParams(params);
+      p.delete('page');
       p.delete('strain');
       return p;
     }, { replace: true });
@@ -359,6 +392,7 @@ export default function CatalogPage({ pageType: propPageType }) {
     setPage(1);
     setSearchParams((params) => {
       const p = new URLSearchParams(params);
+      p.delete('page');
       if (sMin) p.set('minPrice', sMin); else p.delete('minPrice');
       if (sMax) p.set('maxPrice', sMax); else p.delete('maxPrice');
       return p;
@@ -371,6 +405,7 @@ export default function CatalogPage({ pageType: propPageType }) {
     setPage(1);
     setSearchParams((params) => {
       const p = new URLSearchParams(params);
+      p.delete('page');
       p.delete('minPrice');
       p.delete('maxPrice');
       return p;
@@ -422,18 +457,23 @@ export default function CatalogPage({ pageType: propPageType }) {
     } else if (val === 'price_desc') {
       setSortBy('retail_price');
       setSortOrder('DESC');
-    } else if (val === 'name_asc') {
-      setSortBy('product_name');
-      setSortOrder('ASC');
-    } else if (val === 'stock_desc') {
-      setSortBy('qty_available');
+    } else if (val === 'thc_desc') {
+      setSortBy('thc');
       setSortOrder('DESC');
+    } else if (val === 'thc_asc') {
+      setSortBy('thc');
+      setSortOrder('ASC');
     } else {
       setSortBy('modified');
       setSortOrder('DESC');
     }
     setPage(1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    setSearchParams((params) => {
+      const p = new URLSearchParams(params);
+      p.delete('page');
+      return p;
+    }, { replace: true });
   };
 
   // Filtered categories for sidebar search
@@ -482,6 +522,22 @@ export default function CatalogPage({ pageType: propPageType }) {
 
   // Pagination calculation
   const totalPages = Math.ceil(totalCount / limit) || 1;
+
+  const handlePageChange = (newPage) => {
+    const targetPage = Math.max(1, Math.min(totalPages, newPage));
+    if (targetPage === page) return;
+    setPage(targetPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setSearchParams((params) => {
+      const p = new URLSearchParams(params);
+      if (targetPage > 1) {
+        p.set('page', String(targetPage));
+      } else {
+        p.delete('page');
+      }
+      return p;
+    }, { replace: true });
+  };
   const startItem = totalCount > 0 ? (page - 1) * limit + 1 : 0;
   const endItem = Math.min(page * limit, totalCount);
 
@@ -505,7 +561,7 @@ export default function CatalogPage({ pageType: propPageType }) {
   const { pages, hasStartEllipsis, hasEndEllipsis } = getPageNumbers();
 
   return (
-    <div className="min-h-screen pt-28 pb-24 bg-[#F8FAFC]">
+    <div className="min-h-screen pt-28 pb-36 bg-[#F8FAFC]">
       <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
         
         {/* Minimal Clean Page Header */}
@@ -569,10 +625,10 @@ export default function CatalogPage({ pageType: propPageType }) {
                     ? 'price_asc'
                     : sortBy === 'retail_price' && sortOrder === 'DESC'
                     ? 'price_desc'
-                    : sortBy === 'product_name'
-                    ? 'name_asc'
-                    : sortBy === 'qty_available'
-                    ? 'stock_desc'
+                    : sortBy === 'thc' && sortOrder === 'DESC'
+                    ? 'thc_desc'
+                    : sortBy === 'thc' && sortOrder === 'ASC'
+                    ? 'thc_asc'
                     : 'newest'
                 }
                 className="px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#0166dc]"
@@ -580,8 +636,8 @@ export default function CatalogPage({ pageType: propPageType }) {
                 <option value="newest">Recently Updated</option>
                 <option value="price_asc">Price: Low to High</option>
                 <option value="price_desc">Price: High to Low</option>
-                <option value="name_asc">Name: A to Z</option>
-                <option value="stock_desc">Highest Stock</option>
+                <option value="thc_desc">THC: High to Low</option>
+                <option value="thc_asc">THC: Low to High</option>
               </select>
             </div>
           </div>
@@ -591,11 +647,11 @@ export default function CatalogPage({ pageType: propPageType }) {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           
           {/* Vertical Filter Sidebar (Desktop) */}
-          <aside className="hidden lg:block lg:col-span-1 sticky top-28 space-y-6">
-            <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs space-y-5">
+          <aside className="hidden lg:block lg:col-span-1 sticky top-28">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-xs flex flex-col max-h-[calc(110vh-13rem)] overflow-hidden">
               
-              {/* Sidebar Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              {/* Pinned Sidebar Header */}
+              <div className="p-5 pb-3.5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
                 <div className="flex items-center gap-2">
                   <SlidersHorizontal className="w-4 h-4 text-[#0166dc]" />
                   <span className="font-heading text-xs font-extrabold tracking-wider text-slate-900 uppercase">
@@ -611,6 +667,9 @@ export default function CatalogPage({ pageType: propPageType }) {
                   </button>
                 )}
               </div>
+
+              {/* Independently Scrollable Filter Body */}
+              <div className="flex-1 overflow-y-auto p-5 pt-4 space-y-5 overscroll-contain scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300">
 
               {/* Search Filter */}
               <div>
@@ -673,7 +732,7 @@ export default function CatalogPage({ pageType: propPageType }) {
                   </div>
                 )}
 
-                <div className="max-h-[460px] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                <div className="space-y-1">
                   {/* All Categories Option */}
                   <button
                     type="button"
@@ -845,7 +904,7 @@ export default function CatalogPage({ pageType: propPageType }) {
                   </div>
                 )}
 
-                <div className="max-h-[220px] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                <div className="space-y-1">
                   {visibleBrands.length === 0 ? (
                     <div className="text-[11px] text-slate-400 py-1.5 px-2">No brands found</div>
                   ) : (
@@ -937,6 +996,7 @@ export default function CatalogPage({ pageType: propPageType }) {
 
               {/* Verified Image Indicator Badge */}
               
+              </div>
             </div>
           </aside>
 
@@ -1056,10 +1116,10 @@ export default function CatalogPage({ pageType: propPageType }) {
                         ? 'price_asc'
                         : sortBy === 'retail_price' && sortOrder === 'DESC'
                         ? 'price_desc'
-                        : sortBy === 'product_name'
-                        ? 'name_asc'
-                        : sortBy === 'qty_available'
-                        ? 'stock_desc'
+                        : sortBy === 'thc' && sortOrder === 'DESC'
+                        ? 'thc_desc'
+                        : sortBy === 'thc' && sortOrder === 'ASC'
+                        ? 'thc_asc'
                         : 'newest'
                     }
                     className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#0166dc]"
@@ -1067,8 +1127,8 @@ export default function CatalogPage({ pageType: propPageType }) {
                     <option value="newest">Recently Updated</option>
                     <option value="price_asc">Price: Low to High</option>
                     <option value="price_desc">Price: High to Low</option>
-                    <option value="name_asc">Name: A to Z</option>
-                    <option value="stock_desc">Highest Stock</option>
+                    <option value="thc_desc">THC: High to Low</option>
+                    <option value="thc_asc">THC: Low to High</option>
                   </select>
                 </div>
 
@@ -1160,10 +1220,7 @@ export default function CatalogPage({ pageType: propPageType }) {
                 <div className="flex items-center gap-1.5">
                   {/* Prev Button */}
                   <button
-                    onClick={() => {
-                      setPage((p) => Math.max(1, p - 1));
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
+                    onClick={() => handlePageChange(page - 1)}
                     disabled={page === 1}
                     className="flex items-center gap-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                   >
@@ -1175,10 +1232,7 @@ export default function CatalogPage({ pageType: propPageType }) {
                   {hasStartEllipsis && (
                     <>
                       <button
-                        onClick={() => {
-                          setPage(1);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
+                        onClick={() => handlePageChange(1)}
                         className="w-9 h-9 rounded-xl border border-slate-200 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 cursor-pointer"
                       >
                         1
@@ -1191,10 +1245,7 @@ export default function CatalogPage({ pageType: propPageType }) {
                   {pages.map((pNum) => (
                     <button
                       key={pNum}
-                      onClick={() => {
-                        setPage(pNum);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
+                      onClick={() => handlePageChange(pNum)}
                       className={`w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         page === pNum
                           ? 'bg-[#0166dc] text-white shadow-md shadow-[#0166dc]/20 font-black'
@@ -1210,10 +1261,7 @@ export default function CatalogPage({ pageType: propPageType }) {
                     <>
                       <span className="px-1 text-slate-400">...</span>
                       <button
-                        onClick={() => {
-                          setPage(totalPages);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
+                        onClick={() => handlePageChange(totalPages)}
                         className="w-9 h-9 rounded-xl border border-slate-200 text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 cursor-pointer"
                       >
                         {totalPages}
@@ -1223,10 +1271,7 @@ export default function CatalogPage({ pageType: propPageType }) {
 
                   {/* Next Button */}
                   <button
-                    onClick={() => {
-                      setPage((p) => Math.min(totalPages, p + 1));
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
+                    onClick={() => handlePageChange(page + 1)}
                     disabled={page === totalPages}
                     className="flex items-center gap-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                   >
@@ -1505,6 +1550,71 @@ export default function CatalogPage({ pageType: propPageType }) {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Bottom Cannabis Legal Limit Progress Bar — hidden when cart is empty (0g) */}
+      {cartCannabisGrams > 0 && (!isNicotinePage || cartCannabisGrams > 0) && (
+        <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-2xl bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-xl shadow-slate-900/10 p-3.5 sm:p-4 transition-all">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2 font-medium text-xs">
+            <span className="flex items-center gap-2 text-slate-700">
+              <div className={`p-1.5 rounded-xl shrink-0 ${
+                isCannabisLimitExceeded
+                  ? 'bg-red-50 text-red-600'
+                  : cannabisProgressPercent >= 80
+                  ? 'bg-orange-50 text-orange-500'
+                  : 'bg-[#0166dc]/10 text-[#0166dc]'
+              }`}>
+                <Scale className="w-4 h-4 shrink-0" />
+              </div>
+              {isCannabisLimitExceeded ? (
+                <span className="text-red-600 font-bold">
+                  Exceeds {CANNABIS_LIMIT.toFixed(1)}g Legal Purchase Limit (+{excessCannabis.toFixed(1)}g)
+                </span>
+              ) : cartCannabisGrams >= CANNABIS_LIMIT ? (
+                <span className="text-[#0166dc] font-black">
+                  Reached {CANNABIS_LIMIT.toFixed(1)}g Legal Purchase Limit
+                </span>
+              ) : (
+                <span>
+                  Cannabis Legal Limit (30g per transaction): <strong className="text-slate-900 font-bold">{remainingCannabis.toFixed(1)}g</strong> remaining
+                </span>
+              )}
+            </span>
+
+            <div className="flex items-center gap-3 self-end sm:self-auto">
+              <span className={`text-[11px] font-mono font-semibold shrink-0 ${
+                isCannabisLimitExceeded
+                  ? 'text-red-600 font-bold'
+                  : cannabisProgressPercent >= 80
+                  ? 'text-orange-600 font-bold'
+                  : 'text-slate-600'
+              }`}>
+                {cartCannabisGrams.toFixed(1)} / {CANNABIS_LIMIT.toFixed(1)}g ({Math.round(cannabisProgressPercent)}%)
+              </span>
+              {cartCannabisGrams > 0 && (
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className="px-3 py-1 rounded-lg bg-[#0166dc] hover:bg-[#0153b3] text-white text-[11px] font-extrabold uppercase tracking-wider transition-colors cursor-pointer shadow-xs"
+                >
+                  View Bag
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className={`w-full ${isCannabisLimitExceeded ? 'bg-red-100' : 'bg-slate-200'} h-2 rounded-full overflow-hidden`}>
+            <div
+              className={`${
+                isCannabisLimitExceeded
+                  ? 'bg-red-500'
+                  : cannabisProgressPercent >= 80
+                  ? 'bg-gradient-to-r from-[#0166dc] to-orange-500'
+                  : 'bg-gradient-to-r from-[#0166dc] to-[#0166dc]'
+              } h-full transition-all duration-500 rounded-full`}
+              style={{ width: `${cannabisProgressPercent}%` }}
+            />
           </div>
         </div>
       )}

@@ -11,6 +11,31 @@ function generateVerificationToken() {
 
 const OtpModel = {
   /**
+   * Create email_otps table if it doesn't exist
+   */
+  async createTable() {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS email_otps (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(150) NOT NULL,
+        otp_hash VARCHAR(255) NOT NULL,
+        purpose VARCHAR(50) NOT NULL,
+        attempts INT NOT NULL DEFAULT 0,
+        max_attempts INT NOT NULL DEFAULT 5,
+        is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+        verification_token VARCHAR(255) NULL,
+        expires_at DATETIME NOT NULL,
+        verified_at DATETIME NULL,
+        ip_address VARCHAR(45) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_email_purpose (email, purpose),
+        INDEX idx_token (verification_token),
+        INDEX idx_expires_at (expires_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+  },
+
+  /**
    * Check cooldown time (in seconds) since last OTP was sent for this email/purpose
    */
   async getSecondsSinceLastOtp(email, purpose) {

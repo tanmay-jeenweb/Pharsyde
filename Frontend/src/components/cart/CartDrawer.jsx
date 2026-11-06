@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { calculateCartTaxes } from '../../utils/taxCalculator';
-import { X, Trash2, Plus, Minus, ArrowRight, ShoppingBag, ShieldCheck, Truck, Sparkles, AlertTriangle, Scale } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ArrowRight, ShoppingBag, Truck, AlertTriangle, Scale } from 'lucide-react';
 
 export default function CartDrawer() {
   const {
@@ -17,10 +17,6 @@ export default function CartDrawer() {
     isCannabisLimitExceeded = false,
     freeDeliveryThreshold = 75.0,
   } = useApp();
-  const [promoCode, setPromoCode] = useState('');
-  const [promoDiscount, setPromoDiscount] = useState(0);
-  const [promoApplied, setPromoApplied] = useState(false);
-  const [promoError, setPromoError] = useState('');
 
   if (!isCartOpen) return null;
 
@@ -29,33 +25,11 @@ export default function CartDrawer() {
   const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - cartSubtotal);
 
   const CANNABIS_LIMIT = Number(cannabisMaxGrams) > 0 ? Number(cannabisMaxGrams) : 30.0;
-  const cannabisProgressPercent = Math.min(100, (cartCannabisGrams / CANNABIS_LIMIT) * 100);
-  const remainingCannabis = Math.max(0, CANNABIS_LIMIT - cartCannabisGrams);
   const excessCannabis = isCannabisLimitExceeded ? Math.max(0, cartCannabisGrams - CANNABIS_LIMIT) : 0;
 
-  const deliveryFee = cartSubtotal >= FREE_SHIPPING_THRESHOLD || cartSubtotal === 0 ? 0 : 9.99;
-
-  const taxSummary = calculateCartTaxes(cart, {
-    discount: promoDiscount,
-    shipping: deliveryFee,
-  });
+  const taxSummary = calculateCartTaxes(cart);
   const estimatedTax = taxSummary.totalTax;
   const finalTotal = taxSummary.finalTotal;
-
-
-
-
-  const handleApplyPromo = (e) => {
-    e.preventDefault();
-    setPromoError('');
-    if (promoCode.trim().toUpperCase() === 'PHARSYDE10') {
-      const discount = cartSubtotal * 0.1;
-      setPromoDiscount(discount);
-      setPromoApplied(true);
-    } else {
-      setPromoError('Invalid coupon code. Try PHARSYDE10');
-    }
-  };
 
   const handleProceedToCheckout = () => {
     setIsCartOpen(false);
@@ -96,76 +70,24 @@ export default function CartDrawer() {
             </button>
           </div>
 
-          {/* Progress Indicators: Free Shipping & Cannabis Legal Purchase Limit (30g) */}
-          <div className="px-6 py-3.5 bg-slate-50 border-b border-slate-200 text-xs space-y-3">
-            {/* Free Shipping Progress Indicator */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5 font-medium">
-                <span className="flex items-center gap-1.5 text-slate-700">
-                  <Truck className="w-4 h-4 text-[#0166dc]" />
-                  {cartSubtotal >= FREE_SHIPPING_THRESHOLD ? (
-                    <span className="text-[#0166dc] font-black">Unlocked Free Winnipeg Delivery!</span>
-                  ) : (
-                    <span>Add <strong className="text-slate-900">${remainingForFreeShipping.toFixed(2)}</strong> for Free Delivery</span>
-                  )}
-                </span>
-                <span className="text-[11px] text-slate-500 font-mono font-semibold">{Math.round(progressPercent)}%</span>
-              </div>
-              <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                <div
-                  className="bg-gradient-to-r from-[#0166dc] to-orange-500 h-full transition-all duration-500 rounded-full"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
+          {/* Progress Indicator: Free Shipping */}
+          <div className="px-6 py-3.5 bg-slate-50 border-b border-slate-200 text-xs">
+            <div className="flex items-center justify-between mb-1.5 font-medium">
+              <span className="flex items-center gap-1.5 text-slate-700">
+                <Truck className="w-4 h-4 text-[#0166dc]" />
+                {cartSubtotal >= FREE_SHIPPING_THRESHOLD ? (
+                  <span className="text-[#0166dc] font-black">Unlocked Free Winnipeg Delivery!</span>
+                ) : (
+                  <span>Add <strong className="text-slate-900">${remainingForFreeShipping.toFixed(2)}</strong> for Free Delivery</span>
+                )}
+              </span>
+              <span className="text-[11px] text-slate-500 font-mono font-semibold">{Math.round(progressPercent)}%</span>
             </div>
-
-            {/* Cannabis Dynamic Legal Limit Progress Indicator */}
-            <div className="pt-2.5 border-t border-slate-200/80">
-              <div className="flex items-center justify-between mb-1.5 font-medium">
-                <span className="flex items-center gap-1.5 text-slate-700">
-                  <Scale className={`w-4 h-4 shrink-0 ${
-                    isCannabisLimitExceeded
-                      ? 'text-red-600'
-                      : cannabisProgressPercent >= 80
-                      ? 'text-orange-500'
-                      : 'text-[#0166dc]'
-                  }`} />
-                  {isCannabisLimitExceeded ? (
-                    <span className="text-red-600 font-bold">
-                      Exceeds {CANNABIS_LIMIT.toFixed(1)}g Legal Limit (+{excessCannabis.toFixed(1)}g)
-                    </span>
-                  ) : cartCannabisGrams >= CANNABIS_LIMIT ? (
-                    <span className="text-[#0166dc] font-black">
-                      Reached {CANNABIS_LIMIT.toFixed(1)}g Legal Purchase Limit
-                    </span>
-                  ) : (
-                    <span>
-                      Cannabis Legal Limit: <strong className="text-slate-900">{remainingCannabis.toFixed(1)}g</strong> remaining
-                    </span>
-                  )}
-                </span>
-                <span className={`text-[11px] font-mono font-semibold shrink-0 ${
-                  isCannabisLimitExceeded
-                    ? 'text-red-600 font-bold'
-                    : cannabisProgressPercent >= 80
-                    ? 'text-orange-600 font-bold'
-                    : 'text-slate-500'
-                }`}>
-                  {cartCannabisGrams.toFixed(1)} / {CANNABIS_LIMIT.toFixed(1)}g ({Math.round(cannabisProgressPercent)}%)
-                </span>
-              </div>
-              <div className={`w-full ${isCannabisLimitExceeded ? 'bg-red-100' : 'bg-slate-200'} h-1.5 rounded-full overflow-hidden`}>
-                <div
-                  className={`${
-                    isCannabisLimitExceeded
-                      ? 'bg-red-500'
-                      : cannabisProgressPercent >= 80
-                      ? 'bg-gradient-to-r from-[#0166dc] to-orange-500'
-                      : 'bg-gradient-to-r from-[#0166dc] to-[#0166dc]'
-                  } h-full transition-all duration-500 rounded-full`}
-                  style={{ width: `${cannabisProgressPercent}%` }}
-                />
-              </div>
+            <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-[#0166dc] to-orange-500 h-full transition-all duration-500 rounded-full"
+                style={{ width: `${progressPercent}%` }}
+              />
             </div>
           </div>
 
@@ -261,69 +183,24 @@ export default function CartDrawer() {
 
           {/* Footer & Checkout Breakdown */}
           {cart.length > 0 && (
-            <div className="p-6 bg-white border-t border-slate-200 space-y-4">
-              {/* Promo code form */}
-              <form onSubmit={handleApplyPromo} className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Promo Code (e.g. PHARSYDE10)"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#0166dc] focus:bg-white"
-                />
-                <button
-                  type="submit"
-                  className="px-3.5 py-2 bg-slate-900 hover:bg-[#0166dc] hover:text-black text-white text-xs font-bold rounded-xl transition-colors shadow-xs"
-                >
-                  Apply
-                </button>
-              </form>
-              {promoError && <p className="text-[11px] text-orange-600 font-medium">{promoError}</p>}
-              {promoApplied && (
-                <p className="text-[11px] text-[#0166dc] font-black flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-[#0166dc]" /> 10% Welcome Discount Applied!
-                </p>
-              )}
-
+            <div className="px-6 py-3 bg-white border-t border-slate-200 space-y-2.5">
               {/* Price Calculation Breakdown */}
-              <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
+              <div className="space-y-1.5 text-xs text-slate-600">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span className="font-mono text-slate-900 font-semibold">${cartSubtotal.toFixed(2)} CAD</span>
                 </div>
-                {promoDiscount > 0 && (
-                  <div className="flex justify-between text-[#0166dc] font-bold">
-                    <span>Discount</span>
-                    <span className="font-mono">-${promoDiscount.toFixed(2)} CAD</span>
-                  </div>
-                )}
                 <div className="flex justify-between">
                   <span>{taxSummary.hasCannabis && taxSummary.hasNicotine ? 'Estimated Taxes (5% Cannabis / 12% Nicotine)' : taxSummary.hasNicotine ? 'Nicotine Tax (5% GST + 7% PST = 12%)' : 'Cannabis Tax (5% GST)'}</span>
                   <span className="font-mono text-slate-900">${estimatedTax.toFixed(2)} CAD</span>
                 </div>
-                {taxSummary.hasCannabis && taxSummary.hasNicotine && (
-                  <div className="flex justify-between text-[11px] text-slate-400 pl-2">
-                    <span>• Cannabis 5% GST: ${taxSummary.cannabisTax.toFixed(2)} | Nicotine 12% (5% GST+7% PST): ${taxSummary.nicotineTax.toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span>Winnipeg Delivery / Pickup</span>
-                  <span className="font-mono text-slate-900">
-                    {deliveryFee === 0 ? 'FREE' : `$${deliveryFee.toFixed(2)} CAD`}
-                  </span>
-                </div>
+                
                 {cartCannabisGrams > 0 && (
                   <div className="flex justify-between items-center text-xs pt-1 border-t border-slate-100">
-                    <span className="flex items-center gap-1.5 text-slate-600">
-                      <Scale className="w-3.5 h-3.5 text-slate-700" />
-                      <span>Cannabis Weight</span>
-                    </span>
-                    <span className={`font-mono font-bold ${isCannabisLimitExceeded ? 'text-red-600' : 'text-slate-900'}`}>
-                      {cartCannabisGrams.toFixed(1)}g / {CANNABIS_LIMIT.toFixed(1)}g
-                    </span>
+                    
                   </div>
                 )}
-                <div className="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200">
+                <div className="flex justify-between text-sm font-bold text-slate-900 pt-1.5 border-t border-slate-200">
                   <span>Estimated Total</span>
                   <span className="font-mono text-base text-[#0166dc] font-black">${finalTotal.toFixed(2)} CAD</span>
                 </div>

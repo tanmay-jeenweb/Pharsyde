@@ -584,7 +584,7 @@ export const STORE_INFO = {
   name: "Pharsyde Cannabis",
   address: "117 Regent Ave W, Winnipeg, MB R2C 1R1",
   phone: "(204) 222-4753",
-  email: "pharsydecannabis@gmail.com",
+  email: "cannabis@pharsyde.ca",
   hours: [
     { days: "Monday – Friday", time: "7:00 AM – 10:00 PM" },
     { days: "Saturday", time: "8:00 AM – 10:00 PM" },
