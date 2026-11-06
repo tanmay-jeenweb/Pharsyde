@@ -17,16 +17,28 @@ import {
   Grid,
   CheckCircle2,
   Check,
-  X
+  X,
+  Scale
 } from 'lucide-react';
 
 export default function CatalogPage({ pageType: propPageType }) {
-  const { showToast } = useApp();
+  const {
+    showToast,
+    cartCannabisGrams = 0,
+    cannabisMaxGrams,
+    isCannabisLimitExceeded = false,
+    setIsCartOpen,
+  } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
 
   const isCannabisPage = propPageType === 'cannabis' || location.pathname === '/cannabis';
   const isNicotinePage = propPageType === 'nicotine' || location.pathname === '/nicotine';
+
+  const CANNABIS_LIMIT = Number(cannabisMaxGrams) > 0 ? Number(cannabisMaxGrams) : 30.0;
+  const cannabisProgressPercent = Math.min(100, (cartCannabisGrams / CANNABIS_LIMIT) * 100);
+  const remainingCannabis = Math.max(0, CANNABIS_LIMIT - cartCannabisGrams);
+  const excessCannabis = isCannabisLimitExceeded ? Math.max(0, cartCannabisGrams - CANNABIS_LIMIT) : 0;
 
   // Helper to parse categories from URL parameter (comma-separated or multiple)
   const parseCategoriesFromUrl = () => {
@@ -66,7 +78,7 @@ export default function CatalogPage({ pageType: propPageType }) {
     if (isNicotinePage) return NICOTINE_CATEGORIES;
     return [];
   });
-  const [showAllCategories, setShowAllCategories] = useState(true);
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState(parseCategoriesFromUrl);
   const [categoryFilterQuery, setCategoryFilterQuery] = useState('');
 
@@ -542,7 +554,7 @@ export default function CatalogPage({ pageType: propPageType }) {
   const { pages, hasStartEllipsis, hasEndEllipsis } = getPageNumbers();
 
   return (
-    <div className="min-h-screen pt-28 pb-24 bg-[#F8FAFC]">
+    <div className="min-h-screen pt-28 pb-36 bg-[#F8FAFC]">
       <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-16">
         
         {/* Minimal Clean Page Header */}
@@ -628,11 +640,11 @@ export default function CatalogPage({ pageType: propPageType }) {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           
           {/* Vertical Filter Sidebar (Desktop) */}
-          <aside className="hidden lg:block lg:col-span-1 sticky top-28 space-y-6">
-            <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs space-y-5">
+          <aside className="hidden lg:block lg:col-span-1 sticky top-28">
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-xs flex flex-col max-h-[calc(110vh-13rem)] overflow-hidden">
               
-              {/* Sidebar Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              {/* Pinned Sidebar Header */}
+              <div className="p-5 pb-3.5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
                 <div className="flex items-center gap-2">
                   <SlidersHorizontal className="w-4 h-4 text-[#0166dc]" />
                   <span className="font-heading text-xs font-extrabold tracking-wider text-slate-900 uppercase">
@@ -648,6 +660,9 @@ export default function CatalogPage({ pageType: propPageType }) {
                   </button>
                 )}
               </div>
+
+              {/* Independently Scrollable Filter Body */}
+              <div className="flex-1 overflow-y-auto p-5 pt-4 space-y-5 overscroll-contain scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300">
 
               {/* Search Filter */}
               <div>
@@ -710,7 +725,7 @@ export default function CatalogPage({ pageType: propPageType }) {
                   </div>
                 )}
 
-                <div className="max-h-[460px] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                <div className="space-y-1">
                   {/* All Categories Option */}
                   <button
                     type="button"
@@ -882,7 +897,7 @@ export default function CatalogPage({ pageType: propPageType }) {
                   </div>
                 )}
 
-                <div className="max-h-[220px] overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                <div className="space-y-1">
                   {visibleBrands.length === 0 ? (
                     <div className="text-[11px] text-slate-400 py-1.5 px-2">No brands found</div>
                   ) : (
@@ -974,6 +989,7 @@ export default function CatalogPage({ pageType: propPageType }) {
 
               {/* Verified Image Indicator Badge */}
               
+              </div>
             </div>
           </aside>
 
@@ -1527,6 +1543,71 @@ export default function CatalogPage({ pageType: propPageType }) {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Bottom Cannabis Legal Limit Progress Bar */}
+      {(!isNicotinePage || cartCannabisGrams > 0) && (
+        <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-2xl bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-xl shadow-slate-900/10 p-3.5 sm:p-4 transition-all">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2 font-medium text-xs">
+            <span className="flex items-center gap-2 text-slate-700">
+              <div className={`p-1.5 rounded-xl shrink-0 ${
+                isCannabisLimitExceeded
+                  ? 'bg-red-50 text-red-600'
+                  : cannabisProgressPercent >= 80
+                  ? 'bg-orange-50 text-orange-500'
+                  : 'bg-[#0166dc]/10 text-[#0166dc]'
+              }`}>
+                <Scale className="w-4 h-4 shrink-0" />
+              </div>
+              {isCannabisLimitExceeded ? (
+                <span className="text-red-600 font-bold">
+                  Exceeds {CANNABIS_LIMIT.toFixed(1)}g Legal Purchase Limit (+{excessCannabis.toFixed(1)}g)
+                </span>
+              ) : cartCannabisGrams >= CANNABIS_LIMIT ? (
+                <span className="text-[#0166dc] font-black">
+                  Reached {CANNABIS_LIMIT.toFixed(1)}g Legal Purchase Limit
+                </span>
+              ) : (
+                <span>
+                  Cannabis Legal Limit (30g per transaction): <strong className="text-slate-900 font-bold">{remainingCannabis.toFixed(1)}g</strong> remaining
+                </span>
+              )}
+            </span>
+
+            <div className="flex items-center gap-3 self-end sm:self-auto">
+              <span className={`text-[11px] font-mono font-semibold shrink-0 ${
+                isCannabisLimitExceeded
+                  ? 'text-red-600 font-bold'
+                  : cannabisProgressPercent >= 80
+                  ? 'text-orange-600 font-bold'
+                  : 'text-slate-600'
+              }`}>
+                {cartCannabisGrams.toFixed(1)} / {CANNABIS_LIMIT.toFixed(1)}g ({Math.round(cannabisProgressPercent)}%)
+              </span>
+              {cartCannabisGrams > 0 && (
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className="px-3 py-1 rounded-lg bg-[#0166dc] hover:bg-[#0153b3] text-white text-[11px] font-extrabold uppercase tracking-wider transition-colors cursor-pointer shadow-xs"
+                >
+                  View Bag
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className={`w-full ${isCannabisLimitExceeded ? 'bg-red-100' : 'bg-slate-200'} h-2 rounded-full overflow-hidden`}>
+            <div
+              className={`${
+                isCannabisLimitExceeded
+                  ? 'bg-red-500'
+                  : cannabisProgressPercent >= 80
+                  ? 'bg-gradient-to-r from-[#0166dc] to-orange-500'
+                  : 'bg-gradient-to-r from-[#0166dc] to-[#0166dc]'
+              } h-full transition-all duration-500 rounded-full`}
+              style={{ width: `${cannabisProgressPercent}%` }}
+            />
           </div>
         </div>
       )}
