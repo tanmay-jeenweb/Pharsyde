@@ -107,27 +107,37 @@ export default function HomePage() {
         let items = (res && res.success && Array.isArray(res.products)) ? res.products : [];
         items = items.filter((p) => p.imageUrl && p.imageUrl.trim() !== '' && p.imageUrl !== '[]');
 
-        // If fewer than 12 configured best sellers, backfill from catalog with images
+        const isProductInStock = (p) => {
+          if (p.inStock === false) return false;
+          const stock = p.qty_available !== undefined && p.qty_available !== null ? parseFloat(p.qty_available) : null;
+          return stock === null || isNaN(stock) || stock > 0;
+        };
+
+        // If fewer than 12 configured best sellers, backfill from catalog with images and stock
         if (items.length < 12) {
           try {
-            const fallback = await getProductsApi({ limit: 12, sortBy: 'modified', sortOrder: 'DESC', hasImage: true });
+            const fallback = await getProductsApi({ limit: 12, sortBy: 'modified', sortOrder: 'DESC', hasImage: true, inStock: true });
             if (fallback && Array.isArray(fallback.products)) {
               const existingIds = new Set(items.map((i) => i.pk || i.id));
-              const extras = fallback.products.filter((p) => !existingIds.has(p.pk || p.id));
+              const extras = fallback.products.filter((p) => !existingIds.has(p.pk || p.id) && isProductInStock(p));
               items = [...items, ...extras].slice(0, 12);
             }
           } catch {}
         }
 
         if (isMounted) {
-          setBestSellers(items);
+          setBestSellers(items.filter(isProductInStock));
         }
       } catch (err) {
         console.warn('Could not load best sellers:', err);
         try {
-          const fallback = await getProductsApi({ limit: 12, hasImage: true });
+          const fallback = await getProductsApi({ limit: 12, hasImage: true, inStock: true });
           if (isMounted && fallback?.products) {
-            setBestSellers(fallback.products);
+            setBestSellers(fallback.products.filter((p) => {
+              if (p.inStock === false) return false;
+              const stock = p.qty_available !== undefined && p.qty_available !== null ? parseFloat(p.qty_available) : null;
+              return stock === null || isNaN(stock) || stock > 0;
+            }));
           }
         } catch {}
       } finally {
@@ -138,16 +148,26 @@ export default function HomePage() {
     async function loadNewArrivals() {
       try {
         setLoadingNewArrivals(true);
-        const res = await getNewArrivalsProductsApi({ limit: 12 });
+        const res = await getNewArrivalsProductsApi({ limit: 12, inStock: true });
         let items = (res && res.success && Array.isArray(res.products)) ? res.products : [];
-        items = items.filter((p) => p.imageUrl && p.imageUrl.trim() !== '' && p.imageUrl !== '[]');
+        items = items.filter((p) => {
+          if (!p.imageUrl || p.imageUrl.trim() === '' || p.imageUrl === '[]') return false;
+          if (p.inStock === false) return false;
+          const stock = p.qty_available !== undefined && p.qty_available !== null ? parseFloat(p.qty_available) : null;
+          return stock === null || isNaN(stock) || stock > 0;
+        });
 
         if (items.length < 12) {
           try {
-            const fallback = await getProductsApi({ limit: 12, sortBy: 'modified', sortOrder: 'DESC', hasImage: true });
+            const fallback = await getProductsApi({ limit: 12, sortBy: 'modified', sortOrder: 'DESC', hasImage: true, inStock: true });
             if (fallback && Array.isArray(fallback.products)) {
               const existingIds = new Set(items.map((i) => i.pk || i.id));
-              const extras = fallback.products.filter((p) => !existingIds.has(p.pk || p.id));
+              const extras = fallback.products.filter((p) => {
+                if (existingIds.has(p.pk || p.id)) return false;
+                if (p.inStock === false) return false;
+                const stock = p.qty_available !== undefined && p.qty_available !== null ? parseFloat(p.qty_available) : null;
+                return stock === null || isNaN(stock) || stock > 0;
+              });
               items = [...items, ...extras].slice(0, 12);
             }
           } catch {}
@@ -159,9 +179,13 @@ export default function HomePage() {
       } catch (err) {
         console.warn('Could not load new arrivals:', err);
         try {
-          const fallback = await getProductsApi({ limit: 12, sortBy: 'modified', sortOrder: 'DESC', hasImage: true });
+          const fallback = await getProductsApi({ limit: 12, sortBy: 'modified', sortOrder: 'DESC', hasImage: true, inStock: true });
           if (isMounted && fallback?.products) {
-            setNewArrivals(fallback.products);
+            setNewArrivals(fallback.products.filter((p) => {
+              if (p.inStock === false) return false;
+              const stock = p.qty_available !== undefined && p.qty_available !== null ? parseFloat(p.qty_available) : null;
+              return stock === null || isNaN(stock) || stock > 0;
+            }));
           }
         } catch {}
       } finally {
