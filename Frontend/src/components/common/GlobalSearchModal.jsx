@@ -36,6 +36,15 @@ export default function GlobalSearchModal() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSearchOpen, setIsSearchOpen]);
 
+  // Helper to ensure 0-stock products are excluded
+  const filterInStock = (items = []) => {
+    return items.filter((p) => {
+      if (p.inStock === false) return false;
+      const stock = p.qty_available !== undefined && p.qty_available !== null ? parseFloat(p.qty_available) : null;
+      return stock === null || isNaN(stock) || stock > 0;
+    });
+  };
+
   // Fetch search results from backend API
   useEffect(() => {
     if (!isSearchOpen) return;
@@ -43,28 +52,29 @@ export default function GlobalSearchModal() {
     const trimmed = query.trim();
     if (!trimmed) {
       // Show default top items
-      getProductsApi({ hasImage: true, limit: 4 })
-        .then((res) => setResults(res.products || []))
-        .catch(() => setResults(PRODUCTS.slice(0, 4)));
+      getProductsApi({ hasImage: true, inStock: true, limit: 4 })
+        .then((res) => setResults(filterInStock(res.products || [])))
+        .catch(() => setResults(filterInStock(PRODUCTS.slice(0, 4))));
       return;
     }
 
     setLoading(true);
     const handler = setTimeout(() => {
-      getProductsApi({ search: trimmed, hasImage: true, limit: 6 })
+      getProductsApi({ search: trimmed, hasImage: true, inStock: true, limit: 6 })
         .then((res) => {
-          setResults(res.products || []);
+          setResults(filterInStock(res.products || []));
           setLoading(false);
         })
         .catch(() => {
           // Fallback to local mock
           const filtered = PRODUCTS.filter(
             (p) =>
-              p.name.toLowerCase().includes(trimmed.toLowerCase()) ||
+              p.inStock !== false &&
+              (p.name.toLowerCase().includes(trimmed.toLowerCase()) ||
               p.brand.toLowerCase().includes(trimmed.toLowerCase()) ||
-              p.category.toLowerCase().includes(trimmed.toLowerCase())
+              p.category.toLowerCase().includes(trimmed.toLowerCase()))
           );
-          setResults(filtered);
+          setResults(filterInStock(filtered));
           setLoading(false);
         });
     }, 250);

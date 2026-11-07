@@ -66,6 +66,11 @@ export default function NewArrivalsPage() {
         const hasValidImage = p.imageUrl && p.imageUrl.trim() !== '' && p.imageUrl !== '[]';
         if (!hasValidImage) return false;
 
+        // Stock check: do not show products with 0 stock
+        if (p.inStock === false) return false;
+        const stock = p.qty_available !== undefined && p.qty_available !== null ? parseFloat(p.qty_available) : null;
+        if (stock !== null && !isNaN(stock) && stock <= 0) return false;
+
         // Category filter
         if (selectedCategory !== 'All' && p.category !== selectedCategory) {
           return false;

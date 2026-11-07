@@ -20,6 +20,7 @@ const getProducts = async (req, res, next) => {
       storeId,
       active,
       hasImage,
+      inStock,
       search,
       page,
       limit = 50,
@@ -51,13 +52,14 @@ const getProducts = async (req, res, next) => {
         storeId,
         active,
         hasImage,
+        inStock,
         search,
         limit: parsedLimit,
         offset: parsedOffset,
         sortBy,
         sortOrder
       }),
-      ProductModel.count({ category, subCategory, brand, strain, minPrice, maxPrice, active, hasImage, search, storeId })
+      ProductModel.count({ category, subCategory, brand, strain, minPrice, maxPrice, active, hasImage, inStock, search, storeId })
     ]);
 
     const currentPage = !isNaN(parsedPage) && parsedPage > 0 ? parsedPage : Math.floor(parsedOffset / parsedLimit) + 1;
@@ -97,8 +99,9 @@ const getNewArrivals = async (req, res, next) => {
       limit = parseInt(req.query.limit, 10);
     }
 
-    // 2. Fetch new arrivals
-    const products = await ProductModel.findNewArrivals({ limit });
+    // 2. Fetch new arrivals (default to in-stock only unless explicitly disabled)
+    const inStock = req.query.inStock !== undefined ? (req.query.inStock === 'true') : true;
+    const products = await ProductModel.findNewArrivals({ limit, inStock });
 
     res.status(200).json({
       success: true,
@@ -128,7 +131,8 @@ const getBestSellers = async (req, res, next) => {
 
     let products = [];
     if (Array.isArray(productIds) && productIds.length > 0) {
-      products = await ProductModel.findByPks(productIds);
+      const inStock = req.query.inStock !== undefined ? (req.query.inStock === 'true') : true;
+      products = await ProductModel.findByPks(productIds, { hasImage: true, inStock });
     }
 
     res.status(200).json({
@@ -298,8 +302,11 @@ const deleteProduct = async (req, res, next) => {
  */
 const getCategories = async (req, res, next) => {
   try {
-    const { hasImage } = req.query;
-    const categories = await ProductModel.getCategories({ hasImage: hasImage === 'true' });
+    const { hasImage, inStock } = req.query;
+    const categories = await ProductModel.getCategories({
+      hasImage: hasImage === 'true',
+      inStock: inStock === 'true' || inStock === true,
+    });
     res.status(200).json({
       success: true,
       categories,
@@ -316,8 +323,12 @@ const getCategories = async (req, res, next) => {
  */
 const getBrands = async (req, res, next) => {
   try {
-    const { category, hasImage } = req.query;
-    const brands = await ProductModel.getBrands({ category, hasImage: hasImage === 'true' });
+    const { category, hasImage, inStock } = req.query;
+    const brands = await ProductModel.getBrands({
+      category,
+      hasImage: hasImage === 'true',
+      inStock: inStock === 'true' || inStock === true,
+    });
     res.status(200).json({
       success: true,
       brands,
@@ -334,8 +345,12 @@ const getBrands = async (req, res, next) => {
  */
 const getStrains = async (req, res, next) => {
   try {
-    const { category, hasImage } = req.query;
-    const strains = await ProductModel.getStrains({ category, hasImage: hasImage === 'true' });
+    const { category, hasImage, inStock } = req.query;
+    const strains = await ProductModel.getStrains({
+      category,
+      hasImage: hasImage === 'true',
+      inStock: inStock === 'true' || inStock === true,
+    });
     res.status(200).json({
       success: true,
       strains,

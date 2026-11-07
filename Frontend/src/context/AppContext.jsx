@@ -296,7 +296,7 @@ export function AppProvider({ children }) {
     if (currentGrams + additionalGrams > cannabisMaxGrams) {
       showToast(
         `Cannot add: Exceeds ${cannabisMaxGrams.toFixed(1)}g legal limit for cannabis (current: ${currentGrams.toFixed(1)}g, adding: ${additionalGrams.toFixed(1)}g).`,
-        'warning'
+        'error'
       );
       return false;
     }
@@ -354,7 +354,7 @@ export function AppProvider({ children }) {
       const currentGrams = calculateCartCannabisGrams(cart);
       showToast(
         `Cannot increase quantity: Exceeds ${cannabisMaxGrams.toFixed(1)}g legal cannabis limit (current: ${currentGrams.toFixed(1)}g, proposed: ${proposedGrams.toFixed(1)}g).`,
-        'warning'
+        'error'
       );
       return false;
     }

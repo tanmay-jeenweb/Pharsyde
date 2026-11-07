@@ -152,6 +152,7 @@ const ProductModel = {
     storeId,
     active,
     hasImage,
+    inStock,
     search,
     limit = 50,
     offset = 0,
@@ -168,6 +169,12 @@ const ProductModel = {
 
     if (hasImage === 'true' || hasImage === true) {
       query += ' AND imageUrl IS NOT NULL AND imageUrl != "" AND imageUrl != "[]"';
+    }
+
+    if (inStock === 'true' || inStock === true) {
+      query += ' AND qty_available > 0';
+    } else if (inStock === 'false' || inStock === false) {
+      query += ' AND (qty_available <= 0 OR qty_available IS NULL)';
     }
 
     if (category) {
@@ -268,13 +275,18 @@ const ProductModel = {
   /**
    * Get newest arrival products with valid images
    */
-  async findNewArrivals({ limit = 24 } = {}) {
-    const query = `
+  async findNewArrivals({ limit = 24, inStock = true } = {}) {
+    let query = `
       SELECT * FROM products
       WHERE active = 1
         AND imageUrl IS NOT NULL
         AND imageUrl != ''
         AND imageUrl != '[]'
+    `;
+    if (inStock === 'true' || inStock === true) {
+      query += ' AND qty_available > 0';
+    }
+    query += `
       ORDER BY created_at DESC, modified DESC
       LIMIT ?
     `;
@@ -285,7 +297,7 @@ const ProductModel = {
   /**
    * Count products matching filters
    */
-  async count({ category, subCategory, brand, strain, minPrice, maxPrice, active, hasImage, search, storeId } = {}) {
+  async count({ category, subCategory, brand, strain, minPrice, maxPrice, active, hasImage, inStock, search, storeId } = {}) {
     let query = 'SELECT COUNT(*) as total FROM products WHERE 1=1';
     const params = [];
 
@@ -296,6 +308,12 @@ const ProductModel = {
 
     if (hasImage === 'true' || hasImage === true) {
       query += ' AND imageUrl IS NOT NULL AND imageUrl != "" AND imageUrl != "[]"';
+    }
+
+    if (inStock === 'true' || inStock === true) {
+      query += ' AND qty_available > 0';
+    } else if (inStock === 'false' || inStock === false) {
+      query += ' AND (qty_available <= 0 OR qty_available IS NULL)';
     }
 
     if (category) {
@@ -388,7 +406,7 @@ const ProductModel = {
    * Find multiple products by primary keys (pks) maintaining selection order.
    * Defaults to hasImage = true so only products with valid images are returned (matching All Products catalog).
    */
-  async findByPks(pks = [], { hasImage = true } = {}) {
+  async findByPks(pks = [], { hasImage = true, inStock = false } = {}) {
     if (!Array.isArray(pks) || pks.length === 0) return [];
     const validPks = pks.map(String).filter(Boolean);
     if (validPks.length === 0) return [];
@@ -400,6 +418,9 @@ const ProductModel = {
     `;
     if (hasImage) {
       query += ` AND imageUrl IS NOT NULL AND imageUrl != '' AND imageUrl != '[]'`;
+    }
+    if (inStock === 'true' || inStock === true) {
+      query += ` AND qty_available > 0`;
     }
 
     const [rows] = await pool.query(query, validPks);
@@ -568,10 +589,13 @@ const ProductModel = {
   /**
    * Get distinct categories
    */
-  async getCategories({ hasImage } = {}) {
+  async getCategories({ hasImage, inStock } = {}) {
     let query = 'SELECT DISTINCT category FROM products WHERE category IS NOT NULL AND category != ""';
     if (hasImage === 'true' || hasImage === true) {
       query += ' AND imageUrl IS NOT NULL AND imageUrl != "" AND imageUrl != "[]"';
+    }
+    if (inStock === 'true' || inStock === true) {
+      query += ' AND qty_available > 0';
     }
     query += ' ORDER BY category ASC';
     const [rows] = await pool.query(query);
@@ -581,11 +605,14 @@ const ProductModel = {
   /**
    * Get distinct brands
    */
-  async getBrands({ category, hasImage } = {}) {
+  async getBrands({ category, hasImage, inStock } = {}) {
     let query = 'SELECT DISTINCT brand FROM products WHERE brand IS NOT NULL AND brand != ""';
     const params = [];
     if (hasImage === 'true' || hasImage === true) {
       query += ' AND imageUrl IS NOT NULL AND imageUrl != "" AND imageUrl != "[]"';
+    }
+    if (inStock === 'true' || inStock === true) {
+      query += ' AND qty_available > 0';
     }
     if (category) {
       const categories = Array.isArray(category)
@@ -610,11 +637,14 @@ const ProductModel = {
   /**
    * Get distinct strains
    */
-  async getStrains({ category, hasImage } = {}) {
+  async getStrains({ category, hasImage, inStock } = {}) {
     let query = 'SELECT DISTINCT strain FROM products WHERE strain IS NOT NULL AND strain != "" AND strain != "None"';
     const params = [];
     if (hasImage === 'true' || hasImage === true) {
       query += ' AND imageUrl IS NOT NULL AND imageUrl != "" AND imageUrl != "[]"';
+    }
+    if (inStock === 'true' || inStock === true) {
+      query += ' AND qty_available > 0';
     }
     if (category) {
       const categories = Array.isArray(category)
