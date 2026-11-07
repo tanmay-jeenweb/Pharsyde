@@ -218,6 +218,10 @@ export function AppProvider({ children }) {
     }, 3500);
   };
 
+  const removeToast = (id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
   // Customer Auth Operations
   const customerLogin = async (email, password) => {
     const res = await customerLoginApi({ email, password });
@@ -447,6 +451,7 @@ export function AppProvider({ children }) {
         confirmAge,
         toasts,
         showToast,
+        removeToast,
         customerUser,
         customerToken,
         isCustomerLoggedIn,
