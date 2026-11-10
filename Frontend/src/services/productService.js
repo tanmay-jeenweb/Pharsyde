@@ -43,6 +43,7 @@ export async function getProductsApi({
   limit = 24,
   offset,
   hasImage = true,
+  inStock = true,
   storeId,
   sortBy = 'featured',
   sortOrder = 'desc'
@@ -99,6 +100,10 @@ export async function getProductsApi({
     params.append('hasImage', 'true');
   }
 
+  if (inStock !== undefined && inStock !== null && inStock !== '') {
+    params.append('inStock', String(inStock));
+  }
+
   if (storeId !== undefined) {
     params.append('storeId', String(storeId));
   }
@@ -112,9 +117,14 @@ export async function getProductsApi({
 /**
  * Fetch distinct categories from the backend
  */
-export async function getCategoriesApi({ hasImage = true } = {}) {
+export async function getCategoriesApi({ hasImage = true, inStock = true } = {}) {
   try {
-    const data = await fetchJsonWithFallback(`/products/meta/categories?hasImage=${hasImage ? 'true' : 'false'}`);
+    const params = new URLSearchParams();
+    if (hasImage) params.append('hasImage', 'true');
+    if (inStock !== undefined && inStock !== null && inStock !== '') {
+      params.append('inStock', String(inStock));
+    }
+    const data = await fetchJsonWithFallback(`/products/meta/categories?${params.toString()}`);
     return data.categories || [];
   } catch {
     return [];
@@ -124,9 +134,12 @@ export async function getCategoriesApi({ hasImage = true } = {}) {
 /**
  * Fetch distinct brands from the backend (optionally filtered by category)
  */
-export async function getBrandsApi({ category = '', hasImage = true } = {}) {
+export async function getBrandsApi({ category = '', hasImage = true, inStock = true } = {}) {
   const params = new URLSearchParams();
   if (hasImage) params.append('hasImage', 'true');
+  if (inStock !== undefined && inStock !== null && inStock !== '') {
+    params.append('inStock', String(inStock));
+  }
   if (Array.isArray(category) && category.length > 0) {
     params.append('category', category.filter((c) => c && c !== 'All').join(','));
   } else if (category && category !== 'All') {
@@ -144,9 +157,12 @@ export async function getBrandsApi({ category = '', hasImage = true } = {}) {
 /**
  * Fetch distinct strains from the backend (optionally filtered by category)
  */
-export async function getStrainsApi({ category = '', hasImage = true } = {}) {
+export async function getStrainsApi({ category = '', hasImage = true, inStock = true } = {}) {
   const params = new URLSearchParams();
   if (hasImage) params.append('hasImage', 'true');
+  if (inStock !== undefined && inStock !== null && inStock !== '') {
+    params.append('inStock', String(inStock));
+  }
   if (Array.isArray(category) && category.length > 0) {
     params.append('category', category.filter((c) => c && c !== 'All').join(','));
   } else if (category && category !== 'All') {
@@ -206,9 +222,12 @@ export async function syncAllApi({ quick = false, maxPages, pageSize, sortId } =
 /**
  * Fetch latest new arrivals products
  */
-export async function getNewArrivalsProductsApi({ limit } = {}) {
+export async function getNewArrivalsProductsApi({ limit, inStock = true } = {}) {
   const params = new URLSearchParams();
   if (limit) params.append('limit', String(limit));
+  if (inStock !== undefined && inStock !== null && inStock !== '') {
+    params.append('inStock', String(inStock));
+  }
   try {
     return await fetchJsonWithFallback(`/products/new-arrivals${params.toString() ? '?' + params.toString() : ''}`);
   } catch {
@@ -236,9 +255,13 @@ export async function getPublicSettingsApi() {
 /**
  * Fetch configured best seller products
  */
-export async function getBestSellersProductsApi() {
+export async function getBestSellersProductsApi({ inStock = true } = {}) {
+  const params = new URLSearchParams();
+  if (inStock !== undefined && inStock !== null && inStock !== '') {
+    params.append('inStock', String(inStock));
+  }
   try {
-    return await fetchJsonWithFallback('/products/best-sellers');
+    return await fetchJsonWithFallback(`/products/best-sellers${params.toString() ? '?' + params.toString() : ''}`);
   } catch {
     return { success: false, products: [] };
   }

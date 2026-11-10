@@ -71,17 +71,25 @@ export default function ProductDetailsPage() {
           const primaryImg = fetched.imageUrl || fetched.secondImageUrl || null;
           setSelectedImage(primaryImg);
 
-          // Fetch related products from same category with images
+          // Fetch related products from same category with images and in stock
           if (fetched.category) {
             getProductsApi({
               category: fetched.category,
               hasImage: true,
-              limit: 4
+              inStock: true,
+              limit: 6
             })
               .then((res) => {
                 if (isMounted && res.products) {
                   setRelatedProducts(
-                    res.products.filter((p) => p.pk !== fetched.pk && p.sku !== fetched.sku).slice(0, 3)
+                    res.products
+                      .filter((p) => {
+                        if (p.inStock === false) return false;
+                        const stock = p.qty_available !== undefined && p.qty_available !== null ? parseFloat(p.qty_available) : null;
+                        if (stock !== null && !isNaN(stock) && stock <= 0) return false;
+                        return p.pk !== fetched.pk && p.sku !== fetched.sku;
+                      })
+                      .slice(0, 3)
                   );
                 }
               })

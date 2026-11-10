@@ -135,12 +135,12 @@ export default function CatalogPage({ pageType: propPageType }) {
   }, [minPrice, maxPrice]);
 
   // Fetch available categories once on mount or when refreshed
-  // Only shows categories that actually have products with images in the DB
+  // Only shows categories that actually have products with images and stock in the DB
   useEffect(() => {
     let isMounted = true;
     async function loadCategories() {
       try {
-        const fetchedCategories = await getCategoriesApi({ hasImage: true });
+        const fetchedCategories = await getCategoriesApi({ hasImage: true, inStock: true });
         if (isMounted && fetchedCategories && fetchedCategories.length > 0) {
           // Filter to only the categories relevant to the current page
           if (isCannabisPage) {
@@ -173,8 +173,8 @@ export default function CatalogPage({ pageType: propPageType }) {
       try {
         const catScope = isCannabisPage ? CANNABIS_CATEGORIES : isNicotinePage ? NICOTINE_CATEGORIES : '';
         const [fetchedBrands, fetchedStrains] = await Promise.all([
-          getBrandsApi({ category: catScope, hasImage: true }),
-          getStrainsApi({ category: catScope, hasImage: true })
+          getBrandsApi({ category: catScope, hasImage: true, inStock: true }),
+          getStrainsApi({ category: catScope, hasImage: true, inStock: true })
         ]);
 
         if (isMounted) {
@@ -222,11 +222,20 @@ export default function CatalogPage({ pageType: propPageType }) {
           limit,
           sortBy,
           sortOrder,
-          hasImage: true // Enforces only including items with images
+          hasImage: true, // Enforces only including items with images
+          inStock: true // Don't show products with 0 stock in catalog
         });
 
         if (isMounted) {
-          setProducts(data.products || []);
+          // Double defensive filter: never show product with 0 stock in catalog
+          const inStockProducts = (data.products || []).filter((product) => {
+            if (product.inStock === false) return false;
+            const stock = product.qty_available !== undefined && product.qty_available !== null
+              ? parseFloat(product.qty_available)
+              : null;
+            return stock === null || isNaN(stock) || stock > 0;
+          });
+          setProducts(inStockProducts);
           setTotalCount(data.total || 0);
           setLoading(false);
         }

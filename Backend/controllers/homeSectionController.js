@@ -325,7 +325,7 @@ const getPublicHomeSections = async (req, res, next) => {
       sections.map(async (sec) => {
         let products = [];
         if (Array.isArray(sec.product_ids) && sec.product_ids.length > 0) {
-          products = await ProductModel.findByPks(sec.product_ids, { hasImage: true });
+          products = await ProductModel.findByPks(sec.product_ids, { hasImage: true, inStock: true });
         }
         return {
           id: sec.id,
