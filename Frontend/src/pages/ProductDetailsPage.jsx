@@ -17,13 +17,10 @@ import {
   Flame,
   Info,
   Scale,
-  Barcode,
-  Package,
   Store,
   Tag,
   AlertCircle,
   FileText,
-  BadgePercent,
   ImageOff
 } from 'lucide-react';
 
@@ -172,7 +169,6 @@ export default function ProductDetailsPage() {
   const productSubCategory = product.subCategory || product.other_category || null;
   const productStrain = product.strain || product.strainType;
   const productSku = product.sku || null;
-  const productBarcode = product.barcode || null;
   const productSize = product.size || product.weight || null;
   const equivalentG = product.equivalent_g ? parseFloat(product.equivalent_g) : null;
 
@@ -520,85 +516,6 @@ export default function ProductDetailsPage() {
                   </p>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Detailed Inventory Specifications Data Matrix */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-10 shadow-xs mb-16">
-          <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100">
-            <Package className="w-5 h-5 text-[#0166dc]" />
-            <h3 className="font-heading text-lg sm:text-xl font-black text-slate-900 uppercase tracking-tight">
-              Inventory & Compliance Specifications
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 text-xs">
-
-            {/* Barcode */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Barcode / UPC</span>
-              <span className="font-mono font-bold text-slate-800 text-sm">{productBarcode || 'N/A'}</span>
-            </div>
-
-            {/* Inventory PK */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">System Inventory ID (PK)</span>
-              <span className="font-mono font-bold text-slate-800 text-sm">{productId}</span>
-            </div>
-
-            {/* Store ID */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Store Location</span>
-              <span className="font-bold text-slate-800 text-sm">Store #{product.storeId || 1} (Regent Ave W)</span>
-            </div>
-
-            {/* Category */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Primary Category</span>
-              <span className="font-bold text-slate-800 text-sm">{productCategory}</span>
-            </div>
-
-            {/* SubCategory */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Sub-Category</span>
-              <span className="font-bold text-slate-800 text-sm">{productSubCategory || 'Standard'}</span>
-            </div>
-
-            {/* Strain Classification */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Cannabis Lineage</span>
-              <span className="font-bold text-slate-800 text-sm">{productStrain || 'Unclassified'}</span>
-            </div>
-
-            {/* Units Per Case */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Units Per Case</span>
-              <span className="font-bold text-slate-800 text-sm">{product.default_units_per_case || '1.00'}</span>
-            </div>
-
-            {/* Stock Quantity */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Quantity Available</span>
-              <span className="font-bold text-slate-800 text-sm">{qtyAvailable !== null ? `${qtyAvailable} Units` : 'In Stock'}</span>
-            </div>
-
-            {/* Supplier */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Licensed Producer / Supplier</span>
-              <span className="font-bold text-slate-800 text-sm">{product.supplier || productBrand}</span>
-            </div>
-
-            {/* Taxable */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Tax Classification</span>
-              <span className="font-bold text-slate-800 text-sm">{product.taxable ? 'Taxable Goods' : 'Standard Cannabis Tax'}</span>
-            </div>
-
-            {/* Discountable */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Discount Eligibility</span>
-              <span className="font-bold text-slate-800 text-sm">{product.discountable ? 'Promo Eligible' : 'Standard Pricing'}</span>
             </div>
           </div>
         </div>
